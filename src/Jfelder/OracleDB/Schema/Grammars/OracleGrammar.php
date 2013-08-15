@@ -20,7 +20,17 @@ class OracleGrammar extends \Illuminate\Database\Schema\Grammars\Grammar {
 	 */
 	protected $modifiers = array('Increment', 'Nullable', 'Default');
 
-        /**
+   /**
+    * Compile the query to determine if a table exists.
+    *
+    * @return string
+    */
+   public function compileTableExists()
+   {
+      return 'select * from user_tables where upper(table_name) = upper(?)';
+   }
+
+   /**
 	 * Get the primary key syntax for a table creation statement.
 	 *
 	 * @param  \Illuminate\Database\Schema\Blueprint  $blueprint
@@ -29,7 +39,7 @@ class OracleGrammar extends \Illuminate\Database\Schema\Grammars\Grammar {
 	protected function addPrimaryKeys(Blueprint $blueprint)
 	{
 		$primary = $this->getCommandByName($blueprint, 'primary');
-                                
+
 		if ( ! is_null($primary))
 		{
                         $table = $this->wrapTable($blueprint);
@@ -67,7 +77,7 @@ class OracleGrammar extends \Illuminate\Database\Schema\Grammars\Grammar {
 
 			$sql .= ", constraint {$foreign->index} foreign key ( {$columns} ) references {$on} ( {$onColumns} )";
 
-                        // Once we have the basic foreign key creation statement constructed we can 
+                        // Once we have the basic foreign key creation statement constructed we can
                         // build out the syntax for what should happen on an update or delete of
                         // the affected columns, which will get something like "cascade", etc.
                         if ( ! is_null($foreign->onDelete))
@@ -92,9 +102,9 @@ class OracleGrammar extends \Illuminate\Database\Schema\Grammars\Grammar {
 
 		$sql = 'create table '.$this->wrapTable($blueprint)." ( $columns";
 
-		// To be able to name the primary/foreign keys when the table is 
-		// initially created we will need to check for a primary/foreign 
-                // key commands and add the columns to the table's declaration 
+		// To be able to name the primary/foreign keys when the table is
+		// initially created we will need to check for a primary/foreign
+                // key commands and add the columns to the table's declaration
                 // here so they can be created on the tables.
 
 		$sql .= (string) $this->addForeignKeys($blueprint);
@@ -169,21 +179,21 @@ class OracleGrammar extends \Illuminate\Database\Schema\Grammars\Grammar {
                 // before we can create the SQL, such as wrapping the tables and convert
                 // an array of columns to comma-delimited strings for the SQL queries.
                 $columns = $this->columnize($command->columns);
-                
+
                 $onColumns = $this->columnize((array) $command->references);
-                
+
                 $sql = "alter table {$table} add constraint {$command->index} ";
-                
+
                 $sql .= "foreign key ( {$columns} ) references {$on} ( {$onColumns} )";
-                
-                // Once we have the basic foreign key creation statement constructed we can 
+
+                // Once we have the basic foreign key creation statement constructed we can
                 // build out the syntax for what should happen on an update or delete of
                 // the affected columns, which will get something like "cascade", etc.
                 if ( ! is_null($command->onDelete))
                 {
                     $sql .= " on delete {$command->onDelete}";
                 }
-                
+
                 return $sql;
             }
         }
@@ -333,7 +343,7 @@ class OracleGrammar extends \Illuminate\Database\Schema\Grammars\Grammar {
 		$table = $this->wrapTable($blueprint);
 
                 $rs[0] = 'alter table '.$table.' rename column '.$command->from.' to '.$command->to;
-		
+
                 return (array) $rs;
 	}
 
@@ -466,7 +476,7 @@ class OracleGrammar extends \Illuminate\Database\Schema\Grammars\Grammar {
 	 */
 	protected function typeTimestamp(Fluent $column)
 	{
-		return 'timestamp default 0';
+		return 'timestamp';
 	}
 
 	/**
@@ -521,6 +531,6 @@ class OracleGrammar extends \Illuminate\Database\Schema\Grammars\Grammar {
                         $blueprint->primary($column->name);
 		}
 	}
-        
+
 
 }
