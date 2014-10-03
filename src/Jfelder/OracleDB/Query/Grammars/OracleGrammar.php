@@ -28,7 +28,54 @@ class OracleGrammar extends \Illuminate\Database\Query\Grammars\Grammar {
 		return trim($this->concatenate($components));
 	}
 
-	/**
+
+    /**
+     * Compile an insert statement into SQL.
+     *
+     * @param  \Illuminate\Database\Query\Builder  $query
+     * @param  array  $values
+     * @return string
+     */
+    public function compileInsert(Builder $query, array $values)
+    {
+        // Essentially we will force every insert to be treated as a batch insert which
+        // simply makes creating the SQL easier for us since we can utilize the same
+        // basic routine regardless of an amount of records given to us to insert.
+        $table = $this->wrapTable($query->from);
+
+        if ( ! is_array(reset($values)))
+        {
+            $values = array($values);
+        }
+
+        // If there is only one record being inserted, we will just use the usual query
+        // grammar insert builder because no special syntax is needed for the single
+        // row inserts in Oracle. However, if there are multiples, we'll continue.
+        $count = count($values);
+
+        if ($count == 1)
+        {
+            return parent::compileInsert($query, reset($values));
+        }
+
+        $columns = $this->columnize(array_keys(reset($values)));
+
+        $rows = array();
+
+        // Oracle requires us to build the multi-row insert as multiple inserts with
+        // a select statement at the end. So we'll build out this list of columns
+        // and then join them all together with select to complete the queries.
+        $parameters = $this->parameterize(reset($values));
+
+        for ($i=0; $i<$count; $i++)
+        {
+            $rows[] = "into {$table} ({$columns}) values ({$parameters}) ";
+        }
+
+        return "insert all ".implode($rows)." select 1 from dual";
+    }
+
+    /**
 	 * Compile an insert and get ID statement into SQL.
 	 *
 	 * @param  \Illuminate\Database\Query\Builder  $query

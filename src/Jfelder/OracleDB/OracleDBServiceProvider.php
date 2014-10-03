@@ -24,9 +24,9 @@ class OracledbServiceProvider extends ServiceProvider {
 
 	/**
 	 * Register the service provider.
-	 *
-	 * @return void
-	 */
+     *
+     * @throws \ErrorException
+     */
 	public function register()
 	{
             $this->package('jfelder/oracledb');
