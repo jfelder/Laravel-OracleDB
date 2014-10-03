@@ -4,6 +4,7 @@ use \Illuminate\Support\Fluent;
 use \Illuminate\Database\Connection;
 use \Illuminate\Database\Schema\Blueprint;
 use Config;
+
 class OracleGrammar extends \Illuminate\Database\Schema\Grammars\Grammar {
 
 	/**

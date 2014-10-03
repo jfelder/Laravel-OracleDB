@@ -24,7 +24,10 @@ class OCI extends \PDO
     protected $charset;
 
     /**
-     * @var oci8 Database connection
+     * @var resource oci8 Database connection
+     */
+    /**
+     * @var bool|resource|string
      */
     protected $conn;
 
@@ -53,7 +56,7 @@ class OCI extends \PDO
     protected $error = array(0 => '', 1 => null, 2 => null);
     
     /**
-     * @var string SQL statment to be run
+     * @var string SQL statement to be run
      */
     public $queryString = "";
 
@@ -228,9 +231,8 @@ class OCI extends \PDO
     /**
      * Returns the ID of the last inserted row or sequence value
      *
-     * @param  string $name Name of the sequence object from which the ID should be returned.
+     * @throws OCIException This feature is not supported
      *
-     * @return string Triggers an IM001 SQLSTATE since Oracle does not support this
      */
     public function lastInsertId ($name = null)
     {
@@ -332,6 +334,8 @@ class OCI extends \PDO
      *
      * @param int $attribute PDO::ATTR_* attribute identifier
      * @param mixed $value Value of PDO::ATTR_* attribute
+     *
+     * @return true
      */
     public function setAttribute ($attribute, $value)
     {
@@ -371,7 +375,7 @@ class OCI extends \PDO
     /**
      * Returns the oci8 connection handle for use with other oci_ functions
      *
-     * @return oci8 The oci8 connection handle
+     * @return bool|oci8|resource|string The oci8 connection handle
      */
     public function getOCIResource()
     {
@@ -410,9 +414,11 @@ class OCI extends \PDO
      *
      * @param int $mode Either \OCI_COMMIT_ON_SUCCESS or \OCI_NO_AUTO_COMMIT
      *
-     * @throws OCIExecption If any value other than the above are passed in
+     * @return bool
+     *
+     * @throws OCIException If any value other than the above are passed in
      */
-    public function setExecuteMode($mode) 
+    public function setExecuteMode($mode)
     {
         if($mode === \OCI_COMMIT_ON_SUCCESS || $mode === \OCI_NO_AUTO_COMMIT) {
             $this->mode = $mode;
