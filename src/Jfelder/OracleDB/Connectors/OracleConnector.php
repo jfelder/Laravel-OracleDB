@@ -1,9 +1,9 @@
 <?php namespace Jfelder\OracleDB\Connectors;
 
-use Illuminate\Database\Connectors;
+use Illuminate\Database\Connectors\Connector as Connector;
+use Illuminate\Database\Connectors\ConnectorInterface as ConnectorInterface;
 
-class OracleConnector extends \Illuminate\Database\Connectors\Connector implements \Illuminate\Database\Connectors\ConnectorInterface 
-{
+class OracleConnector extends Connector implements ConnectorInterface {
 
     /**
      * The default PDO connection options.

@@ -1,17 +1,33 @@
 <?php namespace Jfelder\OracleDB;
 
 use Illuminate\Database\Connection;
+use Jfelder\OracleDB\Schema\OracleBuilder;
+use Jfelder\OracleDB\Query\Grammars\OracleGrammar as QueryGrammer;
+use Jfelder\OracleDB\Schema\Grammars\OracleGrammar as SchemaGrammer;
+
 
 class OracleConnection extends Connection {
 
-	/**
+    /**
+     * Get a schema builder instance for the connection.
+     *
+     * @return \Illuminate\Database\Schema\OracleBuilder
+     */
+    public function getSchemaBuilder()
+    {
+        if (is_null($this->schemaGrammar)) { $this->useDefaultSchemaGrammar(); }
+
+        return new OracleBuilder($this);
+    }
+
+    /**
 	 * Get the default query grammar instance.
 	 *
 	 * @return Jfelder\OracleDB\Query\Grammars\OracleGrammar
 	 */
 	protected function getDefaultQueryGrammar()
 	{
-		return $this->withTablePrefix(new Query\Grammars\OracleGrammar);
+		return $this->withTablePrefix(new QueryGrammar);
 	}
 
 	/**
@@ -21,7 +37,7 @@ class OracleConnection extends Connection {
 	 */
 	protected function getDefaultSchemaGrammar()
 	{
-		return $this->withTablePrefix(new Schema\Grammars\OracleGrammar);
+		return $this->withTablePrefix(new SchemaGrammar);
 	}
 
 	/**
