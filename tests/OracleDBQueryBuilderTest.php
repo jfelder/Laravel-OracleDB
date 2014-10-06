@@ -644,7 +644,16 @@ class OracleDBQueryBuilderTest extends PHPUnit_Framework_TestCase {
 	}
 
 
-	public function testInsertGetIdMethod()
+    public function testMultipleInsertMethod()
+    {
+        $builder = $this->getBuilder();
+        $builder->getConnection()->shouldReceive('insert')->once()->with('insert into users (email) values (?)', array('foo'))->andReturn(true);
+        $result = $builder->from('users')->insert(array(array('email' => 'foo'), array('email' => 'bar')));
+        $this->assertTrue($result);
+    }
+
+
+    public function testInsertGetIdMethod()
 	{
 		$builder = $this->getBuilder();
 		$builder->getProcessor()->shouldReceive('processInsertGetId')->once()->with($builder, 'insert into users (email) values (?) returning id into ?', array('foo'), 'id')->andReturn(1);
