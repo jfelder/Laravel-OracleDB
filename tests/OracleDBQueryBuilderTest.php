@@ -856,6 +856,8 @@ class OracleDBQueryBuilderTest extends PHPUnit_Framework_TestCase {
 		$grammar = new Jfelder\OracleDB\Query\Grammars\OracleGrammar;
 		$processor = m::mock('Jfelder\OracleDB\Query\Processors\OracleProcessor');
 		return new Builder(m::mock('Illuminate\Database\ConnectionInterface'), $grammar, $processor);
+
+
 	}
 
 }

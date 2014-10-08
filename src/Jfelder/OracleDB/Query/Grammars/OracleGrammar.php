@@ -1,7 +1,7 @@
 <?php namespace Jfelder\OracleDB\Query\Grammars;
 
-use \Illuminate\Database\Query\Builder;
-use \Illuminate\Database\Query\Grammars\Grammar as BaseGrammar;
+use Illuminate\Database\Query\Builder;
+use Illuminate\Database\Query\Grammars\Grammar as BaseGrammar;
 use Config;
 
 class OracleGrammar extends BaseGrammar {

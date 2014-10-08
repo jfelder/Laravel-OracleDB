@@ -197,10 +197,10 @@ class OracleDBOCITest extends \PHPUnit_Framework_TestCase
         $this->assertEquals(null, $this->oci->getAttribute('doesnotexist'));    
     }
     
-    public function testGetAvailableDrivers ()
-    {
-        $this->assertArrayHasKey(0, $this->oci->getAvailableDrivers());
-    }
+//    public function testGetAvailableDrivers ()
+//    {
+//        $this->assertArrayHasKey(0, $this->oci->getAvailableDrivers());
+//    }
 
     public function testInTransactionWhileNotInTransaction()
     {
