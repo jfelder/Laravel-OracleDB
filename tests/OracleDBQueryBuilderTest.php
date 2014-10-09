@@ -4,6 +4,8 @@ use Mockery as m;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Database\Query\Expression as Raw;
 
+include 'mocks/PDOMocks.php';
+
 class OracleDBQueryBuilderTest extends PHPUnit_Framework_TestCase {
 
 	public function tearDown()
@@ -303,9 +305,9 @@ class OracleDBQueryBuilderTest extends PHPUnit_Framework_TestCase {
 		$this->assertEquals('select * from users order by email asc, age desc', $builder->toSql());
 
 		$builder = $this->getBuilder();
-		$builder->select('*')->from('users')->orderBy('email')->orderByRaw('age ? desc', array('foo' => 'bar'));
+		$builder->select('*')->from('users')->orderBy('email')->orderByRaw('age ? desc', array('foo'));
 		$this->assertEquals('select * from users order by email asc, age ? desc', $builder->toSql());
-		$this->assertEquals(array('foo' => 'bar'), $builder->getBindings());
+		$this->assertEquals(array('foo'), $builder->getBindings());
 	}
 
 
@@ -647,7 +649,7 @@ class OracleDBQueryBuilderTest extends PHPUnit_Framework_TestCase {
     public function testMultipleInsertMethod()
     {
         $builder = $this->getBuilder();
-        $builder->getConnection()->shouldReceive('insert')->once()->with('insert into users (email) values (?)', array('foo'))->andReturn(true);
+        $builder->getConnection()->shouldReceive('insert')->once()->with('insert all into users (email) values (?) into users (email) valiues (?) select * from dual;', array('foo'))->andReturn(true);
         $result = $builder->from('users')->insert(array(array('email' => 'foo'), array('email' => 'bar')));
         $this->assertTrue($result);
     }
@@ -751,7 +753,8 @@ class OracleDBQueryBuilderTest extends PHPUnit_Framework_TestCase {
 	{
 		$method     = 'whereFooBarAndBazOrQux';
 		$parameters = array('corge', 'waldo', 'fred');
-		$builder    = m::mock('Illuminate\Database\Query\Builder[where]');
+		//$builder    = m::mock('Illuminate\Database\Query\Builder[where]');
+        $builder    = m::mock('Illuminate\Database\Query\Builder')->makePartial();
 
 		$builder->shouldReceive('where')->with('foo_bar', '=', $parameters[0], 'and')->once()->andReturn($builder);
 		$builder->shouldReceive('where')->with('baz', '=', $parameters[1], 'and')->once()->andReturn($builder);
@@ -766,7 +769,8 @@ class OracleDBQueryBuilderTest extends PHPUnit_Framework_TestCase {
 	{
 		$method     = 'whereIosVersionAndAndroidVersionOrOrientation';
 		$parameters = array('6.1', '4.2', 'Vertical');
-		$builder    = m::mock('Illuminate\Database\Query\Builder[where]');
+		//$builder    = m::mock('Illuminate\Database\Query\Builder[where]');
+        $builder    = m::mock('Illuminate\Database\Query\Builder')->makePartial();
 
 		$builder->shouldReceive('where')->with('ios_version', '=', '6.1', 'and')->once()->andReturn($builder);
 		$builder->shouldReceive('where')->with('android_version', '=', '4.2', 'and')->once()->andReturn($builder);
