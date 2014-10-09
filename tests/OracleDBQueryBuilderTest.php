@@ -649,7 +649,7 @@ class OracleDBQueryBuilderTest extends PHPUnit_Framework_TestCase {
     public function testMultipleInsertMethod()
     {
         $builder = $this->getBuilder();
-        $builder->getConnection()->shouldReceive('insert')->once()->with('insert all into users (email) values (?) into users (email) values (?) select 1 from dual;', array(0=>'foo',1=>'bar',))->andReturn(true);
+        $builder->getConnection()->shouldReceive('insert')->once()->with('insert all into users (email) values (?) into users (email) values (?)  select 1 from dual', array(0=>'foo',1=>'bar',))->andReturn(true);
         $result = $builder->from('users')->insert(array(array('email' => 'foo'), array('email' => 'bar')));
         $this->assertTrue($result);
     }
