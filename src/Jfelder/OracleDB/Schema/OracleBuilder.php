@@ -1,7 +1,7 @@
 <?php
 namespace Jfelder\OracleDB\Schema;
 
-class OracleBuilder extends Illuminate\Database\Schema\Buidler {
+class OracleBuilder extends \Illuminate\Database\Schema\Buidler {
 
     /**
      * Determine if the given table exists.
