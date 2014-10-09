@@ -2,8 +2,6 @@
 
 use Illuminate\Database\Connection;
 use Jfelder\OracleDB\Schema\OracleBuilder;
-use Jfelder\OracleDB\Query\Grammars\OracleGrammar as QueryGrammer;
-use Jfelder\OracleDB\Schema\Grammars\OracleGrammar as SchemaGrammer;
 
 
 class OracleConnection extends Connection {
@@ -27,7 +25,7 @@ class OracleConnection extends Connection {
 	 */
 	protected function getDefaultQueryGrammar()
 	{
-		return $this->withTablePrefix(new QueryGrammar);
+		return $this->withTablePrefix(new Jfelder\OracleDB\Query\Grammars\OracleGrammar);
 	}
 
 	/**
@@ -37,7 +35,7 @@ class OracleConnection extends Connection {
 	 */
 	protected function getDefaultSchemaGrammar()
 	{
-		return $this->withTablePrefix(new SchemaGrammar);
+		return $this->withTablePrefix(new Jfelder\OracleDB\Schema\Grammars\OracleGrammar);
 	}
 
 	/**

@@ -1,9 +1,7 @@
 <?php
 namespace Jfelder\OracleDB\Schema;
 
-use Illuminate\Database\Schema\Buidler;
-
-class OracleBuilder extends Builder {
+class OracleBuilder extends Illuminate\Database\Schema\Buidler {
 
     /**
      * Determine if the given table exists.
@@ -41,4 +39,4 @@ class OracleBuilder extends Builder {
         return $this->connection->getPostProcessor()->processColumnListing($results);
     }
 
-} 
+}
