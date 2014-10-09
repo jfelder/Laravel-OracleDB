@@ -1,6 +1,6 @@
 ## Laravel 4 Oracle Database Package
 
-###OracleDB (updated for 4.1)
+###OracleDB (updated for 4.2)
 
 [![Latest Stable Version](https://poser.pugx.org/jfelder/oracledb/v/stable.png)](https://packagist.org/packages/jfelder/oracledb) [![Total Downloads](https://poser.pugx.org/jfelder/oracledb/downloads.png)](https://packagist.org/packages/jfelder/oracledb) [![Build Status](https://travis-ci.org/jfelder/Laravel-OracleDB.png)](https://travis-ci.org/jfelder/Laravel-OracleDB) [![SensioLabsInsight](https://insight.sensiolabs.com/projects/5ab2ec12-1622-4cb6-8ff0-238d0ec4028f/mini.png)](https://insight.sensiolabs.com/projects/5ab2ec12-1622-4cb6-8ff0-238d0ec4028f)
 
