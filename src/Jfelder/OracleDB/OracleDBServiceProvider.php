@@ -1,27 +1,18 @@
-<?php namespace Jfelder\OracleDB;
+<?php
+
+namespace Jfelder\OracleDB;
 
 use Illuminate\Support\ServiceProvider;
-use Config;
 
-class OracledbServiceProvider extends ServiceProvider {
-
-	/**
-	 * Indicates if loading of the provider is deferred.
-	 *
-	 * @var bool
-	 */
-	protected $defer = false;
-
-	/**
-	 * Bootstrap the application events.
-	 *
-	 * @return void
-	 */
-	public function boot()
-	{
-
-	}
-
+class OracleDBServiceProvider extends ServiceProvider
+{
+    public function boot()
+    {
+        // this  for conig
+        $this->publishes([
+            __DIR__.'/config/oracledb.php' => config_path('oracledb.php'),
+        ]);
+    }
 	/**
 	 * Register the service provider.
      *
@@ -29,48 +20,32 @@ class OracledbServiceProvider extends ServiceProvider {
      */
 	public function register()
 	{
-            $this->package('jfelder/oracledb');
-            
-            // get the configs
-            $tempConns = Config::get('oracledb::database.connections');
-            
-            // Add my database configurations to the default set of configurations                        
-            $this->app['config']['database.connections'] = array_merge(
-                $this->app['config']['database.connections']
-                ,$tempConns
-            );
-            
-            $aConnKeys = array_keys($tempConns);
-            
-            if (is_array($aConnKeys))
+        // merge config with other connections
+        $this->mergeConfigFrom(config_path('oracledb.php'), 'database.connections');
+
+        // get only oracle configs to loop thru and extend DB
+        $config = $this->app['config']->get('oracledb', []);
+
+        $connection_keys = array_keys($config);
+
+        if (is_array($connection_keys))
+        {
+            foreach ($connection_keys as $key)
             {
-                foreach ($aConnKeys as $conn)
+                $this->app['db']->extend($key, function($config)
                 {
-                    $this->app['db']->extend($conn, function($config) 
-                    {
-                        $oConnector = new \Jfelder\OracleDB\Connectors\OracleConnector();
+                    $oConnector = new Connectors\OracleConnector();
 
-                        $connection = $oConnector->connect($config);
+                    $connection = $oConnector->connect($config);
 
-                        return new \Jfelder\OracleDB\OracleConnection($connection, $config["database"], $config["prefix"]);
-                    });
-                }
+                    return new OracleConnection($connection, $config["database"], $config["prefix"]);
+                });
             }
-            else
-            {
-                throw new \ErrorException('Configuration File is corrupt.');
-            }
-                
-	}
-
-	/**
-	 * Get the services provided by the provider.
-	 *
-	 * @return array
-	 */
-	public function provides()
-	{
-		return array();
+        }
+        else
+        {
+            throw new \ErrorException('Configuration File is corrupt or not present.');
+        }
 	}
 
 }

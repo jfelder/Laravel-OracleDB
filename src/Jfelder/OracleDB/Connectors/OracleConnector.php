@@ -1,7 +1,10 @@
-<?php namespace Jfelder\OracleDB\Connectors;
+<?php
+
+namespace Jfelder\OracleDB\Connectors;
 
 use Illuminate\Database\Connectors\Connector as Connector;
 use Illuminate\Database\Connectors\ConnectorInterface as ConnectorInterface;
+use Jfelder\OracleDB\OCI_PDO\OCI as OCI;
 
 class OracleConnector extends Connector implements ConnectorInterface {
 
@@ -26,10 +29,11 @@ class OracleConnector extends Connector implements ConnectorInterface {
      */
     public function createConnection($dsn, array $config, array $options)
     {
-        if($config['driver'] == 'oci8') {
-            return new \Jfelder\OracleDB\OCI_PDO\OCI($dsn, $config['username'], $config['password'], $options, $config['charset']);
+        if($config['driver'] == 'pdo') {
+            return parent::createConnection($dsn, $config, $options);
         } else {
-            return parent::createConnection($dsn, $config, $options);                    
+            return new OCI($dsn, $config['username'], $config['password'], $options, $config['charset']);
+
         }
     }
 
