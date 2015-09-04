@@ -8,9 +8,8 @@ class OracleDBServiceProvider extends ServiceProvider
 {
     public function boot()
     {
-        // this  for conig
         $this->publishes([
-            __DIR__.'/config/oracledb.php' => config_path('oracledb.php'),
+            __DIR__.'/../../config/oracledb.php' => config_path('oracledb.php'),
         ]);
     }
 	/**
@@ -20,31 +19,30 @@ class OracleDBServiceProvider extends ServiceProvider
      */
 	public function register()
 	{
-        // merge config with other connections
-        $this->mergeConfigFrom(config_path('oracledb.php'), 'database.connections');
+        if(file_exists(config_path('oracledb.php'))) {
 
-        // get only oracle configs to loop thru and extend DB
-        $config = $this->app['config']->get('oracledb', []);
+            // merge config with other connections
+            $this->mergeConfigFrom(config_path('oracledb.php'), 'database.connections');
 
-        $connection_keys = array_keys($config);
+            // get only oracle configs to loop thru and extend DB
+            $config = $this->app['config']->get('oracledb', []);
 
-        if (is_array($connection_keys))
-        {
-            foreach ($connection_keys as $key)
+            $connection_keys = array_keys($config);
+
+            if (is_array($connection_keys))
             {
-                $this->app['db']->extend($key, function($config)
+                foreach ($connection_keys as $key)
                 {
-                    $oConnector = new Connectors\OracleConnector();
+                    $this->app['db']->extend($key, function($config)
+                    {
+                        $oConnector = new Connectors\OracleConnector();
 
-                    $connection = $oConnector->connect($config);
+                        $connection = $oConnector->connect($config);
 
-                    return new OracleConnection($connection, $config["database"], $config["prefix"]);
-                });
+                        return new OracleConnection($connection, $config["database"], $config["prefix"]);
+                    });
+                }
             }
-        }
-        else
-        {
-            throw new \ErrorException('Configuration File is corrupt or not present.');
         }
 	}
 
