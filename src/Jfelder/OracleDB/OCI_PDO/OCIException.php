@@ -6,7 +6,6 @@ use \PDOException;
 
 class OCIException extends PDOException
 {
-
     /**
      * Create a new query exception instance.
      *
