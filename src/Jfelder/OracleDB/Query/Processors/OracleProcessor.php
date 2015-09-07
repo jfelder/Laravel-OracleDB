@@ -39,7 +39,7 @@ class OracleProcessor extends Processor
         }
 
         // bind output param for the returning cluase
-        $stmt->bindParam($counter, $last_insert_id, \PDO::PARAM_INT|\PDO::PARAM_INPUT_OUTPUT, 8);
+        $stmt->bindParam($counter, $last_insert_id, \PDO::PARAM_INT | \PDO::PARAM_INPUT_OUTPUT, 8);
 
         // execute statement
         $stmt->execute();
@@ -70,6 +70,7 @@ class OracleProcessor extends Processor
      * @param mixed $param
      * @return \PDO::PARAM_* type
      */
+
     private function bindType($param)
     {
         if (is_int($param)) {

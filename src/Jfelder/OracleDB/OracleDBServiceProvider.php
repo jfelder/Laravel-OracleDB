@@ -5,14 +5,12 @@ namespace Jfelder\OracleDB;
 use Illuminate\Support\ServiceProvider;
 
 /**
- * Class OracleDBServiceProvider
- *
- * @package Jfelder\OracleDB
+ * Class OracleDBServiceProvider.
  */
 class OracleDBServiceProvider extends ServiceProvider
 {
     /**
-     * Boot
+     * Boot.
      */
     public function boot()
     {
@@ -22,6 +20,7 @@ class OracleDBServiceProvider extends ServiceProvider
             ]
         );
     }
+
     /**
      * Register the service provider.
      *
@@ -45,7 +44,7 @@ class OracleDBServiceProvider extends ServiceProvider
 
                         $connection = $oConnector->connect($config);
 
-                        return new OracleConnection($connection, $config["database"], $config["prefix"]);
+                        return new OracleConnection($connection, $config['database'], $config['prefix']);
                     });
                 }
             }

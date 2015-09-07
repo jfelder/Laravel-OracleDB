@@ -13,11 +13,11 @@ class OracleConnector extends Connector implements ConnectorInterface
      *
      * @var array
      */
-    protected $options = array(
+    protected $options = [
         \PDO::ATTR_CASE => \PDO::CASE_LOWER,
         \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
         \PDO::ATTR_ORACLE_NULLS => \PDO::NULL_NATURAL,
-    );
+    ];
 
     /**
      * Create a new PDO connection.
@@ -68,7 +68,7 @@ class OracleConnector extends Connector implements ConnectorInterface
         $rv = $config['tns'];
 
         if ($config['driver'] != 'oci8') {
-            $rv = 'oci:dbname=' . $rv . (empty($config['charset']) ? "" : ";charset=".$config['charset']);
+            $rv = 'oci:dbname='.$rv.(empty($config['charset']) ? '' : ';charset='.$config['charset']);
         }
 
         return $rv;

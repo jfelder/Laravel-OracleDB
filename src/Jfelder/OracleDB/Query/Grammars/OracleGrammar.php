@@ -17,7 +17,7 @@ class OracleGrammar extends BaseGrammar
     public function compileSelect(Builder $query)
     {
         if (is_null($query->columns)) {
-            $query->columns = array('*');
+            $query->columns = ['*'];
         }
 
         $components = $this->compileComponents($query);
@@ -31,7 +31,6 @@ class OracleGrammar extends BaseGrammar
 
         return trim($this->concatenate($components));
     }
-
 
     /**
      * Compile an insert statement into SQL.
@@ -48,7 +47,7 @@ class OracleGrammar extends BaseGrammar
         $table = $this->wrapTable($query->from);
 
         if (! is_array(reset($values))) {
-            $values = array($values);
+            $values = [$values];
         }
 
         // If there is only one record being inserted, we will just use the usual query
@@ -62,18 +61,18 @@ class OracleGrammar extends BaseGrammar
 
         $columns = $this->columnize(array_keys(reset($values)));
 
-        $rows = array();
+        $rows = [];
 
         // Oracle requires us to build the multi-row insert as multiple inserts with
         // a select statement at the end. So we'll build out this list of columns
         // and then join them all together with select to complete the queries.
         $parameters = $this->parameterize(reset($values));
 
-        for ($i=0; $i<$count; $i++) {
+        for ($i = 0; $i < $count; $i++) {
             $rows[] = "into {$table} ({$columns}) values ({$parameters}) ";
         }
 
-        return "insert all ".implode($rows)." select 1 from dual";
+        return 'insert all '.implode($rows).' select 1 from dual';
     }
 
     /**
@@ -92,8 +91,8 @@ class OracleGrammar extends BaseGrammar
 
         return $this->compileInsert($query, $values).' returning '.$this->wrap($sequence).' into ?';
     }
-        
-        /**
+
+    /**
      * Compile the lock into SQL.
      *
      * @param  \Illuminate\Database\Query\Builder  $query
@@ -108,7 +107,6 @@ class OracleGrammar extends BaseGrammar
 
         return $value ? 'for update' : 'lock in share mode';
     }
-
 
     /**
      * Create a full ANSI offset clause for the query.
@@ -146,7 +144,7 @@ class OracleGrammar extends BaseGrammar
 
             return "between {$start} and {$finish}";
         }
-    
+
         return ">= {$start}";
     }
 
@@ -156,7 +154,6 @@ class OracleGrammar extends BaseGrammar
      * @param  string  $sql
      * @param  string  $constraint
      * @return string
-     *
      */
     protected function compileTableExpression($sql, $constraint, $query)
     {
