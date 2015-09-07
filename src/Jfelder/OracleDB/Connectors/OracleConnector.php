@@ -6,8 +6,8 @@ use Illuminate\Database\Connectors\Connector as Connector;
 use Illuminate\Database\Connectors\ConnectorInterface as ConnectorInterface;
 use Jfelder\OracleDB\OCI_PDO\OCI as OCI;
 
-class OracleConnector extends Connector implements ConnectorInterface {
-
+class OracleConnector extends Connector implements ConnectorInterface
+{
     /**
      * The default PDO connection options.
      *
@@ -29,7 +29,7 @@ class OracleConnector extends Connector implements ConnectorInterface {
      */
     public function createConnection($dsn, array $config, array $options)
     {
-        if($config['driver'] == 'pdo') {
+        if ($config['driver'] == 'pdo') {
             return parent::createConnection($dsn, $config, $options);
         } else {
             return new OCI($dsn, $config['username'], $config['password'], $options, $config['charset']);
@@ -69,9 +69,9 @@ class OracleConnector extends Connector implements ConnectorInterface {
         $rv = $config['tns'];
 
         if ($config['driver'] != 'oci8') {
-            $rv = 'oci:dbname=' . $rv . (empty($config['charset']) ? "" : ";charset=".$config['charset']); 
+            $rv = 'oci:dbname=' . $rv . (empty($config['charset']) ? "" : ";charset=".$config['charset']);
         }
 
-        return $rv; 
-    }        
+        return $rv;
+    }
 }

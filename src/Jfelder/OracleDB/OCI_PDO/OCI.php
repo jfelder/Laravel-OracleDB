@@ -1,8 +1,9 @@
-<?php namespace Jfelder\OracleDB\OCI_PDO;
+<?php
+
+namespace Jfelder\OracleDB\OCI_PDO;
 
 class OCI extends \PDO
 {
-
     /**
      * @var string
      */
@@ -61,7 +62,7 @@ class OCI extends \PDO
     public $queryString = "";
 
     /**
-     * @var OCIStatement Statement object 
+     * @var OCIStatement Statement object
      */
     protected $stmt = null;
 
@@ -78,10 +79,10 @@ class OCI extends \PDO
      * @param string $password Password of creditial to login to database
      * @param array $driver_options Options for the connection handle
      * @param string $charset Character set to specify to the database when connecting
-     * 
+     *
      * @throws OCIException if connection fails
      */
-    public function __construct($dsn, $username, $password, $driver_options = array(), $charset = '') 
+    public function __construct($dsn, $username, $password, $driver_options = array(), $charset = '')
     {
         $this->dsn = $dsn;
         $this->username = $username;
@@ -89,7 +90,7 @@ class OCI extends \PDO
         $this->attributes = $driver_options + $this->attributes;
         $this->charset = $charset;
 
-        if($this->getAttribute(\PDO::ATTR_PERSISTENT)) {
+        if ($this->getAttribute(\PDO::ATTR_PERSISTENT)) {
             $this->conn = oci_pconnect($username, $password, $dsn, $charset);
         } else {
             $this->conn = oci_connect($username, $password, $dsn, $charset);
@@ -104,7 +105,7 @@ class OCI extends \PDO
     /**
      * Destructor - Checks for an oci resource and frees the resource if needed
      */
-    public function __destruct() 
+    public function __destruct()
     {
         if (strtolower(get_resource_type($this->conn)) == 'oci8') {
             oci_close($this->conn);
@@ -115,12 +116,12 @@ class OCI extends \PDO
      * Initiates a transaction
      *
      * @throws OCIException If already in a transaction
-     * 
+     *
      * @return bool Returns TRUE on success
      */
     public function beginTransaction()
     {
-        if($this->inTransaction()) {
+        if ($this->inTransaction()) {
             throw new OCIException($this->setErrorInfo('25000', '9999', 'Already in a transaction'));
         }
         
@@ -132,12 +133,12 @@ class OCI extends \PDO
      * Commits a transaction
      *
      * @throws OCIException If oci_commit fails
-     * 
+     *
      * @return bool Returns TRUE on success or FALSE on failure
      */
-    public function commit ()
+    public function commit()
     {
-        if($this->inTransaction()) {
+        if ($this->inTransaction()) {
             $r = oci_commit($this->conn);
             if (!$r) {
                 throw new OCIException('08007');
@@ -153,11 +154,11 @@ class OCI extends \PDO
     /**
      * Fetch the SQLSTATE associated with the last operation on the database handle
      *
-     * @return mixed Returns SQLSTATE if available or null 
+     * @return mixed Returns SQLSTATE if available or null
      */
-    public function errorCode ()
+    public function errorCode()
     {
-        if(!empty($this->error[0])) {
+        if (!empty($this->error[0])) {
             return $this->error[0];
         }
         return null;
@@ -168,7 +169,7 @@ class OCI extends \PDO
      *
      * @return array Array of error information about the last operation performed
      */
-    public function errorInfo ()
+    public function errorInfo()
     {
         return $this->error;
     }
@@ -180,13 +181,13 @@ class OCI extends \PDO
      *
      * @return int Returns the number of rows that were modified or deleted by the statement
      */
-    public function exec ($statement)
+    public function exec($statement)
     {
         $this->prepare($statement);
 
         $result = $this->stmt->execute();
 
-        if(!$result) {
+        if (!$result) {
             return false;
         }
         
@@ -200,7 +201,7 @@ class OCI extends \PDO
      *
      * @return mixed The value of the requested PDO attribute or null if it does not exist.
      */
-    public function getAttribute ($attribute)
+    public function getAttribute($attribute)
     {
         if (isset($this->attributes[$attribute])) {
             return $this->attributes[$attribute];
@@ -213,7 +214,7 @@ class OCI extends \PDO
      *
      * @return array Array of PDO driver names.
      */
-    public static function getAvailableDrivers ()
+    public static function getAvailableDrivers()
     {
         return parent::getAvailableDrivers();
     }
@@ -223,7 +224,7 @@ class OCI extends \PDO
      *
      * @return bool Returns TRUE if a transaction is currently active, and FALSE if not.
      */
-    public function inTransaction ()
+    public function inTransaction()
     {
         return $this->transaction;
     }
@@ -234,7 +235,7 @@ class OCI extends \PDO
      * @throws OCIException This feature is not supported
      *
      */
-    public function lastInsertId ($name = null)
+    public function lastInsertId($name = null)
     {
         throw new OCIException($this->setErrorInfo('IM001', '0000', 'Driver does not support this function'));
     }
@@ -247,14 +248,14 @@ class OCI extends \PDO
      *
      * @return mixed Returns a OCIStatement on success, false otherwise
      */
-    public function prepare ($statement, $driver_options = array())
+    public function prepare($statement, $driver_options = array())
     {
-        $tokens = explode("?" , $statement);
+        $tokens = explode("?", $statement);
         
         $count = count($tokens) - 1;
-        if($count) {
+        if ($count) {
             $statement = "";
-            for($i=0;$i<$count;$i++) {
+            for ($i=0; $i<$count; $i++) {
                 $statement .= trim($tokens[$i])." :{$i} ";
             }
             $statement .= trim($tokens[$i]);
@@ -278,7 +279,7 @@ class OCI extends \PDO
      *
      * @return mixed Returns a OCIStatement on success, false otherwise
      */
-    public function query ($statement, $mode = null, $type = null, $ctorargs = array())
+    public function query($statement, $mode = null, $type = null, $ctorargs = array())
     {
         $this->prepare($statement);
         if ($mode) {
@@ -287,7 +288,7 @@ class OCI extends \PDO
         
         $result = $this->stmt->execute();
         
-        if(!$result) {
+        if (!$result) {
             return false;
         }
         
@@ -300,9 +301,9 @@ class OCI extends \PDO
      * @param  string $string The string to be quoted.
      * @param  int $parameter_type Provides a data type hint for drivers that have alternate quoting styles.
      *
-     * @return string Returns false 
+     * @return string Returns false
      */
-    public function quote ($string, $parameter_type = \PDO::PARAM_STR )
+    public function quote($string, $parameter_type = \PDO::PARAM_STR)
     {
         return false;
     }
@@ -311,12 +312,12 @@ class OCI extends \PDO
      * Rolls back a transaction
      *
      * @throws OCIException If oci_rollback returns an error.
-     * 
+     *
      * @return bool Returns TRUE on success or FALSE on failure.
      */
     public function rollBack()
     {
-        if($this->inTransaction()) {
+        if ($this->inTransaction()) {
             $r = oci_rollback($this->conn);
             if (!$r) {
                 throw new OCIException($this->setErrorInfo('40003'));
@@ -324,7 +325,7 @@ class OCI extends \PDO
             $this->transaction = ! $this->flipExecuteMode();
             
             return true;
-        } 
+        }
         
         return false;
     }
@@ -337,18 +338,18 @@ class OCI extends \PDO
      *
      * @return true
      */
-    public function setAttribute ($attribute, $value)
+    public function setAttribute($attribute, $value)
     {
         $this->attributes[$attribute] = $value;
         return true;
     }
     
     /**
-     * CUSTOM CODE FROM HERE DOWN 
-     * 
+     * CUSTOM CODE FROM HERE DOWN
+     *
      * All code above this is overriding the PDO base code
      * All code below this are custom helpers or other functionality provided by the oci_* functions
-     * 
+     *
      */
     
     /**
@@ -356,7 +357,7 @@ class OCI extends \PDO
      *
      * @return int Returns true
      */
-    public function flipExecuteMode() 
+    public function flipExecuteMode()
     {
         $this->setExecuteMode($this->getExecuteMode() == \OCI_COMMIT_ON_SUCCESS ? \OCI_NO_AUTO_COMMIT : \OCI_COMMIT_ON_SUCCESS);
         return true;
@@ -367,7 +368,7 @@ class OCI extends \PDO
      *
      * @return int Either \OCI_COMMIT_ON_SUCCESS or \OCI_NO_AUTO_COMMIT
      */
-    public function getExecuteMode() 
+    public function getExecuteMode()
     {
         return $this->mode;
     }
@@ -391,12 +392,13 @@ class OCI extends \PDO
      *
      * @return array Returns the PDO errorInfo array
      */
-    private function setErrorInfo($code=null, $error=null, $message = null) 
+    private function setErrorInfo($code = null, $error = null, $message = null)
     {
-        if(is_null($code))
+        if (is_null($code)) {
             $code = 'JF000';
-        
-        if(is_null($error)){
+        }
+
+        if (is_null($error)) {
             $e = oci_error($this->conn);
             $error = $e['code'];
             $message = $e['message'] . (empty($e['sqltext']) ? '' : ' - SQL: '.$e['sqltext']);
@@ -404,7 +406,7 @@ class OCI extends \PDO
 
         $this->error[0] = $code;
         $this->error[1] = $error;
-        $this->error[2] = $message;            
+        $this->error[2] = $message;
         
         return $this->error;
     }
@@ -420,7 +422,7 @@ class OCI extends \PDO
      */
     public function setExecuteMode($mode)
     {
-        if($mode === \OCI_COMMIT_ON_SUCCESS || $mode === \OCI_NO_AUTO_COMMIT) {
+        if ($mode === \OCI_COMMIT_ON_SUCCESS || $mode === \OCI_NO_AUTO_COMMIT) {
             $this->mode = $mode;
             return true;
         }

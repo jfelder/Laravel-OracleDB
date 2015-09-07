@@ -1,11 +1,12 @@
-<?php namespace Jfelder\OracleDB\Query\Processors;
+<?php
+
+namespace Jfelder\OracleDB\Query\Processors;
 
 use Illuminate\Database\Query\Builder;
 use Illuminate\Database\Query\Processors\Processor as Processor;
 
-class OracleProcessor extends Processor 
+class OracleProcessor extends Processor
 {
-
     /**
      * Process an "insert get ID" query.
      *
@@ -20,7 +21,7 @@ class OracleProcessor extends Processor
         $counter = 0;
         $last_insert_id = 0;
 
-        //Get PDO object 
+        //Get PDO object
         $pdo = $query->getConnection()->getPdo();
 
         // get PDO statment object
@@ -28,11 +29,12 @@ class OracleProcessor extends Processor
 
         // PDO driver params are 1-based so ++ has to be before bindValue
         // OCI driver params are 0-based so no ++ before bindValue
-        if (get_class($pdo) != 'Jfelder\OracleDB\OCI_PDO\OCI')
+        if (get_class($pdo) != 'Jfelder\OracleDB\OCI_PDO\OCI') {
             $counter++;
+        }
 
-        // bind each parameter from the values array to their location in the 
-        foreach($values as $k => $v) {
+        // bind each parameter from the values array to their location in the
+        foreach ($values as $k => $v) {
             $stmt->bindValue($counter++, $v, $this->bindType($v));
         }
 
@@ -45,19 +47,36 @@ class OracleProcessor extends Processor
         return (int) $last_insert_id;
     }
 
+    /**
+     * Process the results of a column listing query.
+     *
+     * @param  array  $results
+     * @return array
+     */
+    public function processColumnListing($results)
+    {
+        $mapping = function ($r) {
+            $r = (object) $r;
+
+            return $r->column_name;
+        };
+
+        return array_map($mapping, $results);
+    }
+
     /*
      * Determine parameter type passed in
      * 
      * @param mixed $param
      * @return \PDO::PARAM_* type
      */
-    private function bindType($param) 
+    private function bindType($param)
     {
-        if(is_int($param)) {
+        if (is_int($param)) {
             $param = \PDO::PARAM_INT;
-        } elseif(is_bool($param)) {
+        } elseif (is_bool($param)) {
             $param = \PDO::PARAM_BOOL;
-        } elseif(is_null($param)) {
+        } elseif (is_null($param)) {
             $param = \PDO::PARAM_NULL;
         } else {
             $param = \PDO::PARAM_STR;
@@ -65,5 +84,4 @@ class OracleProcessor extends Processor
 
         return $param;
     }
-
 }

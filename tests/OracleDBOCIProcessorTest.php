@@ -11,9 +11,7 @@ class OracleDBOCIProcessorTest extends PHPUnit_Framework_TestCase
     protected function setUp()
     {
         if (!extension_loaded('oci8')) {
-            $this->markTestSkipped(
-              'The oci8 extension is not available.'
-            );
+            $this->markTestSkipped('The oci8 extension is not available.');
         }
     }
 
@@ -40,8 +38,22 @@ class OracleDBOCIProcessorTest extends PHPUnit_Framework_TestCase
 
         $processor = new Jfelder\OracleDB\Query\Processors\OracleProcessor;
         
-        $result = $processor->processInsertGetId($builder, 'sql', array(1, 'foo', true, null), 'id');
+        $result = $processor->processInsertGetId($builder, 'sql', [1, 'foo', true, null], 'id');
         $this->assertSame(0, $result);
     }
 
+    public function testProcessColumnListing()
+    {
+        $processor = new Jfelder\OracleDB\Query\Processors\OracleProcessor();
+        $listing = [['column_name' => 'id'], ['column_name' => 'name'], ['column_name' => 'email']];
+        $expected = ['id', 'name', 'email'];
+        $this->assertEquals($expected, $processor->processColumnListing($listing));
+
+        // convert listing to objects to simulate PDO::FETCH_CLASS
+        foreach ($listing as &$row) {
+            $row = (object) $row;
+        }
+
+        $this->assertEquals($expected, $processor->processColumnListing($listing));
+    }
 }

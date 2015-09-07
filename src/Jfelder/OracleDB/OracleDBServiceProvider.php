@@ -4,23 +4,32 @@ namespace Jfelder\OracleDB;
 
 use Illuminate\Support\ServiceProvider;
 
+/**
+ * Class OracleDBServiceProvider
+ *
+ * @package Jfelder\OracleDB
+ */
 class OracleDBServiceProvider extends ServiceProvider
 {
+    /**
+     * Boot
+     */
     public function boot()
     {
-        $this->publishes([
-            __DIR__.'/../../config/oracledb.php' => config_path('oracledb.php'),
-        ]);
+        $this->publishes(
+            [
+                __DIR__.'/../../config/oracledb.php' => config_path('oracledb.php'),
+            ]
+        );
     }
-	/**
-	 * Register the service provider.
+    /**
+     * Register the service provider.
      *
-     * @throws \ErrorException
+     * @returns Jfelder\OrcaleDB\OracleConnection
      */
-	public function register()
-	{
-        if(file_exists(config_path('oracledb.php'))) {
-
+    public function register()
+    {
+        if (file_exists(config_path('oracledb.php'))) {
             // merge config with other connections
             $this->mergeConfigFrom(config_path('oracledb.php'), 'database.connections');
 
@@ -29,12 +38,9 @@ class OracleDBServiceProvider extends ServiceProvider
 
             $connection_keys = array_keys($config);
 
-            if (is_array($connection_keys))
-            {
-                foreach ($connection_keys as $key)
-                {
-                    $this->app['db']->extend($key, function($config)
-                    {
+            if (is_array($connection_keys)) {
+                foreach ($connection_keys as $key) {
+                    $this->app['db']->extend($key, function ($config) {
                         $oConnector = new Connectors\OracleConnector();
 
                         $connection = $oConnector->connect($config);
@@ -44,6 +50,5 @@ class OracleDBServiceProvider extends ServiceProvider
                 }
             }
         }
-	}
-
+    }
 }

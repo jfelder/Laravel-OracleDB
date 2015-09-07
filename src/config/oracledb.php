@@ -11,6 +11,6 @@ return [
         'password'  => env('DB_PASSWORD', ''),
         'charset'   => 'WE8ISO8859P1',
         'prefix'    => '',
-		'quoting'   => false,
-	],
+        'quoting'   => false,
+    ],
 ];

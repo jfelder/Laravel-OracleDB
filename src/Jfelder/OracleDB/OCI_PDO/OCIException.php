@@ -1,4 +1,6 @@
-<?php namespace Jfelder\OracleDB\OCI_PDO;
+<?php
+
+namespace Jfelder\OracleDB\OCI_PDO;
 
 use \PDOException;
 
@@ -17,5 +19,4 @@ class OCIException extends PDOException
         $this->code = $e[1];
         $this->message = "SQLSTATE[$e[0]] " . $e[2];
     }
-
 }
