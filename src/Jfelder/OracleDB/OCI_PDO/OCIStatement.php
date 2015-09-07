@@ -22,7 +22,7 @@ class OCIStatement extends \PDOStatement
     /**
      * @var string SQL statement
      */
-    protected $sql = "";
+    protected $sql = '';
 
     /**
      * @var array SQL statement parameters
@@ -47,7 +47,7 @@ class OCIStatement extends \PDOStatement
     protected $error = [
         0 => '',
         1 => null,
-        2 => null
+        2 => null,
     ];
 
     /**
@@ -61,7 +61,7 @@ class OCIStatement extends \PDOStatement
     protected $descriptors = [];
 
     /**
-     * Constructor
+     * Constructor.
      *
      * @param resource $stmt Statement handle created with oci_parse()
      * @param OCI $oci The OCI object for this statement
@@ -69,7 +69,7 @@ class OCIStatement extends \PDOStatement
      *
      * @throws OCIException if $stmt is not a vaild oci8 statement resource
      */
-    public function __construct($stmt, \Jfelder\OracleDB\OCI_PDO\OCI $oci, $sql = "", $options = [])
+    public function __construct($stmt, \Jfelder\OracleDB\OCI_PDO\OCI $oci, $sql = '', $options = [])
     {
         $resource_type = strtolower(get_resource_type($stmt));
 
@@ -84,7 +84,7 @@ class OCIStatement extends \PDOStatement
     }
 
     /**
-     * Destructor - Checks for an oci statment resource and frees the resource if needed
+     * Destructor - Checks for an oci statment resource and frees the resource if needed.
      */
     public function __destruct()
     {
@@ -96,7 +96,7 @@ class OCIStatement extends \PDOStatement
     }
 
     /**
-     * Bind a column to a PHP variable
+     * Bind a column to a PHP variable.
      *
      * @param  mixed $column Number of the column (1-indexed) in the result set
      * @param  mixed $param Name of the PHP variable to which the column will be bound.
@@ -110,11 +110,11 @@ class OCIStatement extends \PDOStatement
      */
     public function bindColumn($column, &$param, $data_type = null, $maxlen = null, $driverdata = null)
     {
-        if (!is_numeric($column) || $column < 1) {
+        if (! is_numeric($column) || $column < 1) {
             throw new \InvalidArgumentException("Invalid column specified: {$column}");
         }
 
-        if (!isset($this->datatypes[$data_type])) {
+        if (! isset($this->datatypes[$data_type])) {
             throw new \InvalidArgumentException("Unknown data type in oci_bind_by_name: {$data_type}");
         }
 
@@ -122,14 +122,14 @@ class OCIStatement extends \PDOStatement
             'var' => &$param,
             'data_type' => $data_type,
             'max_length' => $maxlen,
-            'driverdata' => $driverdata
+            'driverdata' => $driverdata,
         ];
 
         return true;
     }
 
     /**
-     * Binds a parameter to the specified variable name
+     * Binds a parameter to the specified variable name.
      *
      * @param  mixed $parameter Parameter identifier
      * @param  mixed $variable Name of the PHP variable to bind to the SQL statement parameter
@@ -149,8 +149,8 @@ class OCIStatement extends \PDOStatement
 
         $this->addParameter($parameter, $variable, $data_type, $length, $driver_options);
 
-        if (!isset($this->datatypes[$data_type])) {
-            if ($data_type === (\PDO::PARAM_INT|\PDO::PARAM_INPUT_OUTPUT)) {
+        if (! isset($this->datatypes[$data_type])) {
+            if ($data_type === (\PDO::PARAM_INT | \PDO::PARAM_INPUT_OUTPUT)) {
                 $data_type = \PDO::PARAM_STR;
                 $length = $length > 40 ? $length : 40;
             } else {
@@ -165,7 +165,7 @@ class OCIStatement extends \PDOStatement
     }
 
     /**
-     * Binds a value to a parameter
+     * Binds a value to a parameter.
      *
      * @param  mixed $parameter Parameter identifier.
      * @param  mixed $value The value to bind to the parameter
@@ -183,7 +183,7 @@ class OCIStatement extends \PDOStatement
 
         $this->addParameter($parameter, $value, $data_type);
 
-        if (!isset($this->datatypes[$data_type])) {
+        if (! isset($this->datatypes[$data_type])) {
             throw new \InvalidArgumentException("Unknown data type in oci_bind_by_name: {$data_type}");
         }
 
@@ -204,7 +204,7 @@ class OCIStatement extends \PDOStatement
     }
 
     /**
-     * Returns the number of columns in the result set
+     * Returns the number of columns in the result set.
      *
      * @return int Returns the number of columns in the result set represented by the PDOStatement object.
      *             If there is no result set, returns 0.
@@ -215,31 +215,31 @@ class OCIStatement extends \PDOStatement
     }
 
     /**
-     * Dump an SQL prepared command
+     * Dump an SQL prepared command.
      *
      * @return string print_r of the sql and parameters array
      */
     public function debugDumpParams()
     {
-        return print_r(array('sql' => $this->sql, 'params' => $this->parameters), true);
+        return print_r(['sql' => $this->sql, 'params' => $this->parameters], true);
     }
 
     /**
-     * Fetch the SQLSTATE associated with the last operation on the statement handle
+     * Fetch the SQLSTATE associated with the last operation on the statement handle.
      *
      * @return mixed Returns an SQLSTATE or NULL if no operation has been run
      */
     public function errorCode()
     {
-        if (!empty($this->error[0])) {
+        if (! empty($this->error[0])) {
             return $this->error[0];
         }
 
-        return null;
+        return;
     }
 
     /**
-     * Fetch extended error information associated with the last operation on the statement handle
+     * Fetch extended error information associated with the last operation on the statement handle.
      *
      * @return array array of error information about the last operation performed
      */
@@ -249,7 +249,7 @@ class OCIStatement extends \PDOStatement
     }
 
     /**
-     * Executes a prepared statement
+     * Executes a prepared statement.
      *
      * @param  array $input_parameters An array of values with as many elements as there are bound parameters in the
      *                                 SQL statement being executed
@@ -266,7 +266,7 @@ class OCIStatement extends \PDOStatement
 
         $result = oci_execute($this->stmt, $this->conn->getExecuteMode());
 
-        if (!$result) {
+        if (! $result) {
             $this->setErrorInfo('07000');
         }
 
@@ -276,7 +276,7 @@ class OCIStatement extends \PDOStatement
     }
 
     /**
-     * Fetches the next row from a result set
+     * Fetches the next row from a result set.
      *
      * @param  int $fetch_style Controls how the next row will be returned to the caller. This value must be one of
      *                          the PDO::FETCH_* constants
@@ -309,7 +309,7 @@ class OCIStatement extends \PDOStatement
                 break;
         }
 
-        if (!$rs) {
+        if (! $rs) {
             $this->setErrorInfo('07000');
         }
 
@@ -319,7 +319,7 @@ class OCIStatement extends \PDOStatement
     }
 
     /**
-     * Returns an array containing all of the result set rows
+     * Returns an array containing all of the result set rows.
      *
      * @param int|null $fetch_style    Controls how the next row will be returned to the caller. This value must be one
      *                                 of the PDO::FETCH_* constants
@@ -350,7 +350,7 @@ class OCIStatement extends \PDOStatement
             $rs = $temprs;
         }
 
-        if (!$rs) {
+        if (! $rs) {
             $this->setErrorInfo('07000');
         }
 
@@ -358,7 +358,7 @@ class OCIStatement extends \PDOStatement
     }
 
     /**
-     * Returns a single column from the next row of a result set
+     * Returns a single column from the next row of a result set.
      *
      * @param  int $column_number 0-indexed number of the column you wish to retrieve from the row.
      *                            If no value is supplied, fetchColumn fetches the first column.
@@ -367,7 +367,7 @@ class OCIStatement extends \PDOStatement
      */
     public function fetchColumn($column_number = 0)
     {
-        if (!is_int($column_number)) {
+        if (! is_int($column_number)) {
             throw new OCIException($this->setErrorInfo(
                 '0A000',
                 '9999',
@@ -381,7 +381,7 @@ class OCIStatement extends \PDOStatement
     }
 
     /**
-     * Fetches the next row and returns it as an object
+     * Fetches the next row and returns it as an object.
      *
      * @param string $class_name Name of the created class
      * @param array $ctor_args Elements of this array are passed to the constructor
@@ -389,7 +389,7 @@ class OCIStatement extends \PDOStatement
      * @return bool Returns an instance of the required class with property names that correspond to the column names
      *              or FALSE on failure.
      */
-    public function fetchObject($class_name = "stdClass", $ctor_args = null)
+    public function fetchObject($class_name = 'stdClass', $ctor_args = null)
     {
         $this->setFetchMode(\PDO::FETCH_CLASS, $class_name, $ctor_args);
 
@@ -397,7 +397,7 @@ class OCIStatement extends \PDOStatement
     }
 
     /**
-     * Retrieve a statement attribute
+     * Retrieve a statement attribute.
      *
      * @param int $attribute The attribute number
      * @return mixed Returns the value of the attribute on success or null on failure
@@ -407,18 +407,19 @@ class OCIStatement extends \PDOStatement
         if (isset($this->attributes[$attribute])) {
             return $this->attributes[$attribute];
         }
-        return null;
+
+        return;
     }
 
     /**
-     * Returns metadata for a column in a result set
+     * Returns metadata for a column in a result set.
      *
      * @param int #column The 0-indexed column in the result set.
      * @return array Returns an associative array representing the metadata for a single column
      */
     public function getColumnMeta($column)
     {
-        if (!is_int($column)) {
+        if (! is_int($column)) {
             throw new OCIException($this->setErrorInfo(
                 '0A000',
                 '9999',
@@ -438,7 +439,7 @@ class OCIStatement extends \PDOStatement
     }
 
     /**
-     * Advances to the next rowset in a multi-rowset statement handle
+     * Advances to the next rowset in a multi-rowset statement handle.
      *
      * @return bool Returns TRUE on success or FALSE on failure
      */
@@ -448,7 +449,7 @@ class OCIStatement extends \PDOStatement
     }
 
     /**
-     * Returns the number of rows affected by the last SQL statement
+     * Returns the number of rows affected by the last SQL statement.
      *
      * @return int Returns the number of rows affected as an integer, or FALSE on errors.
      */
@@ -458,7 +459,7 @@ class OCIStatement extends \PDOStatement
     }
 
     /**
-     * Set a statement attribute
+     * Set a statement attribute.
      *
      * @param int $attribute The attribute number
      * @param mixed $value Value of named attribute
@@ -467,11 +468,12 @@ class OCIStatement extends \PDOStatement
     public function setAttribute($attribute, $value)
     {
         $this->attributes[$attribute] = $value;
+
         return true;
     }
 
     /**
-     * Set the default fetch mode for this statement
+     * Set the default fetch mode for this statement.
      *
      * @param int $mode The fetch mode must be one of the PDO::FETCH_* constants.
      * @param mixed $type Column number, class name or object depending on PDO::FETCH_* constant used
@@ -484,15 +486,14 @@ class OCIStatement extends \PDOStatement
     }
 
     /**
-     * CUSTOM CODE FROM HERE DOWN
+     * CUSTOM CODE FROM HERE DOWN.
      *
      * All code above this is overriding the PDO base code
      * All code below this are custom helpers or other functionality provided by the oci_* functions
-     *
      */
 
     /**
-     * Stores query parameters for debugDumpParams putput
+     * Stores query parameters for debugDumpParams putput.
      */
     private function addParameter($parameter, $variable, $data_type = \PDO::PARAM_STR, $length = -1, $driver_options = null)
     {
@@ -502,12 +503,12 @@ class OCIStatement extends \PDOStatement
             'name' => $parameter,
             'value' => $variable,
             'is_param' => 1,
-            'param_type' => $data_type
+            'param_type' => $data_type,
         ];
     }
 
     /**
-     * Returns the oci8 statement handle for use with other oci_ functions
+     * Returns the oci8 statement handle for use with other oci_ functions.
      *
      * @return oci8 statment The oci8 statment handle
      */
@@ -516,16 +517,15 @@ class OCIStatement extends \PDOStatement
         return $this->stmt;
     }
 
-
     /**
-     * Single location to process all the bindings on a resultset
+     * Single location to process all the bindings on a resultset.
      *
      * @param array $rs The fetched array to be modified
      */
     private function processBindings($rs)
     {
-        if ($rs !== false && !empty($this->bindings)) {
-            $i=1;
+        if ($rs !== false && ! empty($this->bindings)) {
+            $i = 1;
             foreach ($rs as $col => $value) {
                 if (isset($this->bindings[$i])) {
                     $this->bindings[$i]['var'] = $value;
@@ -536,7 +536,7 @@ class OCIStatement extends \PDOStatement
     }
 
     /**
-     * Single location to process all the fetch options on a resultset
+     * Single location to process all the fetch options on a resultset.
      *
      * @param array $rec The fetched array to be modified
      * @return mixed The modified resultset
@@ -550,11 +550,12 @@ class OCIStatement extends \PDOStatement
 
             $rec = ($this->getAttribute(\PDO::ATTR_DEFAULT_FETCH_MODE) != \PDO::FETCH_CLASS) ? $rec : (object) $rec;
         }
+
         return $rec;
     }
 
     /**
-     * Single location to process all errors and set necessary fields
+     * Single location to process all errors and set necessary fields.
      *
      * @param string $code The SQLSTATE error code. defualts to custom 'JF000'
      * @param string $error The driver based error code. If null, oci_error is called
@@ -570,7 +571,7 @@ class OCIStatement extends \PDOStatement
         if (is_null($error)) {
             $e = oci_error($this->stmt);
             $error = $e['code'];
-            $message = $e['message'] . (empty($e['sqltext']) ? '' : ' - SQL: '.$e['sqltext']);
+            $message = $e['message'].(empty($e['sqltext']) ? '' : ' - SQL: '.$e['sqltext']);
         }
 
         $this->error[0] = $code;

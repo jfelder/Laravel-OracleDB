@@ -2,9 +2,9 @@
 
 namespace Jfelder\OracleDB\Schema\Grammars;
 
-use \Illuminate\Support\Fluent;
-use \Illuminate\Database\Connection;
-use \Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Fluent;
+use Illuminate\Database\Connection;
+use Illuminate\Database\Schema\Blueprint;
 use Config;
 
 class OracleGrammar extends \Illuminate\Database\Schema\Grammars\Grammar
@@ -21,14 +21,14 @@ class OracleGrammar extends \Illuminate\Database\Schema\Grammars\Grammar
      *
      * @var array
      */
-    protected $modifiers = array('Increment', 'Nullable', 'Default');
+    protected $modifiers = ['Increment', 'Nullable', 'Default'];
 
     /**
-     * The possible column serials
+     * The possible column serials.
      *
      * @var array
      */
-    protected $serials = array('bigInteger', 'integer', 'mediumInteger', 'smallInteger', 'tinyInteger');
+    protected $serials = ['bigInteger', 'integer', 'mediumInteger', 'smallInteger', 'tinyInteger'];
 
     /**
      * Compile the query to determine the list of tables.
@@ -40,7 +40,6 @@ class OracleGrammar extends \Illuminate\Database\Schema\Grammars\Grammar
         return 'select * from user_tables where table_name = upper(?)';
     }
 
-
     /**
      * Compile the query to determine the list of columns.
      *
@@ -49,9 +48,8 @@ class OracleGrammar extends \Illuminate\Database\Schema\Grammars\Grammar
      */
     public function compileColumnExists($table)
     {
-        return "select column_name from user_tab_columns where table_name = upper(?) and column_name = upper(?)";
+        return 'select column_name from user_tab_columns where table_name = upper(?) and column_name = upper(?)';
     }
-
 
     /**
      * Get the primary key syntax for a table creation statement.
@@ -263,7 +261,7 @@ class OracleGrammar extends \Illuminate\Database\Schema\Grammars\Grammar
 
         $table = $this->wrapTable($blueprint);
 
-        return 'alter table '.$table.' drop ( '.implode(', ', $columns) . ' )';
+        return 'alter table '.$table.' drop ( '.implode(', ', $columns).' )';
     }
 
     /**
@@ -346,7 +344,7 @@ class OracleGrammar extends \Illuminate\Database\Schema\Grammars\Grammar
     {
         $table = $this->wrapTable($blueprint);
 
-        $rs = array('alter table '.$table.' rename column '.$command->from.' to '.$command->to);
+        $rs = ['alter table '.$table.' rename column '.$command->from.' to '.$command->to];
 
         return $rs;
     }
@@ -407,7 +405,7 @@ class OracleGrammar extends \Illuminate\Database\Schema\Grammars\Grammar
      */
     protected function typeText(Fluent $column)
     {
-        return "varchar2(4000)";
+        return 'varchar2(4000)';
     }
 
     /**
@@ -517,7 +515,7 @@ class OracleGrammar extends \Illuminate\Database\Schema\Grammars\Grammar
      */
     protected function typeEnum(Fluent $column)
     {
-        return "varchar2(255)";
+        return 'varchar2(255)';
     }
 
     /**
@@ -586,8 +584,9 @@ class OracleGrammar extends \Illuminate\Database\Schema\Grammars\Grammar
     {
         $null = $column->nullable ? ' null' : ' not null';
         if (! is_null($column->default)) {
-            return " default ".$this->getDefaultValue($column->default) . $null;
+            return ' default '.$this->getDefaultValue($column->default).$null;
         }
+
         return $null;
     }
 
@@ -600,7 +599,7 @@ class OracleGrammar extends \Illuminate\Database\Schema\Grammars\Grammar
      */
     protected function modifyDefault(Blueprint $blueprint, Fluent $column)
     {
-        return "";
+        return '';
     }
 
     /**

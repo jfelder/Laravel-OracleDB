@@ -18,7 +18,7 @@ class OracleBuilder extends \Illuminate\Database\Schema\Buidler
 
         $table = $this->connection->getTablePrefix().$table;
 
-        return count($this->connection->select($sql, array($database, $table))) > 0;
+        return count($this->connection->select($sql, [$database, $table])) > 0;
     }
 
     /**
@@ -35,7 +35,7 @@ class OracleBuilder extends \Illuminate\Database\Schema\Buidler
 
         $table = $this->connection->getTablePrefix().$table;
 
-        $results = $this->connection->select($sql, array($database, $table));
+        $results = $this->connection->select($sql, [$database, $table]);
 
         return $this->connection->getPostProcessor()->processColumnListing($results);
     }
