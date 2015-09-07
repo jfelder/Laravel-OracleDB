@@ -33,7 +33,6 @@ class OracleConnector extends Connector implements ConnectorInterface
             return parent::createConnection($dsn, $config, $options);
         } else {
             return new OCI($dsn, $config['username'], $config['password'], $options, $config['charset']);
-
         }
     }
 
