@@ -114,6 +114,35 @@ class OracleGrammar extends BaseGrammar
     }
 
     /**
+     * Compile the "union" queries attached to the main query.
+     *
+     * @param  \Illuminate\Database\Query\Builder  $query
+     * @return string
+     */
+    protected function compileUnions(Builder $query)
+    {
+        $sql = '';
+
+        foreach ($query->unions as $union) {
+            $sql .= $this->compileUnion($union);
+        }
+
+        if (isset($query->unionOrders)) {
+            $sql .= ' '.$this->compileOrders($query, $query->unionOrders);
+        }
+
+        if (isset($query->unionLimit)) {
+            $query->limit = $query->unionLimit;
+        }
+
+        if (isset($query->unionOffset)) {
+            $query->offset = $query->unionOffset;
+        }
+
+        return ltrim($sql);
+    }
+
+    /**
      * Compile the lock into SQL.
      *
      * @param  \Illuminate\Database\Query\Builder  $query
