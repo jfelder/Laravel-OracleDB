@@ -6,8 +6,8 @@ use Illuminate\Database\Query\Expression as Raw;
 
 include 'mocks/PDOMocks.php';
 
-class OracleDBQueryBuilderTest extends PHPUnit_Framework_TestCase {
-
+class OracleDBQueryBuilderTest extends PHPUnit_Framework_TestCase
+{
     public function tearDown()
     {
         m::close();
@@ -34,11 +34,11 @@ class OracleDBQueryBuilderTest extends PHPUnit_Framework_TestCase {
     }
 
     public function testBasicTableWrappingProtectsQuotationMarks()
-     {
-         $builder = $this->getOracleBuilder();
-         $builder->select('*')->from('some"table');
-         $this->assertEquals('select * from "some""table"', $builder->toSql());
-     }
+    {
+        $builder = $this->getOracleBuilder();
+        $builder->select('*')->from('some"table');
+        $this->assertEquals('select * from "some""table"', $builder->toSql());
+    }
 
     public function testAliasWrappingAsWholeConstant()
     {
@@ -139,7 +139,7 @@ class OracleDBQueryBuilderTest extends PHPUnit_Framework_TestCase {
         $this->assertEquals([0 => 1, 1 => 2], $builder->getBindings());
 
         $builder = $this->getOracleBuilder();
-        $builder->select('*')->from('users')->whereNotBetween('id', array(1, 2));
+        $builder->select('*')->from('users')->whereNotBetween('id', [1, 2]);
         $this->assertEquals('select * from "users" where "id" not between ? and ?', $builder->toSql());
         $this->assertEquals([0 => 1, 1 => 2], $builder->getBindings());
     }
@@ -149,13 +149,13 @@ class OracleDBQueryBuilderTest extends PHPUnit_Framework_TestCase {
         $builder = $this->getOracleBuilder();
         $builder->select('*')->from('users')->where('id', '=', 1)->orWhere('email', '=', 'foo');
         $this->assertEquals('select * from "users" where "id" = ? or "email" = ?', $builder->toSql());
-        $this->assertEquals(array(0 => 1, 1 => 'foo'), $builder->getBindings());
+        $this->assertEquals([0 => 1, 1 => 'foo'], $builder->getBindings());
     }
 
     public function testRawWheres()
     {
         $builder = $this->getOracleBuilder();
-        $builder->select('*')->from('users')->whereRaw('id = ? or email = ?', array(1, 'foo'));
+        $builder->select('*')->from('users')->whereRaw('id = ? or email = ?', [1, 'foo']);
         $this->assertEquals('select * from "users" where id = ? or email = ?', $builder->toSql());
         $this->assertEquals([0 => 1, 1 => 'foo'], $builder->getBindings());
     }
@@ -163,7 +163,7 @@ class OracleDBQueryBuilderTest extends PHPUnit_Framework_TestCase {
     public function testRawOrWheres()
     {
         $builder = $this->getOracleBuilder();
-        $builder->select('*')->from('users')->where('id', '=', 1)->orWhereRaw('email = ?', array('foo'));
+        $builder->select('*')->from('users')->where('id', '=', 1)->orWhereRaw('email = ?', ['foo']);
         $this->assertEquals('select * from "users" where "id" = ? or email = ?', $builder->toSql());
         $this->assertEquals([0 => 1, 1 => 'foo'], $builder->getBindings());
     }
@@ -171,27 +171,27 @@ class OracleDBQueryBuilderTest extends PHPUnit_Framework_TestCase {
     public function testBasicWhereIns()
     {
         $builder = $this->getOracleBuilder();
-        $builder->select('*')->from('users')->whereIn('id', array(1, 2, 3));
+        $builder->select('*')->from('users')->whereIn('id', [1, 2, 3]);
         $this->assertEquals('select * from "users" where "id" in (?, ?, ?)', $builder->toSql());
-        $this->assertEquals(array(0 => 1, 1 => 2, 2 => 3), $builder->getBindings());
+        $this->assertEquals([0 => 1, 1 => 2, 2 => 3], $builder->getBindings());
 
         $builder = $this->getOracleBuilder();
-        $builder->select('*')->from('users')->where('id', '=', 1)->orWhereIn('id', array(1, 2, 3));
+        $builder->select('*')->from('users')->where('id', '=', 1)->orWhereIn('id', [1, 2, 3]);
         $this->assertEquals('select * from "users" where "id" = ? or "id" in (?, ?, ?)', $builder->toSql());
-        $this->assertEquals(array(0 => 1, 1 => 1, 2 => 2, 3 => 3), $builder->getBindings());
+        $this->assertEquals([0 => 1, 1 => 1, 2 => 2, 3 => 3], $builder->getBindings());
     }
 
     public function testBasicWhereNotIns()
     {
         $builder = $this->getOracleBuilder();
-        $builder->select('*')->from('users')->whereNotIn('id', array(1, 2, 3));
+        $builder->select('*')->from('users')->whereNotIn('id', [1, 2, 3]);
         $this->assertEquals('select * from "users" where "id" not in (?, ?, ?)', $builder->toSql());
-        $this->assertEquals(array(0 => 1, 1 => 2, 2 => 3), $builder->getBindings());
+        $this->assertEquals([0 => 1, 1 => 2, 2 => 3], $builder->getBindings());
 
         $builder = $this->getOracleBuilder();
-        $builder->select('*')->from('users')->where('id', '=', 1)->orWhereNotIn('id', array(1, 2, 3));
+        $builder->select('*')->from('users')->where('id', '=', 1)->orWhereNotIn('id', [1, 2, 3]);
         $this->assertEquals('select * from "users" where "id" = ? or "id" not in (?, ?, ?)', $builder->toSql());
-        $this->assertEquals(array(0 => 1, 1 => 1, 2 => 2, 3 => 3), $builder->getBindings());
+        $this->assertEquals([0 => 1, 1 => 1, 2 => 2, 3 => 3], $builder->getBindings());
     }
 
     public function testEmptyWhereIns()
@@ -226,7 +226,7 @@ class OracleDBQueryBuilderTest extends PHPUnit_Framework_TestCase {
         $builder->select('*')->from('users')->where('id', '=', 1);
         $builder->union($this->getOracleBuilder()->select('*')->from('users')->where('id', '=', 2));
         $this->assertEquals('select * from "users" where "id" = ? union select * from "users" where "id" = ?', $builder->toSql());
-        $this->assertEquals(array(0 => 1, 1 => 2), $builder->getBindings());
+        $this->assertEquals([0 => 1, 1 => 2], $builder->getBindings());
 
 //        $builder = $this->getOracleBuilder();
 //        $expectedSql = 'select "a" from "t1" where "a" = ? and "b" = ? union select "a" from "t2" where "a" = ? and "b" = ? order by "a" asc limit 10';
@@ -242,7 +242,7 @@ class OracleDBQueryBuilderTest extends PHPUnit_Framework_TestCase {
         $builder->select('*')->from('users')->where('id', '=', 1);
         $builder->unionAll($this->getOracleBuilder()->select('*')->from('users')->where('id', '=', 2));
         $this->assertEquals('select * from "users" where "id" = ? union all select * from "users" where "id" = ?', $builder->toSql());
-        $this->assertEquals(array(0 => 1, 1 => 2), $builder->getBindings());
+        $this->assertEquals([0 => 1, 1 => 2], $builder->getBindings());
     }
 
     public function testMultipleUnions()
@@ -252,7 +252,7 @@ class OracleDBQueryBuilderTest extends PHPUnit_Framework_TestCase {
         $builder->union($this->getOracleBuilder()->select('*')->from('users')->where('id', '=', 2));
         $builder->union($this->getOracleBuilder()->select('*')->from('users')->where('id', '=', 3));
         $this->assertEquals('select * from "users" where "id" = ? union select * from "users" where "id" = ? union select * from "users" where "id" = ?', $builder->toSql());
-        $this->assertEquals(array(0 => 1, 1 => 2, 2 => 3), $builder->getBindings());
+        $this->assertEquals([0 => 1, 1 => 2, 2 => 3], $builder->getBindings());
     }
 
     public function testMultipleUnionAlls()
@@ -262,7 +262,7 @@ class OracleDBQueryBuilderTest extends PHPUnit_Framework_TestCase {
         $builder->unionAll($this->getOracleBuilder()->select('*')->from('users')->where('id', '=', 2));
         $builder->unionAll($this->getOracleBuilder()->select('*')->from('users')->where('id', '=', 3));
         $this->assertEquals('select * from "users" where "id" = ? union all select * from "users" where "id" = ? union all select * from "users" where "id" = ?', $builder->toSql());
-        $this->assertEquals(array(0 => 1, 1 => 2, 2 => 3), $builder->getBindings());
+        $this->assertEquals([0 => 1, 1 => 2, 2 => 3], $builder->getBindings());
     }
 
 //    public function testOracleUnionOrderBys()
@@ -311,7 +311,7 @@ class OracleDBQueryBuilderTest extends PHPUnit_Framework_TestCase {
         $builder = $this->getOracleBuilder();
         $builder->select('*')->from('users')->where('id', '=', 1)->orWhereNull('id');
         $this->assertEquals('select * from "users" where "id" = ? or "id" is null', $builder->toSql());
-        $this->assertEquals(array(0 => 1), $builder->getBindings());
+        $this->assertEquals([0 => 1], $builder->getBindings());
     }
 
     public function testBasicWhereNotNulls()
@@ -324,7 +324,7 @@ class OracleDBQueryBuilderTest extends PHPUnit_Framework_TestCase {
         $builder = $this->getOracleBuilder();
         $builder->select('*')->from('users')->where('id', '>', 1)->orWhereNotNull('id');
         $this->assertEquals('select * from "users" where "id" > ? or "id" is not null', $builder->toSql());
-        $this->assertEquals(array(0 => 1), $builder->getBindings());
+        $this->assertEquals([0 => 1], $builder->getBindings());
     }
 
     public function testGroupBys()
@@ -345,9 +345,9 @@ class OracleDBQueryBuilderTest extends PHPUnit_Framework_TestCase {
         $this->assertEquals('select * from "users" order by "email" asc, "age" desc', $builder->toSql());
 
         $builder = $this->getOracleBuilder();
-        $builder->select('*')->from('users')->orderBy('email')->orderByRaw('age ? desc', array('foo'));
+        $builder->select('*')->from('users')->orderBy('email')->orderByRaw('age ? desc', ['foo']);
         $this->assertEquals('select * from "users" order by "email" asc, age ? desc', $builder->toSql());
-        $this->assertEquals(array('foo'), $builder->getBindings());
+        $this->assertEquals(['foo'], $builder->getBindings());
     }
 
     public function testHavings()
@@ -455,7 +455,7 @@ class OracleDBQueryBuilderTest extends PHPUnit_Framework_TestCase {
         $builder = $this->getOracleBuilder();
         $builder->select('*')->from('users')->where('id', 1)->orWhere('name', 'foo');
         $this->assertEquals('select * from "users" where "id" = ? or "name" = ?', $builder->toSql());
-        $this->assertEquals(array(0 => 1, 1 => 'foo'), $builder->getBindings());
+        $this->assertEquals([0 => 1, 1 => 'foo'], $builder->getBindings());
     }
 
     public function testNestedWheres()
@@ -465,7 +465,7 @@ class OracleDBQueryBuilderTest extends PHPUnit_Framework_TestCase {
             $q->where('name', '=', 'bar')->where('age', '=', 25);
         });
         $this->assertEquals('select * from "users" where "email" = ? or ("name" = ? and "age" = ?)', $builder->toSql());
-        $this->assertEquals(array(0 => 'foo', 1 => 'bar', 2 => 25), $builder->getBindings());
+        $this->assertEquals([0 => 'foo', 1 => 'bar', 2 => 25], $builder->getBindings());
     }
 
     public function testFullSubSelects()
@@ -476,7 +476,7 @@ class OracleDBQueryBuilderTest extends PHPUnit_Framework_TestCase {
         });
 
         $this->assertEquals('select * from "users" where "email" = ? or "id" = (select max(id) from "users" where "email" = ?)', $builder->toSql());
-        $this->assertEquals(array(0 => 'foo', 1 => 'bar'), $builder->getBindings());
+        $this->assertEquals([0 => 'foo', 1 => 'bar'], $builder->getBindings());
     }
 
     public function testWhereExists()
@@ -515,14 +515,13 @@ class OracleDBQueryBuilderTest extends PHPUnit_Framework_TestCase {
         $builder = $this->getOracleBuilder();
         $builder->select('*')->from('users')->leftJoinWhere('photos', 'users.id', '=', 'bar')->joinWhere('photos', 'users.id', '=', 'foo');
         $this->assertEquals('select * from "users" left join "photos" on "users"."id" = ? inner join "photos" on "users"."id" = ?', $builder->toSql());
-        $this->assertEquals(array('bar', 'foo'), $builder->getBindings());
+        $this->assertEquals(['bar', 'foo'], $builder->getBindings());
     }
 
     public function testComplexJoin()
     {
         $builder = $this->getOracleBuilder();
-        $builder->select('*')->from('users')->join('contacts', function ($j)
-        {
+        $builder->select('*')->from('users')->join('contacts', function ($j) {
             $j->on('users.id', '=', 'contacts.id')->orOn('users.name', '=', 'contacts.name');
         });
         $this->assertEquals('select * from "users" inner join "contacts" on "users"."id" = "contacts"."id" or "users"."name" = "contacts"."name"', $builder->toSql());
@@ -613,7 +612,7 @@ class OracleDBQueryBuilderTest extends PHPUnit_Framework_TestCase {
     public function testFindReturnsFirstResultByID()
     {
         $builder = $this->getOracleBuilder();
-        $builder->getConnection()->shouldReceive('select')->once()->with('select t2.* from ( select rownum AS "rn", t1.* from (select * from "users" where "id" = ?) t1 ) t2 where t2."rn" between 1 and 1', array(1), true)->andReturn(array(array('foo' => 'bar')));
+        $builder->getConnection()->shouldReceive('select')->once()->with('select t2.* from ( select rownum AS "rn", t1.* from (select * from "users" where "id" = ?) t1 ) t2 where t2."rn" between 1 and 1', [1], true)->andReturn([['foo' => 'bar']]);
         $builder->getProcessor()->shouldReceive('processSelect')->once()->with($builder, [['foo' => 'bar']])->andReturnUsing(function ($query, $results) { return $results; });
         $results = $builder->from('users')->find(1);
         $this->assertEquals(['foo' => 'bar'], $results);
@@ -622,7 +621,7 @@ class OracleDBQueryBuilderTest extends PHPUnit_Framework_TestCase {
     public function testFirstMethodReturnsFirstResult()
     {
         $builder = $this->getOracleBuilder();
-        $builder->getConnection()->shouldReceive('select')->once()->with('select t2.* from ( select rownum AS "rn", t1.* from (select * from "users" where "id" = ?) t1 ) t2 where t2."rn" between 1 and 1', array(1), true)->andReturn(array(array('foo' => 'bar')));
+        $builder->getConnection()->shouldReceive('select')->once()->with('select t2.* from ( select rownum AS "rn", t1.* from (select * from "users" where "id" = ?) t1 ) t2 where t2."rn" between 1 and 1', [1], true)->andReturn([['foo' => 'bar']]);
         $builder->getProcessor()->shouldReceive('processSelect')->once()->with($builder, [['foo' => 'bar']])->andReturnUsing(function ($query, $results) { return $results; });
         $results = $builder->from('users')->where('id', '=', 1)->first();
         $this->assertEquals(['foo' => 'bar'], $results);
@@ -668,16 +667,14 @@ class OracleDBQueryBuilderTest extends PHPUnit_Framework_TestCase {
         $this->assertEquals('bar,baz', $results);
     }
 
-
     public function testValueMethodReturnsSingleColumn()
     {
         $builder = $this->getOracleBuilder();
-        $builder->getConnection()->shouldReceive('select')->once()->with('select t2.* from ( select rownum AS "rn", t1.* from (select "foo" from "users" where "id" = ?) t1 ) t2 where t2."rn" between 1 and 1', array(1), true)->andReturn(array(array('foo' => 'bar')));
-        $builder->getProcessor()->shouldReceive('processSelect')->once()->with($builder, array(array('foo' => 'bar')))->andReturn(array(array('foo' => 'bar')));
+        $builder->getConnection()->shouldReceive('select')->once()->with('select t2.* from ( select rownum AS "rn", t1.* from (select "foo" from "users" where "id" = ?) t1 ) t2 where t2."rn" between 1 and 1', [1], true)->andReturn([['foo' => 'bar']]);
+        $builder->getProcessor()->shouldReceive('processSelect')->once()->with($builder, [['foo' => 'bar']])->andReturn([['foo' => 'bar']]);
         $results = $builder->from('users')->where('id', '=', 1)->value('foo');
         $this->assertEquals('bar', $results);
     }
-
 
     public function testAggregateFunctions()
     {
@@ -688,25 +685,25 @@ class OracleDBQueryBuilderTest extends PHPUnit_Framework_TestCase {
         $this->assertEquals(1, $results);
 
         $builder = $this->getOracleBuilder();
-        $builder->getConnection()->shouldReceive('select')->once()->with('select t2.* from ( select rownum AS "rn", t1.* from (select count(*) as aggregate from "users") t1 ) t2 where t2."rn" between 1 and 1', [], true)->andReturn(array(array('aggregate' => 1)));
+        $builder->getConnection()->shouldReceive('select')->once()->with('select t2.* from ( select rownum AS "rn", t1.* from (select count(*) as aggregate from "users") t1 ) t2 where t2."rn" between 1 and 1', [], true)->andReturn([['aggregate' => 1]]);
         $builder->getProcessor()->shouldReceive('processSelect')->once()->andReturnUsing(function ($builder, $results) { return $results; });
         $results = $builder->from('users')->exists();
         $this->assertTrue($results);
 
         $builder = $this->getOracleBuilder();
-        $builder->getConnection()->shouldReceive('select')->once()->with('select max("id") as aggregate from "users"', [], true)->andReturn(array(array('aggregate' => 1)));
+        $builder->getConnection()->shouldReceive('select')->once()->with('select max("id") as aggregate from "users"', [], true)->andReturn([['aggregate' => 1]]);
         $builder->getProcessor()->shouldReceive('processSelect')->once()->andReturnUsing(function ($builder, $results) { return $results; });
         $results = $builder->from('users')->max('id');
         $this->assertEquals(1, $results);
 
         $builder = $this->getOracleBuilder();
-        $builder->getConnection()->shouldReceive('select')->once()->with('select min("id") as aggregate from "users"', [], true)->andReturn(array(array('aggregate' => 1)));
+        $builder->getConnection()->shouldReceive('select')->once()->with('select min("id") as aggregate from "users"', [], true)->andReturn([['aggregate' => 1]]);
         $builder->getProcessor()->shouldReceive('processSelect')->once()->andReturnUsing(function ($builder, $results) { return $results; });
         $results = $builder->from('users')->min('id');
         $this->assertEquals(1, $results);
 
         $builder = $this->getOracleBuilder();
-        $builder->getConnection()->shouldReceive('select')->once()->with('select sum("id") as aggregate from "users"', [], true)->andReturn(array(array('aggregate' => 1)));
+        $builder->getConnection()->shouldReceive('select')->once()->with('select sum("id") as aggregate from "users"', [], true)->andReturn([['aggregate' => 1]]);
         $builder->getProcessor()->shouldReceive('processSelect')->once()->andReturnUsing(function ($builder, $results) { return $results; });
         $results = $builder->from('users')->sum('id');
         $this->assertEquals(1, $results);
@@ -785,44 +782,40 @@ class OracleDBQueryBuilderTest extends PHPUnit_Framework_TestCase {
     public function testInsertMethod()
     {
         $builder = $this->getOracleBuilder();
-        $builder->getConnection()->shouldReceive('insert')->once()->with('insert into "users" ("email") values (?)', array('foo'))->andReturn(true);
-        $result = $builder->from('users')->insert(array('email' => 'foo'));
+        $builder->getConnection()->shouldReceive('insert')->once()->with('insert into "users" ("email") values (?)', ['foo'])->andReturn(true);
+        $result = $builder->from('users')->insert(['email' => 'foo']);
         $this->assertTrue($result);
     }
-
 
     public function testMultipleInsertMethod()
     {
         $builder = $this->getOracleBuilder();
-        $builder->getConnection()->shouldReceive('insert')->once()->with('insert all into "users" ("email") values (?) into "users" ("email") values (?)  select 1 from dual', array(0=>'foo',1=>'bar',))->andReturn(true);
-        $result = $builder->from('users')->insert(array(array('email' => 'foo'), array('email' => 'bar')));
+        $builder->getConnection()->shouldReceive('insert')->once()->with('insert all into "users" ("email") values (?) into "users" ("email") values (?)  select 1 from dual', [0 => 'foo',1 => 'bar'])->andReturn(true);
+        $result = $builder->from('users')->insert([['email' => 'foo'], ['email' => 'bar']]);
         $this->assertTrue($result);
     }
-
 
     public function testInsertGetIdMethod()
     {
         $builder = $this->getOracleBuilder();
-        $builder->getProcessor()->shouldReceive('processInsertGetId')->once()->with($builder, 'insert into "users" ("email") values (?) returning "id" into ?', array('foo'), 'id')->andReturn(1);
-        $result = $builder->from('users')->insertGetId(array('email' => 'foo'), 'id');
+        $builder->getProcessor()->shouldReceive('processInsertGetId')->once()->with($builder, 'insert into "users" ("email") values (?) returning "id" into ?', ['foo'], 'id')->andReturn(1);
+        $result = $builder->from('users')->insertGetId(['email' => 'foo'], 'id');
         $this->assertEquals(1, $result);
     }
-
 
     public function testInsertGetIdMethodRemovesExpressions()
     {
         $builder = $this->getOracleBuilder();
-        $builder->getProcessor()->shouldReceive('processInsertGetId')->once()->with($builder, 'insert into "users" ("email", "bar") values (?, bar) returning "id" into ?', array('foo'), 'id')->andReturn(1);
-        $result = $builder->from('users')->insertGetId(array('email' => 'foo', 'bar' => new Illuminate\Database\Query\Expression('bar')), 'id');
+        $builder->getProcessor()->shouldReceive('processInsertGetId')->once()->with($builder, 'insert into "users" ("email", "bar") values (?, bar) returning "id" into ?', ['foo'], 'id')->andReturn(1);
+        $result = $builder->from('users')->insertGetId(['email' => 'foo', 'bar' => new Illuminate\Database\Query\Expression('bar')], 'id');
         $this->assertEquals(1, $result);
     }
-
 
     public function testInsertMethodRespectsRawBindings()
     {
         $builder = $this->getOracleBuilder();
         $builder->getConnection()->shouldReceive('insert')->once()->with('insert into "users" ("email") values (CURRENT TIMESTAMP)', [])->andReturn(true);
-        $result = $builder->from('users')->insert(array('email' => new Raw('CURRENT TIMESTAMP')));
+        $result = $builder->from('users')->insert(['email' => new Raw('CURRENT TIMESTAMP')]);
         $this->assertTrue($result);
     }
 
@@ -837,8 +830,8 @@ class OracleDBQueryBuilderTest extends PHPUnit_Framework_TestCase {
     public function testUpdateMethod()
     {
         $builder = $this->getOracleBuilder();
-        $builder->getConnection()->shouldReceive('update')->once()->with('update "users" set "email" = ?, "name" = ? where "id" = ?', array('foo', 'bar', 1))->andReturn(1);
-        $result = $builder->from('users')->where('id', '=', 1)->update(array('email' => 'foo', 'name' => 'bar'));
+        $builder->getConnection()->shouldReceive('update')->once()->with('update "users" set "email" = ?, "name" = ? where "id" = ?', ['foo', 'bar', 1])->andReturn(1);
+        $result = $builder->from('users')->where('id', '=', 1)->update(['email' => 'foo', 'name' => 'bar']);
         $this->assertEquals(1, $result);
 
 //        $builder = $this->getOracleBuilder();
@@ -847,34 +840,31 @@ class OracleDBQueryBuilderTest extends PHPUnit_Framework_TestCase {
 //        $this->assertEquals(1, $result);
     }
 
-
     public function testUpdateMethodWithJoins()
     {
         $builder = $this->getOracleBuilder();
-        $builder->getConnection()->shouldReceive('update')->once()->with('update "users" inner join "orders" on "users"."id" = "orders"."user_id" set "email" = ?, "name" = ? where "users"."id" = ?', array('foo', 'bar', 1))->andReturn(1);
-        $result = $builder->from('users')->join('orders', 'users.id', '=', 'orders.user_id')->where('users.id', '=', 1)->update(array('email' => 'foo', 'name' => 'bar'));
+        $builder->getConnection()->shouldReceive('update')->once()->with('update "users" inner join "orders" on "users"."id" = "orders"."user_id" set "email" = ?, "name" = ? where "users"."id" = ?', ['foo', 'bar', 1])->andReturn(1);
+        $result = $builder->from('users')->join('orders', 'users.id', '=', 'orders.user_id')->where('users.id', '=', 1)->update(['email' => 'foo', 'name' => 'bar']);
         $this->assertEquals(1, $result);
     }
-
 
     public function testUpdateMethodRespectsRaw()
     {
         $builder = $this->getOracleBuilder();
-        $builder->getConnection()->shouldReceive('update')->once()->with('update "users" set "email" = foo, "name" = ? where "id" = ?', array('bar', 1))->andReturn(1);
-        $result = $builder->from('users')->where('id', '=', 1)->update(array('email' => new Raw('foo'), 'name' => 'bar'));
+        $builder->getConnection()->shouldReceive('update')->once()->with('update "users" set "email" = foo, "name" = ? where "id" = ?', ['bar', 1])->andReturn(1);
+        $result = $builder->from('users')->where('id', '=', 1)->update(['email' => new Raw('foo'), 'name' => 'bar']);
         $this->assertEquals(1, $result);
     }
-
 
     public function testDeleteMethod()
     {
         $builder = $this->getOracleBuilder();
-        $builder->getConnection()->shouldReceive('delete')->once()->with('delete from "users" where "email" = ?', array('foo'))->andReturn(1);
+        $builder->getConnection()->shouldReceive('delete')->once()->with('delete from "users" where "email" = ?', ['foo'])->andReturn(1);
         $result = $builder->from('users')->where('email', '=', 'foo')->delete();
         $this->assertEquals(1, $result);
 
         $builder = $this->getOracleBuilder();
-        $builder->getConnection()->shouldReceive('delete')->once()->with('delete from "users" where "id" = ?', array(1))->andReturn(1);
+        $builder->getConnection()->shouldReceive('delete')->once()->with('delete from "users" where "id" = ?', [1])->andReturn(1);
         $result = $builder->from('users')->delete(1);
         $this->assertEquals(1, $result);
     }
@@ -979,12 +969,12 @@ class OracleDBQueryBuilderTest extends PHPUnit_Framework_TestCase {
         $builder = $this->getBuilder();
         $builder->select('*')->from('foo')->where('bar', '=', 'baz')->lock();
         $this->assertEquals('select * from foo where bar = ? for update', $builder->toSql());
-        $this->assertEquals(array('baz'), $builder->getBindings());
+        $this->assertEquals(['baz'], $builder->getBindings());
 
         $builder = $this->getBuilder();
         $builder->select('*')->from('foo')->where('bar', '=', 'baz')->lock(false);
         $this->assertEquals('select * from foo where bar = ? lock in share mode', $builder->toSql());
-        $this->assertEquals(array('baz'), $builder->getBindings());
+        $this->assertEquals(['baz'], $builder->getBindings());
     }
 
     public function testBindingOrder()
