@@ -6,6 +6,8 @@ use Illuminate\Database\Connection;
 use Jfelder\OracleDB\Schema\OracleBuilder;
 use Jfelder\OracleDB\Query\Processors\OracleProcessor;
 use Doctrine\DBAL\Driver\OCI8\Driver as DoctrineDriver;
+use Jfelder\OracleDB\Query\Grammars\OracleGrammar as QueryGrammer;
+use Jfelder\OracleDB\Schema\Grammars\OracleGrammar as SchemaGrammer;
 
 class OracleConnection extends Connection
 {
@@ -26,27 +28,27 @@ class OracleConnection extends Connection
     /**
      * Get the default query grammar instance.
      *
-     * @return Jfelder\OracleDB\Query\Grammars\OracleGrammar
+     * @return \Jfelder\OracleDB\Query\Grammars\OracleGrammar
      */
     protected function getDefaultQueryGrammar()
     {
-        return $this->withTablePrefix(new QueryGrammar);
+        return $this->withTablePrefix(new QueryGrammer);
     }
 
     /**
      * Get the default schema grammar instance.
      *
-     * @return Jfelder\OracleDB\Schema\Grammars\OracleGrammar
+     * @return \Jfelder\OracleDB\Schema\Grammars\OracleGrammar
      */
     protected function getDefaultSchemaGrammar()
     {
-        return $this->withTablePrefix(new SchemaGrammar);
+        return $this->withTablePrefix(new SchemaGrammer);
     }
 
     /**
      * Get the default post processor instance.
      *
-     * @return Jfelder\OracleDB\Query\Processors\OracleProcessor
+     * @return \Jfelder\OracleDB\Query\Processors\OracleProcessor
      */
     protected function getDefaultPostProcessor()
     {

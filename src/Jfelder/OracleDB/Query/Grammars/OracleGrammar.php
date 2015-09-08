@@ -9,6 +9,27 @@ use Config;
 class OracleGrammar extends BaseGrammar
 {
     /**
+     * Compile a date based where clause.
+     *
+     * @param  string  $type
+     * @param  \Illuminate\Database\Query\Builder  $query
+     * @param  array  $where
+     * @return string
+     */
+    protected function dateBasedWhere($type, Builder $query, $where)
+    {
+        $date_parts = [
+            'date' => '',
+            'day' => 'DD',
+            'month' => 'MM',
+            'year' => 'YYYY',
+        ];
+        $value = $this->parameter($where['value']);
+
+        return 'TO_CHAR('.$this->wrap($where['column']).', \''.$date_parts[$type].'\') '.$where['operator'].' '.$value;
+    }
+
+    /**
      * Compile a select query into SQL.
      *
      * @param  \Illuminate\Database\Query\Builder
