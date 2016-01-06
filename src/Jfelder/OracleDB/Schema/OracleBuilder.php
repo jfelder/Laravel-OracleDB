@@ -2,7 +2,7 @@
 
 namespace Jfelder\OracleDB\Schema;
 
-class OracleBuilder extends \Illuminate\Database\Schema\Buidler
+class OracleBuilder extends \Illuminate\Database\Schema\Builder
 {
     /**
      * Determine if the given table exists.
@@ -29,7 +29,7 @@ class OracleBuilder extends \Illuminate\Database\Schema\Buidler
      */
     public function getColumnListing($table)
     {
-        $sql = $this->grammar->compileColumnExists();
+        $sql = $this->grammar->compileColumnExists($table);
 
         $database = $this->connection->getDatabaseName();
 
