@@ -685,8 +685,7 @@ class OracleDBQueryBuilderTest extends PHPUnit_Framework_TestCase
         $this->assertEquals(1, $results);
 
         $builder = $this->getOracleBuilder();
-        $builder->getConnection()->shouldReceive('select')->once()->with('select t2.* from ( select rownum AS "rn", t1.* from (select count(*) as aggregate from "users") t1 ) t2 where t2."rn" between 1 and 1', [], true)->andReturn([['aggregate' => 1]]);
-        $builder->getProcessor()->shouldReceive('processSelect')->once()->andReturnUsing(function ($builder, $results) { return $results; });
+        $builder->getConnection()->shouldReceive('select')->once()->with('select t2."rn" as "exists" from ( select rownum AS "rn", t1.* from (select * from "users") t1 ) t2 where t2."rn" between 1 and 1', [], true)->andReturn([["exists" => 1]]);
         $results = $builder->from('users')->exists();
         $this->assertTrue($results);
 

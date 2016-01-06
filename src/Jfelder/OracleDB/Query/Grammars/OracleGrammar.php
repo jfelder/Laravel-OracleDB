@@ -143,6 +143,20 @@ class OracleGrammar extends BaseGrammar
     }
 
     /**
+     * Compile an exists statement into SQL.
+     *
+     * @param \Illuminate\Database\Query\Builder $query
+     * @return string
+     */
+    public function compileExists(Builder $query)
+    {
+        $select = $this->compileSelect($query);
+
+        return "select t2.\"rn\" as {$this->wrap('exists')} from ( select rownum AS \"rn\", t1.* from ({$select}) t1 ) t2 where t2.\"rn\" between 1 and 1";
+    }
+
+
+    /**
      * Compile the lock into SQL.
      *
      * @param  \Illuminate\Database\Query\Builder  $query
