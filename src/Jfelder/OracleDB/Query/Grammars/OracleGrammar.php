@@ -154,8 +154,7 @@ class OracleGrammar extends BaseGrammar
 
         return "select t2.\"rn\" as {$this->wrap('exists')} from ( select rownum AS \"rn\", t1.* from ({$select}) t1 ) t2 where t2.\"rn\" between 1 and 1";
     }
-
-
+    
     /**
      * Compile the lock into SQL.
      *
