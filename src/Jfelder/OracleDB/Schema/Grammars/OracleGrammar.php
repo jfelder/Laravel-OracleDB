@@ -559,7 +559,7 @@ class OracleGrammar extends \Illuminate\Database\Schema\Grammars\Grammar
      */
     protected function typeTimestamp(Fluent $column)
     {
-        return 'timestamp default 0';
+        return 'timestamp';
     }
 
     /**
