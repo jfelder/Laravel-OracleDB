@@ -387,7 +387,7 @@ class OracleDBQueryBuilderTest extends PHPUnit_Framework_TestCase
         $builder->getProcessor()->shouldReceive('processSelect')->andReturnUsing(function ($builder, $results) { return $results; });
         $builder->from('item');
         $result = $builder->select(['category', new Raw('count(*) as "total"')])->where('department', '=', 'popular')->groupBy('category')->having('total', '>', 3)->get();
-        $this->assertEquals([['category' => 'rock', 'total' => 5]], $result);
+        $this->assertEquals([['category' => 'rock', 'total' => 5]], $result->all());
 
         // Using \Raw value
         $builder = $this->getOracleBuilder();
@@ -396,7 +396,7 @@ class OracleDBQueryBuilderTest extends PHPUnit_Framework_TestCase
         $builder->getProcessor()->shouldReceive('processSelect')->andReturnUsing(function ($builder, $results) { return $results; });
         $builder->from('item');
         $result = $builder->select(['category', new Raw('count(*) as "total"')])->where('department', '=', 'popular')->groupBy('category')->having('total', '>', new Raw('3'))->get();
-        $this->assertEquals([['category' => 'rock', 'total' => 5]], $result);
+        $this->assertEquals([['category' => 'rock', 'total' => 5]], $result->all());
     }
 
     public function testRawHavings()
@@ -634,16 +634,16 @@ class OracleDBQueryBuilderTest extends PHPUnit_Framework_TestCase
         $builder->getProcessor()->shouldReceive('processSelect')->once()->with($builder, [['foo' => 'bar'], ['foo' => 'baz']])->andReturnUsing(function ($query, $results) {
             return $results;
         });
-        $results = $builder->from('users')->where('id', '=', 1)->lists('foo');
-        $this->assertEquals(['bar', 'baz'], $results);
+        $results = $builder->from('users')->where('id', '=', 1)->pluck('foo');
+        $this->assertEquals(['bar', 'baz'], $results->all());
 
         $builder = $this->getOracleBuilder();
         $builder->getConnection()->shouldReceive('select')->once()->andReturn([['id' => 1, 'foo' => 'bar'], ['id' => 10, 'foo' => 'baz']]);
         $builder->getProcessor()->shouldReceive('processSelect')->once()->with($builder, [['id' => 1, 'foo' => 'bar'], ['id' => 10, 'foo' => 'baz']])->andReturnUsing(function ($query, $results) {
             return $results;
         });
-        $results = $builder->from('users')->where('id', '=', 1)->lists('foo', 'id');
-        $this->assertEquals([1 => 'bar', 10 => 'baz'], $results);
+        $results = $builder->from('users')->where('id', '=', 1)->pluck('foo', 'id');
+        $this->assertEquals([1 => 'bar', 10 => 'baz'], $results->all());
     }
 
     public function testImplode()
@@ -721,7 +721,7 @@ class OracleDBQueryBuilderTest extends PHPUnit_Framework_TestCase
         $sum = $builder->sum('id');
         $this->assertEquals(2, $sum);
         $result = $builder->get();
-        $this->assertEquals([['column1' => 'foo', 'column2' => 'bar']], $result);
+        $this->assertEquals([['column1' => 'foo', 'column2' => 'bar']], $result->all());
     }
 
     public function testAggregateResetFollowedBySelectGet()
@@ -734,7 +734,7 @@ class OracleDBQueryBuilderTest extends PHPUnit_Framework_TestCase
         $count = $builder->count('column1');
         $this->assertEquals(1, $count);
         $result = $builder->select('column2', 'column3')->get();
-        $this->assertEquals([['column2' => 'foo', 'column3' => 'bar']], $result);
+        $this->assertEquals([['column2' => 'foo', 'column3' => 'bar']], $result->all());
     }
 
     public function testAggregateResetFollowedByGetWithColumns()
@@ -747,7 +747,7 @@ class OracleDBQueryBuilderTest extends PHPUnit_Framework_TestCase
         $count = $builder->count('column1');
         $this->assertEquals(1, $count);
         $result = $builder->get(['column2', 'column3']);
-        $this->assertEquals([['column2' => 'foo', 'column3' => 'bar']], $result);
+        $this->assertEquals([['column2' => 'foo', 'column3' => 'bar']], $result->all());
     }
 
     public function testAggregateWithSubSelect()
@@ -863,7 +863,7 @@ class OracleDBQueryBuilderTest extends PHPUnit_Framework_TestCase
         $this->assertEquals(1, $result);
 
         $builder = $this->getOracleBuilder();
-        $builder->getConnection()->shouldReceive('delete')->once()->with('delete from "users" where "id" = ?', [1])->andReturn(1);
+        $builder->getConnection()->shouldReceive('delete')->once()->with('delete from "users" where "users"."id" = ?', [1])->andReturn(1);
         $result = $builder->from('users')->delete(1);
         $this->assertEquals(1, $result);
     }
