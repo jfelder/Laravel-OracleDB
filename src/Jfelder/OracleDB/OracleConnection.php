@@ -8,6 +8,7 @@ use Jfelder\OracleDB\Query\Processors\OracleProcessor;
 use Doctrine\DBAL\Driver\OCI8\Driver as DoctrineDriver;
 use Jfelder\OracleDB\Query\Grammars\OracleGrammar as QueryGrammer;
 use Jfelder\OracleDB\Schema\Grammars\OracleGrammar as SchemaGrammer;
+use PDO;
 
 class OracleConnection extends Connection
 {
