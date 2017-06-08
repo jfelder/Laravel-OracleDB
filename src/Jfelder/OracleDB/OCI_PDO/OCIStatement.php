@@ -178,6 +178,7 @@ class OCIStatement extends \PDOStatement
     public function bindValue($parameter, $value, $data_type = \PDO::PARAM_STR)
     {
         if (is_numeric($parameter)) {
+            $parameter--;
             $parameter = ":{$parameter}";
         }
 
