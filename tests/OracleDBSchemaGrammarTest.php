@@ -1,6 +1,7 @@
 <?php
 
 use Mockery as m;
+use PHPUnit\Framework\TestCase as PHPUnit_Framework_TestCase;
 use Illuminate\Database\Schema\Blueprint;
 
 include 'mocks/PDOMocks.php';

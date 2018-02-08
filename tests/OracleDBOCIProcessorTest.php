@@ -1,6 +1,7 @@
 <?php
 
 use Mockery as m;
+use PHPUnit\Framework\TestCase as PHPUnit_Framework_TestCase;
 
 include 'mocks/OCIMocks.php';
 

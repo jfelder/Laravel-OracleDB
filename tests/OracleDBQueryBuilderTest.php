@@ -1,6 +1,7 @@
 <?php
 
 use Mockery as m;
+use PHPUnit\Framework\TestCase as PHPUnit_Framework_TestCase;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Database\Query\Expression as Raw;
 

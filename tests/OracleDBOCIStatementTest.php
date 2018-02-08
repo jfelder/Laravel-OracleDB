@@ -3,11 +3,12 @@
 namespace Jfelder\OracleDB\OCI_PDO {
 
 use Mockery as m;
+use PHPUnit\Framework\TestCase as PHPUnit_Framework_TestCase;
 
 include 'mocks/OCIMocks.php';
 include 'mocks/OCIFunctions.php';
 
-class OracleDBOCIStatementTest extends \PHPUnit_Framework_TestCase
+class OracleDBOCIStatementTest extends PHPUnit_Framework_TestCase
 {
     // defining here in case oci8 extension not installed
 
