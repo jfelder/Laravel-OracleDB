@@ -1,6 +1,6 @@
 ## Laravel Oracle Database Package
 
-### OracleDB (updated for 5.4)
+### OracleDB (updated for 5.6)
 
 [![Latest Stable Version](https://poser.pugx.org/jfelder/oracledb/v/stable.png)](https://packagist.org/packages/jfelder/oracledb) [![Total Downloads](https://poser.pugx.org/jfelder/oracledb/downloads.png)](https://packagist.org/packages/jfelder/oracledb) [![Build Status](https://travis-ci.org/jfelder/Laravel-OracleDB.png)](https://travis-ci.org/jfelder/Laravel-OracleDB)
 
@@ -24,18 +24,11 @@ Add `jfelder/oracledb` as a requirement to composer.json:
 ```json
 {
     "require": {
-        "jfelder/oracledb": "5.4.*"
+        "jfelder/oracledb": "5.6.*"
     }
 }
 ```
 And then run `composer update`
-
-Once Composer has installed or updated your packages you need to register OracleDB. Open up `config/app.php` and find
-the `providers` key and add:
-
-```php
-Jfelder\OracleDB\OracleDBServiceProvider::class,
-```
 
 Finally you need to publish a configuration file by running the following Artisan command.
 
