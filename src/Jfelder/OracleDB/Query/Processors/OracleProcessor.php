@@ -21,8 +21,11 @@ class OracleProcessor extends Processor
         $counter = 0;
         $last_insert_id = 0;
 
+        // Get Oracle Connection object
+        $conn = $query->getConnection();
+
         //Get PDO object
-        $pdo = $query->getConnection()->getPdo();
+        $pdo = $conn->getPdo();
 
         // get PDO statment object
         $stmt = $pdo->prepare($sql);
@@ -35,7 +38,7 @@ class OracleProcessor extends Processor
 
         // bind each parameter from the values array to their location in the
         foreach ($values as $k => $v) {
-            $stmt->bindValue($counter++, $v, $this->bindType($v));
+            $stmt->bindValue($counter++, $this->prepareValue($v, $conn->getQueryGrammar()), $this->bindType($v));
         }
 
         // bind output param for the returning cluase
@@ -84,5 +87,31 @@ class OracleProcessor extends Processor
         }
 
         return $param;
+    }
+
+    /**
+     * Prepare the query value for execution.
+     *
+     * @param $value
+     * @param $grammar
+     *
+     * @return int|string
+     */
+    private function prepareValue($value, $grammar)
+    {
+        // We need to transform objects into strings and DateTime into the actual
+        // date string. Each query grammar maintains its own date string format
+        // so we'll just ask the grammar for the format to get from the date.
+        if(is_object($value)) {
+            if ($value instanceof \DateTime) {
+                $value = $value->format($grammar->getDateFormat());
+            } else {
+                $value = (string) $value;
+            }
+        } elseif (is_bool($value)) {
+            $value = (int) $value;
+        }
+
+        return $value;
     }
 }

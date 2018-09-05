@@ -28,25 +28,27 @@ class OracleDBServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        if (file_exists(config_path('oracledb.php'))) {
+        if (!file_exists(config_path('oracledb.php'))) {
+            $this->mergeConfigFrom(__DIR__ . '/../../config/oracledb.php', 'database.connections');
+        } else {
             // merge config with other connections
             $this->mergeConfigFrom(config_path('oracledb.php'), 'database.connections');
+        }
 
-            // get only oracle configs to loop thru and extend DB
-            $config = $this->app['config']->get('oracledb', []);
+        // get only oracle configs to loop thru and extend DB
+        $config = $this->app['config']->get('oracledb', []);
 
-            $connection_keys = array_keys($config);
+        $connection_keys = array_keys($config);
 
-            if (is_array($connection_keys)) {
-                foreach ($connection_keys as $key) {
-                    $this->app['db']->extend($key, function ($config) {
-                        $oConnector = new Connectors\OracleConnector();
+        if (is_array($connection_keys)) {
+            foreach ($connection_keys as $key) {
+                $this->app['db']->extend($key, function ($config) {
+                    $oConnector = new Connectors\OracleConnector();
 
-                        $connection = $oConnector->connect($config);
+                    $connection = $oConnector->connect($config);
 
-                        return new OracleConnection($connection, $config['database'], $config['prefix']);
-                    });
-                }
+                    return new OracleConnection($connection, $config['database'], $config['prefix']);
+                });
             }
         }
     }
