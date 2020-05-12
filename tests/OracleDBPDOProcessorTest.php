@@ -1,19 +1,20 @@
 <?php
 
 use Mockery as m;
+use PHPUnit\Framework\TestCase;
 
 include 'mocks/PDOMocks.php';
 
-class OracleDBPDOProcessorTest extends PHPUnit_Framework_TestCase
+class OracleDBPDOProcessorTest extends TestCase
 {
-    public function tearDown()
+    public function tearDown(): void
     {
         m::close();
     }
 
     public function testInsertGetIdProcessing()
     {
-        $pdo = $this->getMock('ProcessorTestPDOStub');
+        $pdo = $this->getMockBuilder('ProcessorTestPDOStub')->getMock();
         $pdo->expects($this->once())->method('lastInsertId')->with($this->equalTo('id'))->will($this->returnValue('1'));
 
         $connection = m::mock('Illuminate\Database\Connection');

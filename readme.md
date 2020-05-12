@@ -1,6 +1,6 @@
 ## Laravel Oracle Database Package
 
-### OracleDB (updated for 5.4)
+### OracleDB (updated for Laravel 6.x)
 
 [![Latest Stable Version](https://poser.pugx.org/jfelder/oracledb/v/stable.png)](https://packagist.org/packages/jfelder/oracledb) [![Total Downloads](https://poser.pugx.org/jfelder/oracledb/downloads.png)](https://packagist.org/packages/jfelder/oracledb) [![Build Status](https://travis-ci.org/jfelder/Laravel-OracleDB.png)](https://travis-ci.org/jfelder/Laravel-OracleDB)
 
@@ -24,7 +24,7 @@ Add `jfelder/oracledb` as a requirement to composer.json:
 ```json
 {
     "require": {
-        "jfelder/oracledb": "5.4.*"
+        "jfelder/oracledb": "6.*"
     }
 }
 ```
@@ -56,14 +56,14 @@ Once you have configured the OracleDB database connection(s), you may run querie
 #### NEW: The oci8 library in now the default library. If you want to use the pdo library, enter "pdo" as the driver and the code will automatically use the pdo library instead of the oci8 library. Any other value will result in the oci8 library being used.
 
 ```php
-$results = DB::select('select * from users where id = ?', array(1));
+$results = DB::select('select * from users where id = ?', [1]);
 ```
 
 The above statement assumes you have set the default connection to be the oracle connection you setup in
 config/database.php file and will always return an 'array' of results.
 
 ```php
-$results = DB::connection('oracle')->select('select * from users where id = ?', array(1));
+$results = DB::connection('oracle')->select('select * from users where id = ?', [1]);
 ```
 
 Just like the built-in database drivers, you can use the connection method to access the oracle database(s) you setup
@@ -73,14 +73,14 @@ in config/oracledb.php file.
 
 ```php
 	$id = DB::connection('oracle')->table('users')->insertGetId(
-		array('email' => 'john@example.com', 'votes' => 0), 'userid'
+		['email' => 'john@example.com', 'votes' => 0], 'userid'
 	);
 ```
 
 > **Note:** When using the insertGetId method, you can specify the auto-incrementing column name as the second
 parameter in insertGetId function. It will default to "id" if not specified.
 
-See [Laravel Database Basic Docs](http://four.laravel.com/docs/database) for more information.
+See [Laravel Database Basic Docs](https://laravel.com/docs/6.x/database) for more information.
 
 ### License
 

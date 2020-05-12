@@ -1,19 +1,18 @@
 <?php
 
-namespace Jfelder\OracleDB\OCI_PDO {
-
+use Jfelder\OracleDB\OCI_PDO\OCI;
+use Jfelder\OracleDB\OCI_PDO\OCIException;
 use Mockery as m;
+use PHPUnit\Framework\TestCase;
 
 include 'mocks/OCIMocks.php';
 include 'mocks/OCIFunctions.php';
 
-class OracleDBOCITest extends \PHPUnit_Framework_TestCase
+class OracleDBOCITest extends TestCase
 {
     private $oci;
 
-    // defining here in case oci8 extension not installed
-
-    protected function setUp()
+    protected function setUp(): void
     {
         if (! extension_loaded('oci8')) {
             $this->markTestSkipped(
@@ -30,7 +29,7 @@ class OracleDBOCITest extends \PHPUnit_Framework_TestCase
         }
     }
 
-    public function tearDown()
+    public function tearDown(): void
     {
         m::close();
     }
@@ -49,23 +48,19 @@ class OracleDBOCITest extends \PHPUnit_Framework_TestCase
         $this->assertEquals(0, $oci->getAttribute(\PDO::ATTR_PERSISTENT));
     }
 
-    /**
-     * @expectedException Jfelder\OracleDB\OCI_PDO\OCIException
-     */
     public function testConstructorFailWithPersistentConnection()
     {
         global $OCITransactionStatus;
         $OCITransactionStatus = false;
+        $this->expectException(OCIException::class);
         $oci = new OCI('dsn', null, null, [\PDO::ATTR_PERSISTENT => 1]);
     }
 
-    /**
-     * @expectedException Jfelder\OracleDB\OCI_PDO\OCIException
-     */
     public function testConstructorFailWithoutPersistentConnection()
     {
         global $OCITransactionStatus;
         $OCITransactionStatus = false;
+        $this->expectException(OCIException::class);
         $oci = new OCI('dsn', null, null, [\PDO::ATTR_PERSISTENT => 0]);
     }
 
@@ -86,11 +81,9 @@ class OracleDBOCITest extends \PHPUnit_Framework_TestCase
         $this->assertEquals(0, $this->oci->getExecuteMode());
     }
 
-    /**
-     * @expectedException Jfelder\OracleDB\OCI_PDO\OCIException
-     */
     public function testBeginTransactionAlreadyInTransaction()
     {
+        $this->expectException(OCIException::class);
         $result = $this->oci->beginTransaction();
         $result = $this->oci->beginTransaction();
     }
@@ -101,13 +94,11 @@ class OracleDBOCITest extends \PHPUnit_Framework_TestCase
         $this->assertTrue($this->oci->commit());
     }
 
-    /**
-     * @expectedException Jfelder\OracleDB\OCI_PDO\OCIException
-     */
     public function testCommitInTransactionFails()
     {
         global $OCITransactionStatus;
         $OCITransactionStatus = false;
+        $this->expectException(OCIException::class);
         $this->oci->beginTransaction();
         $this->oci->commit();
     }
@@ -214,19 +205,15 @@ class OracleDBOCITest extends \PHPUnit_Framework_TestCase
         $this->assertTrue($this->oci->inTransaction());
     }
 
-    /**
-     * @expectedException Jfelder\OracleDB\OCI_PDO\OCIException
-     */
     public function testLastInsertIDWithName()
     {
+        $this->expectException(OCIException::class);
         $result = $this->oci->lastInsertID('foo');
     }
 
-    /**
-     * @expectedException Jfelder\OracleDB\OCI_PDO\OCIException
-     */
     public function testLastInsertIDWithoutName()
     {
+        $this->expectException(OCIException::class);
         $result = $this->oci->lastInsertID();
     }
 
@@ -282,15 +269,13 @@ class OracleDBOCITest extends \PHPUnit_Framework_TestCase
         $this->assertEquals([], $property->getValue($stmt));
     }
 
-    /**
-     * @expectedException Jfelder\OracleDB\OCI_PDO\OCIException
-     */
     public function testPrepareFail()
     {
         global $OCIStatementStatus;
         $OCIStatementStatus = false;
         $sql = 'select * from table where id = ? and date = ?';
         $oci = new \TestOCIStub();
+        $this->expectException(OCIException::class);
         $stmt = $oci->prepare($sql);
     }
 
@@ -353,6 +338,7 @@ class OracleDBOCITest extends \PHPUnit_Framework_TestCase
         $sql = 'select * from table';
         $oci = new \TestOCIStub();
         $stmt = $oci->query($sql);
+        $this->assertFalse($stmt);
     }
 
     public function testQuote()
@@ -367,13 +353,11 @@ class OracleDBOCITest extends \PHPUnit_Framework_TestCase
         $this->assertTrue($this->oci->rollBack());
     }
 
-    /**
-     * @expectedException Jfelder\OracleDB\OCI_PDO\OCIException
-     */
     public function testRollBackInTransactionFails()
     {
         global $OCITransactionStatus;
         $OCITransactionStatus = false;
+        $this->expectException(OCIException::class);
         $this->oci->beginTransaction();
         $this->oci->rollBack();
     }
@@ -416,12 +400,9 @@ class OracleDBOCITest extends \PHPUnit_Framework_TestCase
         $this->assertEquals(\OCI_NO_AUTO_COMMIT, $this->oci->getExecuteMode());
     }
 
-    /**
-     * @expectedException Jfelder\OracleDB\OCI_PDO\OCIException
-     */
     public function testSetExecuteModeWithInvalidMode()
     {
+        $this->expectException(OCIException::class);
         $this->oci->setExecuteMode('foo');
     }
-}
 }

@@ -2,12 +2,13 @@
 
 use Mockery as m;
 use Illuminate\Database\Schema\Blueprint;
+use PHPUnit\Framework\TestCase;
 
 include 'mocks/PDOMocks.php';
 
-class OracleDBSchemaGrammarTest extends PHPUnit_Framework_TestCase
+class OracleDBSchemaGrammarTest extends TestCase
 {
-    public function tearDown()
+    public function tearDown(): void
     {
         m::close();
     }

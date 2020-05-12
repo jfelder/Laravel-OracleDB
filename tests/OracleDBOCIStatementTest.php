@@ -1,17 +1,16 @@
 <?php
 
-namespace Jfelder\OracleDB\OCI_PDO {
-
+use Jfelder\OracleDB\OCI_PDO\OCIException;
+use Jfelder\OracleDB\OCI_PDO\OCIStatement;
 use Mockery as m;
+use PHPUnit\Framework\TestCase;
 
 include 'mocks/OCIMocks.php';
 include 'mocks/OCIFunctions.php';
 
-class OracleDBOCIStatementTest extends \PHPUnit_Framework_TestCase
+class OracleDBOCIStatementTest extends TestCase
 {
-    // defining here in case oci8 extension not installed
-
-    protected function setUp()
+    protected function setUp(): void
     {
         if (! extension_loaded('oci8')) {
             $this->markTestSkipped(
@@ -51,7 +50,7 @@ class OracleDBOCIStatementTest extends \PHPUnit_Framework_TestCase
         }
     }
 
-    public function tearDown()
+    public function tearDown(): void
     {
         m::close();
     }
@@ -80,13 +79,11 @@ class OracleDBOCIStatementTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals([], $property->getValue($ocistmt));
     }
 
-    /**
-     * @expectedException Jfelder\OracleDB\OCI_PDO\OCIException
-     */
     public function testConstructorWithoutValidStatementPassignIn()
     {
         global $OCIStatementStatus;
         $OCIStatementStatus = false;
+        $this->expectException(OCIException::class);
         $ocistmt = new OCIStatement('oci8 statement', new \TestOCIStub());
     }
 
@@ -98,33 +95,27 @@ class OracleDBOCIStatementTest extends \PHPUnit_Framework_TestCase
         $this->assertFalse($OCIStatementStatus);
     }
 
-    /**
-     * @expectedException \InvalidArgumentException
-     */
     public function testBindColumnWithColumnName()
     {
         $stmt = new \TestOCIStatementStub('oci8 statement', $this->oci, 'sql', []);
         $holder = '';
+        $this->expectException(InvalidArgumentException::class);
         $stmt->bindColumn('holder', $holder, \PDO::PARAM_STR);
     }
 
-    /**
-     * @expectedException \InvalidArgumentException
-     */
     public function testBindColumnWithColumnNumberLessThanOne()
     {
         $stmt = new \TestOCIStatementStub('oci8 statement', $this->oci, 'sql', []);
         $holder = '';
+        $this->expectException(InvalidArgumentException::class);
         $stmt->bindColumn(0, $holder, \PDO::PARAM_STR);
     }
 
-    /**
-     * @expectedException \InvalidArgumentException
-     */
     public function testBindColumnWithInvalidDataType()
     {
         $stmt = new \TestOCIStatementStub('oci8 statement', $this->oci, 'sql', []);
         $holder = '';
+        $this->expectException(InvalidArgumentException::class);
         $stmt->bindColumn(1, $holder, 'hello');
     }
 
@@ -153,15 +144,13 @@ class OracleDBOCIStatementTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('oci_bind_by_name', $variable);
     }
 
-    /**
-     * @expectedException \InvalidArgumentException
-     */
     public function testBindParamWithInvalidDataType()
     {
         $variable = '';
+        $this->expectException(InvalidArgumentException::class);
 
         $stmt = new \TestOCIStatementStub(true, new \TestOCIStub(), '', []);
-        $this->assertTrue($stmt->bindParam('param', $variable, 'hello'));
+        $stmt->bindParam('param', $variable, 'hello');
     }
 
     public function testBindParamWithReturnDataType()
@@ -180,16 +169,13 @@ class OracleDBOCIStatementTest extends \PHPUnit_Framework_TestCase
         $this->assertTrue($this->stmt->bindValue('param', 'hello'));
     }
 
-    /**
-     * @expectedException \InvalidArgumentException
-     */
     public function testBindValueWithInvalidDataType()
     {
+        $this->expectException(InvalidArgumentException::class);
         $this->stmt->bindValue(0, 'hello', 8);
     }
 
     // method not yet implemented
-
     public function testCloseCursor()
     {
         $this->assertTrue($this->stmt->closeCursor());
@@ -389,11 +375,9 @@ class OracleDBOCIStatementTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('07000', $this->stmt->errorCode());
     }
 
-    /**
-     * @expectedException \InvalidArgumentException
-     */
     public function testFetchAllFailWithInvalidFetchStyle()
     {
+        $this->expectException(InvalidArgumentException::class);
         $this->stmt->fetchAll(\PDO::FETCH_BOTH);
     }
 
@@ -402,11 +386,9 @@ class OracleDBOCIStatementTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals($this->resultNumArray[1], $this->stmt->fetchColumn(1));
     }
 
-    /**
-     * @expectedException Jfelder\OracleDB\OCI_PDO\OCIException
-     */
     public function testFetchColumnWithColumnName()
     {
+        $this->expectException(OCIException::class);
         $this->stmt->fetchColumn('ColumnName');
     }
 
@@ -444,11 +426,9 @@ class OracleDBOCIStatementTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals($expected, $result);
     }
 
-    /**
-     * @expectedException Jfelder\OracleDB\OCI_PDO\OCIException
-     */
     public function testGetColumnMetaWithColumnName()
     {
+        $this->expectException(OCIException::class);
         $this->stmt->getColumnMeta('ColumnName');
     }
 
@@ -476,6 +456,5 @@ class OracleDBOCIStatementTest extends \PHPUnit_Framework_TestCase
     public function testGetOCIResource()
     {
         $this->assertEquals('oci8 statement', $this->stmt->getOCIResource());
-    }
-}
+    }    
 }

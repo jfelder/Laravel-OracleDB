@@ -1,30 +1,29 @@
 {
-    "name": "jfelder/oracledb",
-    "description": "Oracle DB driver for Laravel 5",
-    "keywords": ["oracle", "laravel", "laravel 5", "pdo_oci", "oci8"],
-    "license": "MIT",
-    "authors": [
-        {
-          "name": "Jimmy Felder",
-          "email": "jimmyfelder@gmail.com"
-        }
-    ],
-    "require": {
-      "php": ">=5.6.4",
-      "illuminate/support": "5.4.*",
-      "illuminate/database": "5.4.*",
-      "illuminate/pagination": "5.4.*"
-    },
-    "require-dev": {
-      "fzaninotto/faker": "~1.4",
-      "mockery/mockery": "~0.9.4",
-      "phpunit/phpunit": "~4.0",
-      "phpspec/phpspec": "~2.1"
-    },
-    "autoload": {
-      "psr-4": {
-        "Jfelder\\": "src/Jfelder"
+  "name": "jfelder/oracledb",
+  "description": "Oracle DB driver for Laravel",
+  "keywords": ["oracle", "laravel", "laravel 6", "pdo_oci", "oci8"],
+  "license": "MIT",
+  "authors": [
+      {
+        "name": "Jimmy Felder",
+        "email": "jimmyfelder@gmail.com"
       }
-    },
-    "minimum-stability": "stable"
+  ],
+  "require": {
+    "php": "^7.2",
+    "illuminate/support": "^6.0",
+    "illuminate/database": "^6.0",
+    "illuminate/pagination": "^6.0"
+  },
+  "require-dev": {
+    "fzaninotto/faker": "^1.9.1",
+    "mockery/mockery": "^1.0",
+    "phpunit/phpunit": "^8.0"
+  },
+  "autoload": {
+    "psr-4": {
+      "Jfelder\\": "src/Jfelder"
+    }
+  },
+  "minimum-stability": "stable"
 }
