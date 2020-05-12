@@ -3,12 +3,13 @@
 use Mockery as m;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Database\Query\Expression as Raw;
+use PHPUnit\Framework\TestCase;
 
 include 'mocks/PDOMocks.php';
 
-class OracleDBQueryBuilderTest extends PHPUnit_Framework_TestCase
+class OracleDBQueryBuilderTest extends TestCase
 {
-    public function tearDown()
+    public function tearDown(): void
     {
         m::close();
     }
@@ -20,6 +21,9 @@ class OracleDBQueryBuilderTest extends PHPUnit_Framework_TestCase
         $this->assertEquals('select * from "users"', $builder->toSql());
     }
 
+    /**
+     * @doesNotPerformAssertions
+     */
     public function testBasicSelectUseWritePdo()
     {
         $builder = $this->getOracleBuilderWithProcessor();
@@ -225,11 +229,11 @@ class OracleDBQueryBuilderTest extends PHPUnit_Framework_TestCase
         $builder = $this->getOracleBuilder();
         $builder->select('*')->from('users')->where('id', '=', 1);
         $builder->union($this->getOracleBuilder()->select('*')->from('users')->where('id', '=', 2));
-        $this->assertEquals('select * from "users" where "id" = ? union select * from "users" where "id" = ?', $builder->toSql());
+        $this->assertEquals('(select * from "users" where "id" = ?) union (select * from "users" where "id" = ?)', $builder->toSql());
         $this->assertEquals([0 => 1, 1 => 2], $builder->getBindings());
 
         $builder = $this->getOracleBuilder();
-        $expectedSql = 'select t2.* from ( select rownum AS "rn", t1.* from (select "a" from "t3" where "a" = ? and "b" = ? union select "a" from "t4" where "a" = ? and "b" = ? order by "a" asc) t1 ) t2 where t2."rn" between 1 and 10';
+        $expectedSql = 'select t2.* from ( select rownum AS "rn", t1.* from ((select "a" from "t3" where "a" = ? and "b" = ?) union (select "a" from "t4" where "a" = ? and "b" = ?) order by "a" asc) t1 ) t2 where t2."rn" between 1 and 10';
         $union = $this->getOracleBuilder()->select('a')->from('t4')->where('a', 11)->where('b', 2);
         $builder->select('a')->from('t3')->where('a', 10)->where('b', 1)->union($union)->orderBy('a')->limit(10);
         $this->assertEquals($expectedSql, $builder->toSql());
@@ -241,7 +245,7 @@ class OracleDBQueryBuilderTest extends PHPUnit_Framework_TestCase
         $builder = $this->getOracleBuilder();
         $builder->select('*')->from('users')->where('id', '=', 1);
         $builder->unionAll($this->getOracleBuilder()->select('*')->from('users')->where('id', '=', 2));
-        $this->assertEquals('select * from "users" where "id" = ? union all select * from "users" where "id" = ?', $builder->toSql());
+        $this->assertEquals('(select * from "users" where "id" = ?) union all (select * from "users" where "id" = ?)', $builder->toSql());
         $this->assertEquals([0 => 1, 1 => 2], $builder->getBindings());
     }
 
@@ -251,7 +255,7 @@ class OracleDBQueryBuilderTest extends PHPUnit_Framework_TestCase
         $builder->select('*')->from('users')->where('id', '=', 1);
         $builder->union($this->getOracleBuilder()->select('*')->from('users')->where('id', '=', 2));
         $builder->union($this->getOracleBuilder()->select('*')->from('users')->where('id', '=', 3));
-        $this->assertEquals('select * from "users" where "id" = ? union select * from "users" where "id" = ? union select * from "users" where "id" = ?', $builder->toSql());
+        $this->assertEquals('(select * from "users" where "id" = ?) union (select * from "users" where "id" = ?) union (select * from "users" where "id" = ?)', $builder->toSql());
         $this->assertEquals([0 => 1, 1 => 2, 2 => 3], $builder->getBindings());
     }
 
@@ -261,7 +265,7 @@ class OracleDBQueryBuilderTest extends PHPUnit_Framework_TestCase
         $builder->select('*')->from('users')->where('id', '=', 1);
         $builder->unionAll($this->getOracleBuilder()->select('*')->from('users')->where('id', '=', 2));
         $builder->unionAll($this->getOracleBuilder()->select('*')->from('users')->where('id', '=', 3));
-        $this->assertEquals('select * from "users" where "id" = ? union all select * from "users" where "id" = ? union all select * from "users" where "id" = ?', $builder->toSql());
+        $this->assertEquals('(select * from "users" where "id" = ?) union all (select * from "users" where "id" = ?) union all (select * from "users" where "id" = ?)', $builder->toSql());
         $this->assertEquals([0 => 1, 1 => 2, 2 => 3], $builder->getBindings());
     }
 
@@ -271,7 +275,7 @@ class OracleDBQueryBuilderTest extends PHPUnit_Framework_TestCase
         $builder->select('*')->from('users')->where('id', '=', 1);
         $builder->union($this->getOracleBuilder()->select('*')->from('users')->where('id', '=', 2));
         $builder->orderBy('id', 'desc');
-        $this->assertEquals('select * from "users" where "id" = ? union select * from "users" where "id" = ? order by "id" desc', $builder->toSql());
+        $this->assertEquals('(select * from "users" where "id" = ?) union (select * from "users" where "id" = ?) order by "id" desc', $builder->toSql());
         $this->assertEquals([0 => 1, 1 => 2], $builder->getBindings());
     }
 
@@ -281,7 +285,7 @@ class OracleDBQueryBuilderTest extends PHPUnit_Framework_TestCase
         $builder->select('*')->from('users');
         $builder->union($this->getOracleBuilder()->select('*')->from('dogs'));
         $builder->skip(5)->take(10);
-        $this->assertEquals('select t2.* from ( select rownum AS "rn", t1.* from (select * from "users" union select * from "dogs") t1 ) t2 where t2."rn" between 6 and 15', $builder->toSql());
+        $this->assertEquals('select t2.* from ( select rownum AS "rn", t1.* from ((select * from "users") union (select * from "dogs")) t1 ) t2 where t2."rn" between 6 and 15', $builder->toSql());
     }
 
     public function testSubSelectWhereIns()
@@ -871,8 +875,9 @@ class OracleDBQueryBuilderTest extends PHPUnit_Framework_TestCase
     public function testTruncateMethod()
     {
         $builder = $this->getOracleBuilder();
-        $builder->getConnection()->shouldReceive('statement')->once()->with('truncate "users"', []);
+        $builder->getConnection()->shouldReceive('statement')->once()->with('truncate table "users"', []);
         $builder->from('users')->truncate();
+        $this->assertTrue(true); // assert that no exception occurred
     }
 
     public function testMergeWheresCanMergeWheresAndBindings()
@@ -904,6 +909,9 @@ class OracleDBQueryBuilderTest extends PHPUnit_Framework_TestCase
         $this->assertEquals($builder, $builder->dynamicWhere($method, $parameters));
     }
 
+    /**
+     * @doesNotPerformAssertions
+     */
     public function testDynamicWhereIsNotGreedy()
     {
         $method = 'whereIosVersionAndAndroidVersionOrOrientation';
@@ -925,12 +933,11 @@ class OracleDBQueryBuilderTest extends PHPUnit_Framework_TestCase
         $this->assertCount(2, $builder->wheres);
     }
 
-    /**
-     * @expectedException BadMethodCallException
-     */
     public function testBuilderThrowsExpectedExceptionWithUndefinedMethod()
     {
         $builder = $this->getOracleBuilder();
+
+        $this->expectException(BadMethodCallException::class);
 
         $builder->noValidMethodHere();
     }
@@ -1077,7 +1084,7 @@ class OracleDBQueryBuilderTest extends PHPUnit_Framework_TestCase
         $builder = $this->getOracleBuilder(false);
         $builder->select('*')->from('users')->where('id', '=', 1);
         $builder->union($this->getOracleBuilder(false)->select('*')->from('users')->where('id', '=', 2));
-        $this->assertEquals('select * from users where id = ? union select * from users where id = ?', $builder->toSql());
+        $this->assertEquals('(select * from users where id = ?) union (select * from users where id = ?)', $builder->toSql());
         $this->assertEquals([0 => 1, 1 => 2], $builder->getBindings());
     }
 

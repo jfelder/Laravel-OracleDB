@@ -1,10 +1,11 @@
 <?php
 
 use Mockery as m;
+use PHPUnit\Framework\TestCase;
 
-class OracleDBConnectorTest extends PHPUnit_Framework_TestCase
+class OracleDBConnectorTest extends TestCase
 {
-    public function tearDown()
+    public function tearDown(): void
     {
         m::close();
     }
@@ -21,10 +22,11 @@ class OracleDBConnectorTest extends PHPUnit_Framework_TestCase
      */
     public function testOracleConnectCallsCreateConnectionWithProperArguments($dsn, $config)
     {
-        $connector = $this->getMock('Jfelder\OracleDB\Connectors\OracleConnector', ['createConnection', 'getOptions']);
         $connection = m::mock('stdClass');
+        $connector = $this->getMockBuilder('Jfelder\OracleDB\Connectors\OracleConnector')->setMethods(['createConnection', 'getOptions'])->getMock();
         $connector->expects($this->once())->method('getOptions')->with($this->equalTo($config))->will($this->returnValue(['options']));
         $connector->expects($this->once())->method('createConnection')->with($this->equalTo($dsn), $this->equalTo($config), $this->equalTo(['options']))->will($this->returnValue($connection));
+        
         $result = $connector->connect($config);
 
         $this->assertSame($result, $connection);
@@ -41,7 +43,6 @@ class OracleDBConnectorTest extends PHPUnit_Framework_TestCase
                 ['driver' => 'oci8', 'tns' => '(DESCRIPTION =(ADDRESS = (PROTOCOL = TCP)(HOST = localhost)(PORT = 6789))(CONNECT_DATA =(SID = ORCL)))'], ],
             ['(DESCRIPTION =(ADDRESS = (PROTOCOL = TCP)(HOST = localhost)(PORT = 9876))(CONNECT_DATA =(SID = ORCL)))',
                 ['driver' => 'oci8', 'host' => 'localhost', 'port' => '9876', 'database' => 'ORCL', 'tns' => ''], ],
-
         ];
     }
 }

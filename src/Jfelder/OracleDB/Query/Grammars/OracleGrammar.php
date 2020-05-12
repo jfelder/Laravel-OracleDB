@@ -37,20 +37,36 @@ class OracleGrammar extends BaseGrammar
      */
     public function compileSelect(Builder $query)
     {
+        if ($query->unions && $query->aggregate) {
+            return $this->compileUnionAggregate($query);
+        }
+
+        // If the query does not have any columns set, we'll set the columns to the
+        // * character to just get all of the columns from the database. Then we
+        // can build the query and concatenate all the pieces together as one.
+        $original = $query->columns;
+
         if (is_null($query->columns)) {
             $query->columns = ['*'];
         }
 
+        // To compile the query, we'll spin through each component of the query and
+        // see if that component exists. If it does we'll just call the compiler
+        // function for the component which is responsible for making the SQL.
         $components = $this->compileComponents($query);
+        $sql = trim($this->concatenate($components));
 
-        // If an offset is present on the query, we will need to wrap the query in
-        // a big "ANSI" offset syntax block. This is very nasty compared to the
-        // other database systems but is necessary for implementing features.
-        if ($query->limit > 0 || $query->offset > 0) {
-            return $this->compileAnsiOffset($query, $components);
+        if ($query->unions) {
+            $sql = $this->wrapUnion($sql).' '.$this->compileUnions($query);
         }
 
-        return trim($this->concatenate($components));
+        if ($query->limit > 0 || $query->offset > 0) {
+            $sql = $this->compileAnsiOffset($query, $components);
+        }
+
+        $query->columns = $original;
+
+        return $sql;
     }
 
     /**
@@ -183,6 +199,10 @@ class OracleGrammar extends BaseGrammar
         $constraint = $this->compileRowConstraint($query);
 
         $sql = $this->concatenate($components);
+
+        if ($query->unions) {
+            $sql = $this->wrapUnion($sql).' '.$this->compileUnions($query);
+        }
 
         // We are now ready to build the final SQL query so we'll create a common table
         // expression from the query and get the records with row numbers within our

@@ -1,21 +1,20 @@
 <?php
 
 use Mockery as m;
+use PHPUnit\Framework\TestCase;
 
 include 'mocks/OCIMocks.php';
 
-class OracleDBOCIProcessorTest extends PHPUnit_Framework_TestCase
+class OracleDBOCIProcessorTest extends TestCase
 {
-    // defining here in case oci8 extension not installed
-
-    protected function setUp()
+    protected function setUp(): void
     {
         if (! extension_loaded('oci8')) {
             $this->markTestSkipped('The oci8 extension is not available.');
         }
     }
 
-    public function tearDown()
+    public function tearDown(): void
     {
         m::close();
     }
