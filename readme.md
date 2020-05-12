@@ -1,11 +1,11 @@
 ## Laravel Oracle Database Package
 
-### OracleDB (updated for Laravel 6.x)
+### OracleDB (updated for Laravel 7.x)
 
 [![Latest Stable Version](https://poser.pugx.org/jfelder/oracledb/v/stable.png)](https://packagist.org/packages/jfelder/oracledb) [![Total Downloads](https://poser.pugx.org/jfelder/oracledb/downloads.png)](https://packagist.org/packages/jfelder/oracledb) [![Build Status](https://travis-ci.org/jfelder/Laravel-OracleDB.png)](https://travis-ci.org/jfelder/Laravel-OracleDB)
 
 
-OracleDB is an Oracle Database Driver package for [Laravel Framework](http://laravel.com/) - thanks @taylorotwell. OracleDB is an extension of [Illuminate/Database](https://github.com/illuminate/database) that uses either the [PDO_OCI] (http://www.php.net/manual/en/ref.pdo-oci.php) extension or the [OCI8 Functions](http://www.php.net/manual/en/ref.oci8.php) wrapped into the PDO namespace.
+OracleDB is an Oracle Database Driver package for [Laravel Framework](https://laravel.com) - thanks @taylorotwell. OracleDB is an extension of [Illuminate/Database](https://github.com/illuminate/database) that uses either the [PDO_OCI] (https://www.php.net/manual/en/ref.pdo-oci.php) extension or the [OCI8 Functions](https://www.php.net/manual/en/ref.oci8.php) wrapped into the PDO namespace.
 
 **Please report any bugs you may find.**
 
@@ -24,7 +24,7 @@ Add `jfelder/oracledb` as a requirement to composer.json:
 ```json
 {
     "require": {
-        "jfelder/oracledb": "6.*"
+        "jfelder/oracledb": "7.*"
     }
 }
 ```
@@ -80,8 +80,8 @@ in config/oracledb.php file.
 > **Note:** When using the insertGetId method, you can specify the auto-incrementing column name as the second
 parameter in insertGetId function. It will default to "id" if not specified.
 
-See [Laravel Database Basic Docs](https://laravel.com/docs/6.x/database) for more information.
+See [Laravel Database Basic Docs](https://laravel.com/docs/7.x/database) for more information.
 
 ### License
 
-Licensed under the [MIT License](http://cheeaun.mit-license.org/).
+Licensed under the [MIT License](https://cheeaun.mit-license.org).
