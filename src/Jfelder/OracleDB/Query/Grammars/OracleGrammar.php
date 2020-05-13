@@ -19,10 +19,11 @@ class OracleGrammar extends BaseGrammar
     protected function dateBasedWhere($type, Builder $query, $where)
     {
         $date_parts = [
-            'date' => '',
+            'date' => 'YYYY-MM-DD',
             'day' => 'DD',
             'month' => 'MM',
             'year' => 'YYYY',
+            'time' => 'HH24:MI:SS'
         ];
         $value = $this->parameter($where['value']);
 

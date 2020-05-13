@@ -11,10 +11,6 @@ OracleDB is an Oracle Database Driver package for [Laravel Framework](http://lar
 
 - [Installation](#installation)
 - [Basic Usage](#basic-usage)
-- [Query Builder](#query-builder)
-- [Eloquent](#eloquent)
-- [Schema](#schema)
-- [Migrations](#migrations)
 - [License](#license)
 
 ### Installation

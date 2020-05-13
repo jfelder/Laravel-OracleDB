@@ -21,6 +21,33 @@ class OracleDBQueryBuilderTest extends TestCase
         $this->assertEquals('select * from "users"', $builder->toSql());
     }
 
+    public function testBasicSelectWithGetColumns()
+    {
+        $builder = $this->getOracleBuilder();
+        $builder->getProcessor()->shouldReceive('processSelect');
+        $builder->getConnection()->shouldReceive('select')->once()->andReturnUsing(function ($sql) {
+            $this->assertSame('select * from "users"', $sql);
+        });
+        $builder->getConnection()->shouldReceive('select')->once()->andReturnUsing(function ($sql) {
+            $this->assertSame('select "foo", "bar" from "users"', $sql);
+        });
+        $builder->getConnection()->shouldReceive('select')->once()->andReturnUsing(function ($sql) {
+            $this->assertSame('select "baz" from "users"', $sql);
+        });
+
+        $builder->from('users')->get();
+        $this->assertNull($builder->columns);
+
+        $builder->from('users')->get(['foo', 'bar']);
+        $this->assertNull($builder->columns);
+
+        $builder->from('users')->get('baz');
+        $this->assertNull($builder->columns);
+
+        $this->assertSame('select * from "users"', $builder->toSql());
+        $this->assertNull($builder->columns);
+    }
+
     /**
      * @doesNotPerformAssertions
      */
@@ -51,6 +78,13 @@ class OracleDBQueryBuilderTest extends TestCase
         $this->assertEquals('select "x"."y" as "foo.bar" from "baz"', $builder->toSql());
     }
 
+    public function testAliasWrappingWithSpacesInDatabaseName()
+    {
+        $builder = $this->getOracleBuilder();
+        $builder->select('w x.y.z as foo.bar')->from('baz');
+        $this->assertSame('select "w x"."y"."z" as "foo.bar" from "baz"', $builder->toSql());
+    }    
+
     public function testAddingSelects()
     {
         $builder = $this->getOracleBuilder();
@@ -71,6 +105,13 @@ class OracleDBQueryBuilderTest extends TestCase
         $builder = $this->getOracleBuilder();
         $builder->distinct()->select('foo', 'bar')->from('users');
         $this->assertEquals('select distinct "foo", "bar" from "users"', $builder->toSql());
+    }
+
+    public function testBasicSelectDistinctOnColumns()
+    {
+        $builder = $this->getOracleBuilder();
+        $builder->distinct('foo')->select('foo', 'bar')->from('users');
+        $this->assertSame('select distinct "foo", "bar" from "users"', $builder->toSql());
     }
 
     public function testBasicAlias()
@@ -103,6 +144,135 @@ class OracleDBQueryBuilderTest extends TestCase
         $this->assertEquals('select * from "public"."users"', $builder->toSql());
     }
 
+    public function testWhenCallback()
+    {
+        $callback = function ($query, $condition) {
+            $this->assertTrue($condition);
+
+            $query->where('id', '=', 1);
+        };
+
+        $builder = $this->getOracleBuilder();
+        $builder->select('*')->from('users')->when(true, $callback)->where('email', 'foo');
+        $this->assertSame('select * from "users" where "id" = ? and "email" = ?', $builder->toSql());
+
+        $builder = $this->getOracleBuilder();
+        $builder->select('*')->from('users')->when(false, $callback)->where('email', 'foo');
+        $this->assertSame('select * from "users" where "email" = ?', $builder->toSql());
+    }    
+
+    public function testWhenCallbackWithReturn()
+    {
+        $callback = function ($query, $condition) {
+            $this->assertTrue($condition);
+
+            return $query->where('id', '=', 1);
+        };
+
+        $builder = $this->getOracleBuilder();
+        $builder->select('*')->from('users')->when(true, $callback)->where('email', 'foo');
+        $this->assertSame('select * from "users" where "id" = ? and "email" = ?', $builder->toSql());
+
+        $builder = $this->getOracleBuilder();
+        $builder->select('*')->from('users')->when(false, $callback)->where('email', 'foo');
+        $this->assertSame('select * from "users" where "email" = ?', $builder->toSql());
+    }    
+
+    public function testWhenCallbackWithDefault()
+    {
+        $callback = function ($query, $condition) {
+            $this->assertEquals($condition, 'truthy');
+
+            $query->where('id', '=', 1);
+        };
+
+        $default = function ($query, $condition) {
+            $this->assertEquals($condition, 0);
+
+            $query->where('id', '=', 2);
+        };
+
+        $builder = $this->getOracleBuilder();
+        $builder->select('*')->from('users')->when('truthy', $callback, $default)->where('email', 'foo');
+        $this->assertSame('select * from "users" where "id" = ? and "email" = ?', $builder->toSql());
+        $this->assertEquals([0 => 1, 1 => 'foo'], $builder->getBindings());
+
+        $builder = $this->getOracleBuilder();
+        $builder->select('*')->from('users')->when(0, $callback, $default)->where('email', 'foo');
+        $this->assertSame('select * from "users" where "id" = ? and "email" = ?', $builder->toSql());
+        $this->assertEquals([0 => 2, 1 => 'foo'], $builder->getBindings());
+    }    
+
+    public function testUnlessCallback()
+    {
+        $callback = function ($query, $condition) {
+            $this->assertFalse($condition);
+
+            $query->where('id', '=', 1);
+        };
+
+        $builder = $this->getOracleBuilder();
+        $builder->select('*')->from('users')->unless(false, $callback)->where('email', 'foo');
+        $this->assertSame('select * from "users" where "id" = ? and "email" = ?', $builder->toSql());
+
+        $builder = $this->getOracleBuilder();
+        $builder->select('*')->from('users')->unless(true, $callback)->where('email', 'foo');
+        $this->assertSame('select * from "users" where "email" = ?', $builder->toSql());
+    }
+
+    public function testUnlessCallbackWithReturn()
+    {
+        $callback = function ($query, $condition) {
+            $this->assertFalse($condition);
+
+            return $query->where('id', '=', 1);
+        };
+
+        $builder = $this->getOracleBuilder();
+        $builder->select('*')->from('users')->unless(false, $callback)->where('email', 'foo');
+        $this->assertSame('select * from "users" where "id" = ? and "email" = ?', $builder->toSql());
+
+        $builder = $this->getOracleBuilder();
+        $builder->select('*')->from('users')->unless(true, $callback)->where('email', 'foo');
+        $this->assertSame('select * from "users" where "email" = ?', $builder->toSql());
+    }
+
+    public function testUnlessCallbackWithDefault()
+    {
+        $callback = function ($query, $condition) {
+            $this->assertEquals($condition, 0);
+
+            $query->where('id', '=', 1);
+        };
+
+        $default = function ($query, $condition) {
+            $this->assertEquals($condition, 'truthy');
+
+            $query->where('id', '=', 2);
+        };
+
+        $builder = $this->getOracleBuilder();
+        $builder->select('*')->from('users')->unless(0, $callback, $default)->where('email', 'foo');
+        $this->assertSame('select * from "users" where "id" = ? and "email" = ?', $builder->toSql());
+        $this->assertEquals([0 => 1, 1 => 'foo'], $builder->getBindings());
+
+        $builder = $this->getOracleBuilder();
+        $builder->select('*')->from('users')->unless('truthy', $callback, $default)->where('email', 'foo');
+        $this->assertSame('select * from "users" where "id" = ? and "email" = ?', $builder->toSql());
+        $this->assertEquals([0 => 2, 1 => 'foo'], $builder->getBindings());
+    }    
+
+    public function testTapCallback()
+    {
+        $callback = function ($query) {
+            return $query->where('id', '=', 1);
+        };
+
+        $builder = $this->getOracleBuilder();
+        $builder->select('*')->from('users')->tap($callback)->where('email', 'foo');
+        $this->assertSame('select * from "users" where "id" = ? and "email" = ?', $builder->toSql());
+    }    
+
     public function testBasicWheres()
     {
         $builder = $this->getOracleBuilder();
@@ -110,6 +280,98 @@ class OracleDBQueryBuilderTest extends TestCase
         $this->assertEquals('select * from "users" where "id" = ?', $builder->toSql());
         $this->assertEquals([0 => 1], $builder->getBindings());
     }
+
+    public function testWheresWithArrayValue()
+    {
+        $builder = $this->getOracleBuilder();
+        $builder->select('*')->from('users')->where('id', [12, 30]);
+        $this->assertSame('select * from "users" where "id" = ?', $builder->toSql());
+        $this->assertEquals([0 => 12, 1 => 30], $builder->getBindings());
+
+        $builder = $this->getOracleBuilder();
+        $builder->select('*')->from('users')->where('id', '=', [12, 30]);
+        $this->assertSame('select * from "users" where "id" = ?', $builder->toSql());
+        $this->assertEquals([0 => 12, 1 => 30], $builder->getBindings());
+
+        $builder = $this->getOracleBuilder();
+        $builder->select('*')->from('users')->where('id', '!=', [12, 30]);
+        $this->assertSame('select * from "users" where "id" != ?', $builder->toSql());
+        $this->assertEquals([0 => 12, 1 => 30], $builder->getBindings());
+
+        $builder = $this->getOracleBuilder();
+        $builder->select('*')->from('users')->where('id', '<>', [12, 30]);
+        $this->assertSame('select * from "users" where "id" <> ?', $builder->toSql());
+        $this->assertEquals([0 => 12, 1 => 30], $builder->getBindings());
+    }    
+
+    public function testDateBasedWheresAcceptsTwoArguments()
+    {
+        $builder = $this->getOracleBuilder();
+        $builder->select('*')->from('users')->whereDate('created_at', 1);
+        $this->assertSame('select * from "users" where TO_CHAR("created_at", \'YYYY-MM-DD\') = ?', $builder->toSql());
+
+        $builder = $this->getOracleBuilder();
+        $builder->select('*')->from('users')->whereDay('created_at', 1);
+        $this->assertSame('select * from "users" where TO_CHAR("created_at", \'DD\') = ?', $builder->toSql());
+
+        $builder = $this->getOracleBuilder();
+        $builder->select('*')->from('users')->whereMonth('created_at', 1);
+        $this->assertSame('select * from "users" where TO_CHAR("created_at", \'MM\') = ?', $builder->toSql());
+
+        $builder = $this->getOracleBuilder();
+        $builder->select('*')->from('users')->whereYear('created_at', 1);
+        $this->assertSame('select * from "users" where TO_CHAR("created_at", \'YYYY\') = ?', $builder->toSql());
+    }
+
+    public function testDateBasedOrWheresAcceptsTwoArguments()
+    {
+        $builder = $this->getOracleBuilder();
+        $builder->select('*')->from('users')->where('id', 1)->orWhereDate('created_at', 1);
+        $this->assertSame('select * from "users" where "id" = ? or TO_CHAR("created_at", \'YYYY-MM-DD\') = ?', $builder->toSql());
+
+        $builder = $this->getOracleBuilder();
+        $builder->select('*')->from('users')->where('id', 1)->orWhereDay('created_at', 1);
+        $this->assertSame('select * from "users" where "id" = ? or TO_CHAR("created_at", \'DD\') = ?', $builder->toSql());
+
+        $builder = $this->getOracleBuilder();
+        $builder->select('*')->from('users')->where('id', 1)->orWhereMonth('created_at', 1);
+        $this->assertSame('select * from "users" where "id" = ? or TO_CHAR("created_at", \'MM\') = ?', $builder->toSql());
+
+        $builder = $this->getOracleBuilder();
+        $builder->select('*')->from('users')->where('id', 1)->orWhereYear('created_at', 1);
+        $this->assertSame('select * from "users" where "id" = ? or TO_CHAR("created_at", \'YYYY\') = ?', $builder->toSql());
+    }
+
+    public function testDateBasedWheresExpressionIsNotBound()
+    {
+        $builder = $this->getOracleBuilder();
+        $builder->select('*')->from('users')->whereDate('created_at', new Raw('sysdate'))->where('admin', true);
+        $this->assertEquals([true], $builder->getBindings());
+
+        $builder = $this->getOracleBuilder();
+        $builder->select('*')->from('users')->whereDay('created_at', new Raw('sysdate'));
+        $this->assertEquals([], $builder->getBindings());
+
+        $builder = $this->getOracleBuilder();
+        $builder->select('*')->from('users')->whereMonth('created_at', new Raw('sysdate'));
+        $this->assertEquals([], $builder->getBindings());
+
+        $builder = $this->getOracleBuilder();
+        $builder->select('*')->from('users')->whereYear('created_at', new Raw('sysdate'));
+        $this->assertEquals([], $builder->getBindings());
+    }
+
+    public function testWhereDateOracle()
+    {
+        $builder = $this->getOracleBuilder();
+        $builder->select('*')->from('users')->whereDate('created_at', '=', '2015-12-21');
+        $this->assertSame('select * from "users" where TO_CHAR("created_at", \'YYYY-MM-DD\') = ?', $builder->toSql());
+        $this->assertEquals([0 => '2015-12-21'], $builder->getBindings());
+
+        $builder = $this->getOracleBuilder();
+        $builder->select('*')->from('users')->whereDate('created_at', '=', new Raw("TO_CHAR(sysdate - 1, 'YYYY-MM-DD')"));
+        $this->assertSame('select * from "users" where TO_CHAR("created_at", \'YYYY-MM-DD\') = TO_CHAR(sysdate - 1, \'YYYY-MM-DD\')', $builder->toSql());
+    }    
 
     public function testWhereDayOracle()
     {
@@ -119,7 +381,15 @@ class OracleDBQueryBuilderTest extends TestCase
         $this->assertEquals([0 => 1], $builder->getBindings());
     }
 
-    public function testWhereMonthMySql()
+    public function testOrWhereDayOracle()
+    {
+        $builder = $this->getOracleBuilder();
+        $builder->select('*')->from('users')->whereDay('created_at', '=', 1)->orWhereDay('created_at', '=', 2);
+        $this->assertSame('select * from "users" where TO_CHAR("created_at", \'DD\') = ? or TO_CHAR("created_at", \'DD\') = ?', $builder->toSql());
+        $this->assertEquals([0 => 1, 1 => 2], $builder->getBindings());
+    }    
+
+    public function testWhereMonthOracle()
     {
         $builder = $this->getOracleBuilder();
         $builder->select('*')->from('users')->whereMonth('created_at', '=', 5);
@@ -127,7 +397,15 @@ class OracleDBQueryBuilderTest extends TestCase
         $this->assertEquals([0 => 5], $builder->getBindings());
     }
 
-    public function testWhereYearMySql()
+    public function testOrWhereMonthOracle()
+    {
+        $builder = $this->getOracleBuilder();
+        $builder->select('*')->from('users')->whereMonth('created_at', '=', 5)->orWhereMonth('created_at', '=', 6);
+        $this->assertSame('select * from "users" where TO_CHAR("created_at", \'MM\') = ? or TO_CHAR("created_at", \'MM\') = ?', $builder->toSql());
+        $this->assertEquals([0 => 5, 1 => 6], $builder->getBindings());
+    }
+
+    public function testWhereYearOracle()
     {
         $builder = $this->getOracleBuilder();
         $builder->select('*')->from('users')->whereYear('created_at', '=', 2014);
@@ -135,6 +413,48 @@ class OracleDBQueryBuilderTest extends TestCase
         $this->assertEquals([0 => 2014], $builder->getBindings());
     }
 
+    public function testOrWhereYearOracle()
+    {
+        $builder = $this->getOracleBuilder();
+        $builder->select('*')->from('users')->whereYear('created_at', '=', 2014)->orWhereYear('created_at', '=', 2015);
+        $this->assertSame('select * from "users" where TO_CHAR("created_at", \'YYYY\') = ? or TO_CHAR("created_at", \'YYYY\') = ?', $builder->toSql());
+        $this->assertEquals([0 => 2014, 1 => 2015], $builder->getBindings());
+    }    
+
+    public function testWhereTimeOracle()
+    {
+        $builder = $this->getOracleBuilder();
+        $builder->select('*')->from('users')->whereTime('created_at', '>=', '22:00');
+        $this->assertSame('select * from "users" where TO_CHAR("created_at", \'HH24:MI:SS\') >= ?', $builder->toSql());
+        $this->assertEquals([0 => '22:00'], $builder->getBindings());
+    }
+
+    public function testWhereTimeOperatorOptionalOracle()
+    {
+        $builder = $this->getOracleBuilder();
+        $builder->select('*')->from('users')->whereTime('created_at', '22:00');
+        $this->assertSame('select * from "users" where TO_CHAR("created_at", \'HH24:MI:SS\') = ?', $builder->toSql());
+        $this->assertEquals([0 => '22:00'], $builder->getBindings());
+    }
+
+    public function testWhereLikeOracle()
+    {
+        $builder = $this->getOracleBuilder();
+        $builder->select('*')->from('users')->where('id', 'like', '1');
+        $this->assertSame('select * from "users" where "id" like ?', $builder->toSql());
+        $this->assertEquals([0 => '1'], $builder->getBindings());
+
+        $builder = $this->getOracleBuilder();
+        $builder->select('*')->from('users')->where('id', 'LIKE', '1');
+        $this->assertSame('select * from "users" where "id" LIKE ?', $builder->toSql());
+        $this->assertEquals([0 => '1'], $builder->getBindings());
+
+        $builder = $this->getOracleBuilder();
+        $builder->select('*')->from('users')->where('id', 'not like', '1');
+        $this->assertSame('select * from "users" where "id" not like ?', $builder->toSql());
+        $this->assertEquals([0 => '1'], $builder->getBindings());
+    }
+    
     public function testWhereBetweens()
     {
         $builder = $this->getOracleBuilder();
@@ -146,6 +466,11 @@ class OracleDBQueryBuilderTest extends TestCase
         $builder->select('*')->from('users')->whereNotBetween('id', [1, 2]);
         $this->assertEquals('select * from "users" where "id" not between ? and ?', $builder->toSql());
         $this->assertEquals([0 => 1, 1 => 2], $builder->getBindings());
+
+        $builder = $this->getOracleBuilder();
+        $builder->select('*')->from('users')->whereBetween('id', [new Raw(1), new Raw(2)]);
+        $this->assertSame('select * from "users" where "id" between 1 and 2', $builder->toSql());
+        $this->assertEquals([], $builder->getBindings());        
     }
 
     public function testBasicOrWheres()
