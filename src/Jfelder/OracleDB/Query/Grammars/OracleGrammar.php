@@ -61,7 +61,7 @@ class OracleGrammar extends BaseGrammar
             $sql = $this->wrapUnion($sql).' '.$this->compileUnions($query);
         }
 
-        if ($query->limit > 0 || $query->offset > 0) {
+        if (isset($query->limit) || isset($query->offset)) {
             $sql = $this->compileAnsiOffset($query, $components);
         }
 
@@ -221,6 +221,10 @@ class OracleGrammar extends BaseGrammar
      */
     protected function compileRowConstraint($query)
     {
+        if (isset($query->limit) && $query->limit < 1) {
+            return "< 1";
+        }
+
         $start = $query->offset + 1;
 
         if ($query->limit > 0) {

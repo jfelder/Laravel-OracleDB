@@ -523,6 +523,18 @@ class OracleDBQueryBuilderTest extends TestCase
         $this->assertEquals([0 => 1, 1 => 1, 2 => 2, 3 => 3], $builder->getBindings());
     }
 
+    public function testRawWhereIns()
+    {
+        $builder = $this->getOracleBuilder();
+        $builder->select('*')->from('users')->whereIn('id', [new Raw(1)]);
+        $this->assertSame('select * from "users" where "id" in (1)', $builder->toSql());
+
+        $builder = $this->getOracleBuilder();
+        $builder->select('*')->from('users')->where('id', '=', 1)->orWhereIn('id', [new Raw(1)]);
+        $this->assertSame('select * from "users" where "id" = ? or "id" in (1)', $builder->toSql());
+        $this->assertEquals([0 => 1], $builder->getBindings());
+    }
+
     public function testEmptyWhereIns()
     {
         $builder = $this->getOracleBuilder();
@@ -547,6 +559,64 @@ class OracleDBQueryBuilderTest extends TestCase
         $builder->select('*')->from('users')->where('id', '=', 1)->orWhereNotIn('id', []);
         $this->assertEquals('select * from "users" where "id" = ? or 1 = 1', $builder->toSql());
         $this->assertEquals([0 => 1], $builder->getBindings());
+    }
+
+    public function testWhereIntegerInRaw()
+    {
+        $builder = $this->getOracleBuilder();
+        $builder->select('*')->from('users')->whereIntegerInRaw('id', ['1a', 2]);
+        $this->assertSame('select * from "users" where "id" in (1, 2)', $builder->toSql());
+        $this->assertEquals([], $builder->getBindings());
+    }
+
+    public function testWhereIntegerNotInRaw()
+    {
+        $builder = $this->getOracleBuilder();
+        $builder->select('*')->from('users')->whereIntegerNotInRaw('id', ['1a', 2]);
+        $this->assertSame('select * from "users" where "id" not in (1, 2)', $builder->toSql());
+        $this->assertEquals([], $builder->getBindings());
+    }
+
+    public function testEmptyWhereIntegerInRaw()
+    {
+        $builder = $this->getOracleBuilder();
+        $builder->select('*')->from('users')->whereIntegerInRaw('id', []);
+        $this->assertSame('select * from "users" where 0 = 1', $builder->toSql());
+        $this->assertEquals([], $builder->getBindings());
+    }
+
+    public function testEmptyWhereIntegerNotInRaw()
+    {
+        $builder = $this->getOracleBuilder();
+        $builder->select('*')->from('users')->whereIntegerNotInRaw('id', []);
+        $this->assertSame('select * from "users" where 1 = 1', $builder->toSql());
+        $this->assertEquals([], $builder->getBindings());
+    }    
+
+    public function testBasicWhereColumn()
+    {
+        $builder = $this->getOracleBuilder();
+        $builder->select('*')->from('users')->whereColumn('first_name', 'last_name')->orWhereColumn('first_name', 'middle_name');
+        $this->assertSame('select * from "users" where "first_name" = "last_name" or "first_name" = "middle_name"', $builder->toSql());
+        $this->assertEquals([], $builder->getBindings());
+
+        $builder = $this->getOracleBuilder();
+        $builder->select('*')->from('users')->whereColumn('updated_at', '>', 'created_at');
+        $this->assertSame('select * from "users" where "updated_at" > "created_at"', $builder->toSql());
+        $this->assertEquals([], $builder->getBindings());
+    }
+
+    public function testArrayWhereColumn()
+    {
+        $conditions = [
+            ['first_name', 'last_name'],
+            ['updated_at', '>', 'created_at'],
+        ];
+
+        $builder = $this->getOracleBuilder();
+        $builder->select('*')->from('users')->whereColumn($conditions);
+        $this->assertSame('select * from "users" where ("first_name" = "last_name" and "updated_at" > "created_at")', $builder->toSql());
+        $this->assertEquals([], $builder->getBindings());
     }
 
     public function testUnions()
@@ -594,6 +664,18 @@ class OracleDBQueryBuilderTest extends TestCase
         $this->assertEquals([0 => 1, 1 => 2, 2 => 3], $builder->getBindings());
     }
 
+    public function testUnionWithJoin()
+    {
+        $builder = $this->getOracleBuilder();
+        $builder->select('*')->from('users');
+        $builder->union($this->getOracleBuilder()->select('*')->from('dogs')->join('breeds', function ($join) {
+            $join->on('dogs.breed_id', '=', 'breeds.id')
+                ->where('breeds.is_native', '=', 1);
+        }));
+        $this->assertSame('(select * from "users") union (select * from "dogs" inner join "breeds" on "dogs"."breed_id" = "breeds"."id" and "breeds"."is_native" = ?)', $builder->toSql());
+        $this->assertEquals([0 => 1], $builder->getBindings());
+    }    
+
     public function testOracleUnionOrderBys()
     {
         $builder = $this->getOracleBuilder();
@@ -611,6 +693,18 @@ class OracleDBQueryBuilderTest extends TestCase
         $builder->union($this->getOracleBuilder()->select('*')->from('dogs'));
         $builder->skip(5)->take(10);
         $this->assertEquals('select t2.* from ( select rownum AS "rn", t1.* from ((select * from "users") union (select * from "dogs")) t1 ) t2 where t2."rn" between 6 and 15', $builder->toSql());
+    }
+
+    /**
+     * @doesNotPerformAssertions
+     */
+    public function testUnionAggregate()
+    {
+        $expected = 'select count(*) as aggregate from ((select * from "posts") union (select * from "videos")) as "temp_table"';
+        $builder = $this->getOracleBuilder();
+        $builder->getConnection()->shouldReceive('select')->once()->with($expected, [], true);
+        $builder->getProcessor()->shouldReceive('processSelect')->once();
+        $builder->from('posts')->union($this->getOracleBuilder()->from('videos'))->count();
     }
 
     public function testSubSelectWhereIns()
@@ -643,6 +737,19 @@ class OracleDBQueryBuilderTest extends TestCase
         $this->assertEquals([0 => 1], $builder->getBindings());
     }
 
+    public function testArrayWhereNulls()
+    {
+        $builder = $this->getOracleBuilder();
+        $builder->select('*')->from('users')->whereNull(['id', 'expires_at']);
+        $this->assertSame('select * from "users" where "id" is null and "expires_at" is null', $builder->toSql());
+        $this->assertEquals([], $builder->getBindings());
+
+        $builder = $this->getOracleBuilder();
+        $builder->select('*')->from('users')->where('id', '=', 1)->orWhereNull(['id', 'expires_at']);
+        $this->assertSame('select * from "users" where "id" = ? or "id" is null or "expires_at" is null', $builder->toSql());
+        $this->assertEquals([0 => 1], $builder->getBindings());
+    }    
+
     public function testBasicWhereNotNulls()
     {
         $builder = $this->getOracleBuilder();
@@ -656,56 +763,146 @@ class OracleDBQueryBuilderTest extends TestCase
         $this->assertEquals([0 => 1], $builder->getBindings());
     }
 
+    public function testArrayWhereNotNulls()
+    {
+        $builder = $this->getOracleBuilder();
+        $builder->select('*')->from('users')->whereNotNull(['id', 'expires_at']);
+        $this->assertSame('select * from "users" where "id" is not null and "expires_at" is not null', $builder->toSql());
+        $this->assertEquals([], $builder->getBindings());
+
+        $builder = $this->getOracleBuilder();
+        $builder->select('*')->from('users')->where('id', '>', 1)->orWhereNotNull(['id', 'expires_at']);
+        $this->assertSame('select * from "users" where "id" > ? or "id" is not null or "expires_at" is not null', $builder->toSql());
+        $this->assertEquals([0 => 1], $builder->getBindings());
+    }
+
     public function testGroupBys()
     {
         $builder = $this->getOracleBuilder();
+        $builder->select('*')->from('users')->groupBy('email');
+        $this->assertSame('select * from "users" group by "email"', $builder->toSql());
+
+        $builder = $this->getOracleBuilder();
         $builder->select('*')->from('users')->groupBy('id', 'email');
-        $this->assertEquals('select * from "users" group by "id", "email"', $builder->toSql());
+        $this->assertSame('select * from "users" group by "id", "email"', $builder->toSql());
 
         $builder = $this->getOracleBuilder();
         $builder->select('*')->from('users')->groupBy(['id', 'email']);
-        $this->assertEquals('select * from "users" group by "id", "email"', $builder->toSql());
+        $this->assertSame('select * from "users" group by "id", "email"', $builder->toSql());
+
+        $builder = $this->getOracleBuilder();
+        $builder->select('*')->from('users')->groupBy(new Raw('DATE(created_at)'));
+        $this->assertSame('select * from "users" group by DATE(created_at)', $builder->toSql());
+
+        $builder = $this->getOracleBuilder();
+        $builder->select('*')->from('users')->groupByRaw('DATE(created_at), ? DESC', ['foo']);
+        $this->assertSame('select * from "users" group by DATE(created_at), ? DESC', $builder->toSql());
+        $this->assertEquals(['foo'], $builder->getBindings());
+
+        $builder = $this->getOracleBuilder();
+        $builder->havingRaw('?', ['havingRawBinding'])->groupByRaw('?', ['groupByRawBinding'])->whereRaw('?', ['whereRawBinding']);
+        $this->assertEquals(['whereRawBinding', 'groupByRawBinding', 'havingRawBinding'], $builder->getBindings());
     }
 
     public function testOrderBys()
     {
         $builder = $this->getOracleBuilder();
         $builder->select('*')->from('users')->orderBy('email')->orderBy('age', 'desc');
-        $this->assertEquals('select * from "users" order by "email" asc, "age" desc', $builder->toSql());
+        $this->assertSame('select * from "users" order by "email" asc, "age" desc', $builder->toSql());
+
+        $builder->orders = null;
+        $this->assertSame('select * from "users"', $builder->toSql());
+
+        $builder->orders = [];
+        $this->assertSame('select * from "users"', $builder->toSql());
 
         $builder = $this->getOracleBuilder();
-        $builder->select('*')->from('users')->orderBy('email')->orderByRaw('age ? desc', ['foo']);
-        $this->assertEquals('select * from "users" order by "email" asc, age ? desc', $builder->toSql());
+        $builder->select('*')->from('users')->orderBy('email')->orderByRaw('"age" ? desc', ['foo']);
+        $this->assertSame('select * from "users" order by "email" asc, "age" ? desc', $builder->toSql());
         $this->assertEquals(['foo'], $builder->getBindings());
+
+        $builder = $this->getOracleBuilder();
+        $builder->select('*')->from('users')->orderByDesc('name');
+        $this->assertSame('select * from "users" order by "name" desc', $builder->toSql());
+
+        $builder = $this->getOracleBuilder();
+        $builder->select('*')->from('posts')->where('public', 1)
+            ->unionAll($this->getOracleBuilder()->select('*')->from('videos')->where('public', 1))
+            ->orderByRaw('field(category, ?, ?) asc', ['news', 'opinion']);
+        $this->assertSame('(select * from "posts" where "public" = ?) union all (select * from "videos" where "public" = ?) order by field(category, ?, ?) asc', $builder->toSql());
+        $this->assertEquals([1, 1, 'news', 'opinion'], $builder->getBindings());
     }
+
+    public function testOrderBySubQueries()
+    {
+        $expected = 'select * from "users" order by (select t2.* from ( select rownum AS "rn", t1.* from (select "created_at" from "logins" where "user_id" = "users"."id") t1 ) t2 where t2."rn" between 1 and 1)';
+        $subQuery = function ($query) {
+            return $query->select('created_at')->from('logins')->whereColumn('user_id', 'users.id')->limit(1);
+        };
+
+        $builder = $this->getOracleBuilder()->select('*')->from('users')->orderBy($subQuery);
+        $this->assertSame("$expected asc", $builder->toSql());
+
+        $builder = $this->getOracleBuilder()->select('*')->from('users')->orderBy($subQuery, 'desc');
+        $this->assertSame("$expected desc", $builder->toSql());
+
+        $builder = $this->getOracleBuilder()->select('*')->from('users')->orderByDesc($subQuery);
+        $this->assertSame("$expected desc", $builder->toSql());
+
+        $builder = $this->getOracleBuilder();
+        $builder->select('*')->from('posts')->where('public', 1)
+            ->unionAll($this->getOracleBuilder()->select('*')->from('videos')->where('public', 1))
+            ->orderBy($this->getOracleBuilder()->selectRaw('field(category, ?, ?)', ['news', 'opinion']));
+        $this->assertSame('(select * from "posts" where "public" = ?) union all (select * from "videos" where "public" = ?) order by (select field(category, ?, ?)) asc', $builder->toSql());
+        $this->assertEquals([1, 1, 'news', 'opinion'], $builder->getBindings());
+    }    
+
+    public function testOrderByInvalidDirectionParam()
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        $builder = $this->getOracleBuilder();
+        $builder->select('*')->from('users')->orderBy('age', 'asec');
+    }    
 
     public function testHavings()
     {
         $builder = $this->getOracleBuilder();
         $builder->select('*')->from('users')->having('email', '>', 1);
-        $this->assertEquals('select * from "users" having "email" > ?', $builder->toSql());
+        $this->assertSame('select * from "users" having "email" > ?', $builder->toSql());
 
         $builder = $this->getOracleBuilder();
         $builder->select('*')->from('users')
             ->orHaving('email', '=', 'test@example.com')
             ->orHaving('email', '=', 'test2@example.com');
-        $this->assertEquals('select * from "users" having "email" = ? or "email" = ?', $builder->toSql());
+        $this->assertSame('select * from "users" having "email" = ? or "email" = ?', $builder->toSql());
 
         $builder = $this->getOracleBuilder();
         $builder->select('*')->from('users')->groupBy('email')->having('email', '>', 1);
-        $this->assertEquals('select * from "users" group by "email" having "email" > ?', $builder->toSql());
+        $this->assertSame('select * from "users" group by "email" having "email" > ?', $builder->toSql());
 
         $builder = $this->getOracleBuilder();
         $builder->select('email as foo_email')->from('users')->having('foo_email', '>', 1);
-        $this->assertEquals('select "email" as "foo_email" from "users" having "foo_email" > ?', $builder->toSql());
+        $this->assertSame('select "email" as "foo_email" from "users" having "foo_email" > ?', $builder->toSql());
 
         $builder = $this->getOracleBuilder();
         $builder->select(['category', new Raw('count(*) as "total"')])->from('item')->where('department', '=', 'popular')->groupBy('category')->having('total', '>', new Raw('3'));
-        $this->assertEquals('select "category", count(*) as "total" from "item" where "department" = ? group by "category" having "total" > 3', $builder->toSql());
+        $this->assertSame('select "category", count(*) as "total" from "item" where "department" = ? group by "category" having "total" > 3', $builder->toSql());
 
         $builder = $this->getOracleBuilder();
         $builder->select(['category', new Raw('count(*) as "total"')])->from('item')->where('department', '=', 'popular')->groupBy('category')->having('total', '>', 3);
-        $this->assertEquals('select "category", count(*) as "total" from "item" where "department" = ? group by "category" having "total" > ?', $builder->toSql());
+        $this->assertSame('select "category", count(*) as "total" from "item" where "department" = ? group by "category" having "total" > ?', $builder->toSql());
+
+        $builder = $this->getOracleBuilder();
+        $builder->select('*')->from('users')->havingBetween('last_login_date', ['2018-11-16', '2018-12-16']);
+        $this->assertSame('select * from "users" having "last_login_date" between ? and ?', $builder->toSql());
+    }
+
+    public function testHavingShortcut()
+    {
+        $builder = $this->getOracleBuilder();
+        $builder->select('*')->from('users')->having('email', 1)->orHaving('email', 2);
+        $this->assertSame('select * from "users" having "email" = ? or "email" = ?', $builder->toSql());
     }
 
     public function testHavingFollowedBySelectGet()
@@ -737,9 +934,13 @@ class OracleDBQueryBuilderTest extends TestCase
         $builder = $this->getOracleBuilder();
         $builder->select('*')->from('users')->having('baz', '=', 1)->orHavingRaw('user_foo < user_bar');
         $this->assertEquals('select * from "users" having "baz" = ? or user_foo < user_bar', $builder->toSql());
+
+        $builder = $this->getOracleBuilder();
+        $builder->select('*')->from('users')->havingBetween('last_login_date', ['2018-11-16', '2018-12-16'])->orHavingRaw('user_foo < user_bar');
+        $this->assertSame('select * from "users" having "last_login_date" between ? and ? or user_foo < user_bar', $builder->toSql());        
     }
 
-    public function testLimitsAndOffsets()
+    public function testLimitsAndOffsetsAsdf()
     {
         $builder = $this->getOracleBuilder();
         $builder->select('*')->from('users')->offset(10);
@@ -754,16 +955,20 @@ class OracleDBQueryBuilderTest extends TestCase
         $this->assertEquals('select t2.* from ( select rownum AS "rn", t1.* from (select * from "users") t1 ) t2 where t2."rn" between 6 and 15', $builder->toSql());
 
         $builder = $this->getOracleBuilder();
+        $builder->select('*')->from('users')->skip(0)->take(0);
+        $this->assertSame('select * from (select * from "users") where rownum < 1', $builder->toSql());
+
+        $builder = $this->getOracleBuilder();
+        $builder->select('*')->from('users')->skip(0);
+        $this->assertEquals('select * from (select * from "users") where rownum >= 1', $builder->toSql());
+
+        $builder = $this->getOracleBuilder();
         $builder->select('*')->from('users')->skip(-5)->take(10);
         $this->assertEquals('select t2.* from ( select rownum AS "rn", t1.* from (select * from "users") t1 ) t2 where t2."rn" between 1 and 10', $builder->toSql());
 
         $builder = $this->getOracleBuilder();
-        $builder->select('*')->from('users')->forPage(2, 15);
-        $this->assertEquals('select t2.* from ( select rownum AS "rn", t1.* from (select * from "users") t1 ) t2 where t2."rn" between 16 and 30', $builder->toSql());
-
-        $builder = $this->getOracleBuilder();
-        $builder->select('*')->from('users')->forPage(-2, 15);
-        $this->assertEquals('select t2.* from ( select rownum AS "rn", t1.* from (select * from "users") t1 ) t2 where t2."rn" between 1 and 15', $builder->toSql());
+        $builder->select('*')->from('users')->skip(-5)->take(-10);
+        $this->assertSame('select * from (select * from "users") where rownum >= 1', $builder->toSql());
     }
 
     public function testGetCountForPaginationWithBindings()
