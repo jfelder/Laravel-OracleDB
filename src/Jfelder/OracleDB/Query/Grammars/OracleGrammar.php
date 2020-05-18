@@ -2,9 +2,10 @@
 
 namespace Jfelder\OracleDB\Query\Grammars;
 
+use Config;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Database\Query\Grammars\Grammar as BaseGrammar;
-use Config;
+use RuntimeException;
 
 class OracleGrammar extends BaseGrammar
 {
@@ -123,6 +124,10 @@ class OracleGrammar extends BaseGrammar
      */
     public function compileInsertGetId(Builder $query, $values, $sequence)
     {
+        if (empty($values)) {
+            throw new RuntimeException('This database engine does not support calling the insertGetId method with empty values.');
+        }
+
         if (is_null($sequence)) {
             $sequence = 'id';
         }
