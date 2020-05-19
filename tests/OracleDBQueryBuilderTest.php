@@ -1,9 +1,12 @@
 <?php
 
 use Mockery as m;
+use Illuminate\Database\ConnectionInterface;
 use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Database\Query\Expression as Raw;
+use Illuminate\Database\Query\Grammars\Grammar;
+use Illuminate\Database\Query\Processors\Processor;
 use PHPUnit\Framework\TestCase;
 
 include 'mocks/PDOMocks.php';
@@ -1771,6 +1774,14 @@ class OracleDBQueryBuilderTest extends TestCase
         $builder->getConnection()->shouldReceive('update')->once()->with('update "users" inner join "orders" on "users"."id" = "orders"."user_id" set "email" = ?, "name" = ? where "users"."id" = ?', ['foo', 'bar', 1])->andReturn(1);
         $result = $builder->from('users')->join('orders', 'users.id', '=', 'orders.user_id')->where('users.id', '=', 1)->update(['email' => 'foo', 'name' => 'bar']);
         $this->assertEquals(1, $result);
+
+        $builder = $this->getOracleBuilder();
+        $builder->getConnection()->shouldReceive('update')->once()->with('update "users" inner join "orders" on "users"."id" = "orders"."user_id" and "users"."id" = ? set "email" = ?, "name" = ?', [1, 'foo', 'bar'])->andReturn(1);
+        $result = $builder->from('users')->join('orders', function ($join) {
+            $join->on('users.id', '=', 'orders.user_id')
+                ->where('users.id', '=', 1);
+        })->update(['email' => 'foo', 'name' => 'bar']);
+        $this->assertEquals(1, $result);
     }
 
     public function testUpdateMethodRespectsRaw()
@@ -1780,6 +1791,49 @@ class OracleDBQueryBuilderTest extends TestCase
         $result = $builder->from('users')->where('id', '=', 1)->update(['email' => new Raw('foo'), 'name' => 'bar']);
         $this->assertEquals(1, $result);
     }
+
+    public function testUpdateOrInsertMethod()
+    {
+        $builder = m::mock(Builder::class.'[where,exists,insert]', [
+            m::mock(ConnectionInterface::class),
+            new Grammar,
+            m::mock(Processor::class),
+        ]);
+
+        $builder->shouldReceive('where')->once()->with(['email' => 'foo'])->andReturn(m::self());
+        $builder->shouldReceive('exists')->once()->andReturn(false);
+        $builder->shouldReceive('insert')->once()->with(['email' => 'foo', 'name' => 'bar'])->andReturn(true);
+
+        $this->assertTrue($builder->updateOrInsert(['email' => 'foo'], ['name' => 'bar']));
+
+        $builder = m::mock(Builder::class.'[where,exists,update]', [
+            m::mock(ConnectionInterface::class),
+            new Grammar,
+            m::mock(Processor::class),
+        ]);
+
+        $builder->shouldReceive('where')->once()->with(['email' => 'foo'])->andReturn(m::self());
+        $builder->shouldReceive('exists')->once()->andReturn(true);
+        $builder->shouldReceive('take')->andReturnSelf();
+        $builder->shouldReceive('update')->once()->with(['name' => 'bar'])->andReturn(1);
+
+        $this->assertTrue($builder->updateOrInsert(['email' => 'foo'], ['name' => 'bar']));
+    }
+
+    public function testUpdateOrInsertMethodWorksWithEmptyUpdateValues()
+    {
+        $builder = m::spy(Builder::class.'[where,exists,update]', [
+            m::mock(ConnectionInterface::class),
+            new Grammar,
+            m::mock(Processor::class),
+        ]);
+
+        $builder->shouldReceive('where')->once()->with(['email' => 'foo'])->andReturn(m::self());
+        $builder->shouldReceive('exists')->once()->andReturn(true);
+
+        $this->assertTrue($builder->updateOrInsert(['email' => 'foo']));
+        $builder->shouldNotHaveReceived('update');
+    }    
 
     public function testDeleteMethod()
     {
@@ -1792,7 +1846,31 @@ class OracleDBQueryBuilderTest extends TestCase
         $builder->getConnection()->shouldReceive('delete')->once()->with('delete from "users" where "users"."id" = ?', [1])->andReturn(1);
         $result = $builder->from('users')->delete(1);
         $this->assertEquals(1, $result);
+
+        $builder = $this->getOracleBuilder();
+        $builder->getConnection()->shouldReceive('delete')->once()->with('delete from "users" where "users"."id" = ?', [1])->andReturn(1);
+        $result = $builder->from('users')->selectRaw('?', ['ignore'])->delete(1);
+        $this->assertEquals(1, $result);        
     }
+
+    public function testDeleteWithJoinMethod()
+    {
+        //$builder->from('users')->join('contacts', 'users.id', '=', 'contacts.id')->where('email', '=', 'foo')->orderBy('id')->limit(1)->delete();
+        //$builder->from('users')->join('contacts', 'users.id', '=', 'contacts.id')->where('email', '=', 'foo')->delete();
+        //$builder->from('users')->join('contacts', 'users.id', '=', 'contacts.id')->where('users.email', '=', 'foo')->orderBy('users.id')->limit(1)->delete();
+        //$builder->from('users AS a')->join('users AS b', 'a.id', '=', 'b.user_id')->where('email', '=', 'foo')->orderBy('id')->limit(1)->delete();
+        //$builder->from('users')->join('contacts', 'users.id', '=', 'contacts.id')->orderBy('id')->take(1)->delete(1);
+        //$builder->from('users')->join('contacts', 'users.id', '=', 'contacts.id')->delete(1);
+        //$builder->from('users')->join('contacts', 'users.id', '=', 'contacts.id')->delete();        
+        //$builder->from('users as u')->join('contacts as c', 'u.id', '=', 'c.id')->delete();
+        //$builder->from('users')->join('contacts', 'users.id', '=', 'contacts.id')->where('users.email', '=', 'foo')->delete();
+        //$builder->from('users')
+            // ->join('contacts', function ($join) {
+            //     $join->on('users.id', '=', 'contacts.user_id')
+            //         ->where('users.id', '=', 1);
+            // })->where('name', 'baz')
+            // ->delete();
+    }    
 
     public function testTruncateMethod()
     {
