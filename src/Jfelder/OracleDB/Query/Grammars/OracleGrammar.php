@@ -187,14 +187,8 @@ class OracleGrammar extends BaseGrammar
      */
     protected function compileDeleteWithJoinsOrLimit(Builder $query)
     {
-        $table = $this->wrapTable($query->from);
-
-        $alias = last(preg_split('/\s+as\s+/i', $query->from));
-
-        $selectSql = $this->compileSelect($query->select($alias.'.ctid'));
-
-        return "delete from {$table} where {$this->wrap('ctid')} in ({$selectSql})";
-    }    
+        throw new RuntimeException('This database engine does not support delete statements that contain joins or limits.');
+    }
 
     /**
      * Compile an exists statement into SQL.

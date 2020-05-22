@@ -7,6 +7,8 @@ use Illuminate\Database\Query\Builder;
 use Illuminate\Database\Query\Expression as Raw;
 use Illuminate\Database\Query\Grammars\Grammar;
 use Illuminate\Database\Query\Processors\Processor;
+use Illuminate\Pagination\AbstractPaginator as Paginator;
+use Illuminate\Pagination\LengthAwarePaginator;
 use PHPUnit\Framework\TestCase;
 
 include 'mocks/PDOMocks.php';
@@ -944,7 +946,7 @@ class OracleDBQueryBuilderTest extends TestCase
         $this->assertSame('select * from "users" having "last_login_date" between ? and ? or user_foo < user_bar', $builder->toSql());        
     }
 
-    public function testLimitsAndOffsetsAsdf()
+    public function testLimitsAndOffsets()
     {
         $builder = $this->getOracleBuilder();
         $builder->select('*')->from('users')->offset(10);
@@ -1855,29 +1857,128 @@ class OracleDBQueryBuilderTest extends TestCase
 
     public function testDeleteWithJoinMethod()
     {
-        //$builder->from('users')->join('contacts', 'users.id', '=', 'contacts.id')->where('email', '=', 'foo')->orderBy('id')->limit(1)->delete();
-        //$builder->from('users')->join('contacts', 'users.id', '=', 'contacts.id')->where('email', '=', 'foo')->delete();
-        //$builder->from('users')->join('contacts', 'users.id', '=', 'contacts.id')->where('users.email', '=', 'foo')->orderBy('users.id')->limit(1)->delete();
-        //$builder->from('users AS a')->join('users AS b', 'a.id', '=', 'b.user_id')->where('email', '=', 'foo')->orderBy('id')->limit(1)->delete();
-        //$builder->from('users')->join('contacts', 'users.id', '=', 'contacts.id')->orderBy('id')->take(1)->delete(1);
-        //$builder->from('users')->join('contacts', 'users.id', '=', 'contacts.id')->delete(1);
-        //$builder->from('users')->join('contacts', 'users.id', '=', 'contacts.id')->delete();        
-        //$builder->from('users as u')->join('contacts as c', 'u.id', '=', 'c.id')->delete();
-        //$builder->from('users')->join('contacts', 'users.id', '=', 'contacts.id')->where('users.email', '=', 'foo')->delete();
-        //$builder->from('users')
-            // ->join('contacts', function ($join) {
-            //     $join->on('users.id', '=', 'contacts.user_id')
-            //         ->where('users.id', '=', 1);
-            // })->where('name', 'baz')
-            // ->delete();
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('does not support');
+        $builder = $this->getOracleBuilder();
+        $builder->from('users')->join('contacts', 'users.id', '=', 'contacts.id')->where('users.email', '=', 'foo')->orderBy('users.id')->limit(1)->delete();
     }    
 
+    /**
+     * @doesNotPerformAssertions
+     */
     public function testTruncateMethod()
     {
         $builder = $this->getOracleBuilder();
         $builder->getConnection()->shouldReceive('statement')->once()->with('truncate table "users"', []);
         $builder->from('users')->truncate();
-        $this->assertTrue(true); // assert that no exception occurred
+    }
+
+    public function testUpdateWrappingJson()
+    {
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('does not support');
+        $builder = $this->getOracleBuilder();
+        $builder->from('users')->where('active', '=', 1)->update(['name->first_name' => 'John', 'name->last_name' => 'Doe']);
+    }    
+
+    public function testUpdateWrappingNestedJson()
+    {
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('does not support');
+        $builder = $this->getOracleBuilder();
+        $builder->from('users')->where('active', '=', 1)->update(['meta->name->first_name' => 'John', 'meta->name->last_name' => 'Doe']);
+    }
+
+    public function testUpdateWrappingJsonArray()
+    {
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('does not support');
+        $builder = $this->getOracleBuilder();
+        $builder->from('users')->where('active', 1)->update([
+            'options' => ['2fa' => false, 'presets' => ['laravel', 'vue']],
+            'meta->tags' => ['white', 'large'],
+            'group_id' => new Raw('45'),
+            'created_at' => new DateTime('2019-08-06'),
+        ]);
+    }    
+
+    public function testUpdateWrappingNestedJsonArray()
+    {
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('does not support');
+        $builder = $this->getOracleBuilder();
+
+        $builder->from('users')->update([
+            'options->name' => 'Taylor',
+            'group_id' => new Raw('45'),
+            'options->security' => ['2fa' => false, 'presets' => ['laravel', 'vue']],
+            'options->sharing->twitter' => 'username',
+            'created_at' => new DateTime('2019-08-06'),
+        ]);
+    }    
+
+    public function testUpdateWithJsonPreparesBindingsCorrectly()
+    {
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('does not support');
+        $builder = $this->getOracleBuilder();
+        $builder->from('users')->where('id', '=', 0)->update(['options->enable' => false, 'updated_at' => '2015-05-26 22:02:06']);
+    }   
+    
+    public function testWrappingJsonWithString()
+    {
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('does not support');
+        $builder = $this->getOracleBuilder();
+        $builder->select('*')->from('users')->where('items->sku', '=', 'foo-bar')->toSql();
+    }
+
+    public function testWrappingJsonWithInteger()
+    {
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('does not support');
+        $builder = $this->getOracleBuilder();
+        $builder->select('*')->from('users')->where('items->price', '=', 1)->toSql();
+    }
+
+    public function testWrappingJsonWithDouble()
+    {
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('does not support');
+        $builder = $this->getOracleBuilder();
+        $builder->select('*')->from('users')->where('items->price', '=', 1.5)->toSql();
+    }
+
+    public function testWrappingJsonWithBoolean()
+    {
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('does not support');
+        $builder = $this->getOracleBuilder();
+        $builder->select('*')->from('users')->where('items->available', '=', true)->toSql();
+    }
+
+    public function testWrappingJsonWithBooleanAndIntegerThatLooksLikeOne()
+    {
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('does not support');
+        $builder = $this->getOracleBuilder();
+        $builder->select('*')->from('users')->where('items->available', '=', true)->where('items->active', '=', false)->where('items->number_available', '=', 0)->toSql();
+    }    
+
+    public function testJsonPathEscaping()
+    {
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('does not support');
+        $builder = $this->getOracleBuilder();
+        $builder->select("json->'))#")->toSql();
+    }
+
+    public function testWrappingJson()
+    {
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('does not support');
+        $builder = $this->getOracleBuilder();
+        $builder->select('items->price')->from('users')->where('users.items->price', '=', 1)->orderBy('items->price')->toSql();
     }
 
     public function testMergeWheresCanMergeWheresAndBindings()
@@ -1893,7 +1994,19 @@ class OracleDBQueryBuilderTest extends TestCase
     {
         $builder = $this->getOracleBuilder();
         $builder->select('*')->from('users')->where('foo', null);
-        $this->assertEquals('select * from "users" where "foo" is null', $builder->toSql());
+        $this->assertSame('select * from "users" where "foo" is null', $builder->toSql());
+
+        $builder = $this->getOracleBuilder();
+        $builder->select('*')->from('users')->where('foo', '=', null);
+        $this->assertSame('select * from "users" where "foo" is null', $builder->toSql());
+
+        $builder = $this->getOracleBuilder();
+        $builder->select('*')->from('users')->where('foo', '!=', null);
+        $this->assertSame('select * from "users" where "foo" is not null', $builder->toSql());
+
+        $builder = $this->getOracleBuilder();
+        $builder->select('*')->from('users')->where('foo', '<>', null);
+        $this->assertSame('select * from "users" where "foo" is not null', $builder->toSql());
     }
 
     public function testDynamicWhere()
@@ -1970,6 +2083,22 @@ class OracleDBQueryBuilderTest extends TestCase
         $this->assertEquals(['baz'], $builder->getBindings());
     }
 
+    /**
+     * @doesNotPerformAssertions
+     */
+    public function testSelectWithLockUsesWritePdo()
+    {
+        $builder = $this->getOracleBuilderWithProcessor();
+        $builder->getConnection()->shouldReceive('select')->once()
+            ->with(m::any(), m::any(), false);
+        $builder->select('*')->from('foo')->where('bar', '=', 'baz')->lock()->get();
+
+        $builder = $this->getOracleBuilderWithProcessor();
+        $builder->getConnection()->shouldReceive('select')->once()
+            ->with(m::any(), m::any(), false);
+        $builder->select('*')->from('foo')->where('bar', '=', 'baz')->lock(false)->get();
+    }
+
     public function testBindingOrder()
     {
         $expectedSql = 'select * from "users" inner join "othertable" on "bar" = ? where "registered" = ? group by "city" having "population" > ? order by match ("foo") against(?)';
@@ -2044,6 +2173,369 @@ class OracleDBQueryBuilderTest extends TestCase
         $this->assertEquals($expectedBindings, $builder->getBindings());
     }
 
+    public function testUppercaseLeadingBooleansAreRemoved()
+    {
+        $builder = $this->getOracleBuilder();
+        $builder->select('*')->from('users')->where('name', '=', 'Taylor', 'AND');
+        $this->assertSame('select * from "users" where "name" = ?', $builder->toSql());
+    }    
+
+    public function testLowercaseLeadingBooleansAreRemoved()
+    {
+        $builder = $this->getOracleBuilder();
+        $builder->select('*')->from('users')->where('name', '=', 'Taylor', 'and');
+        $this->assertSame('select * from "users" where "name" = ?', $builder->toSql());
+    }    
+
+    /**
+     * @doesNotPerformAssertions
+     */
+    public function testChunkWithLastChunkComplete()
+    {
+        $builder = $this->getMockQueryBuilder();
+        $builder->orders[] = ['column' => 'foobar', 'direction' => 'asc'];
+
+        $chunk1 = collect(['foo1', 'foo2']);
+        $chunk2 = collect(['foo3', 'foo4']);
+        $chunk3 = collect([]);
+        $builder->shouldReceive('forPage')->once()->with(1, 2)->andReturnSelf();
+        $builder->shouldReceive('forPage')->once()->with(2, 2)->andReturnSelf();
+        $builder->shouldReceive('forPage')->once()->with(3, 2)->andReturnSelf();
+        $builder->shouldReceive('get')->times(3)->andReturn($chunk1, $chunk2, $chunk3);
+
+        $callbackAssertor = m::mock(stdClass::class);
+        $callbackAssertor->shouldReceive('doSomething')->once()->with($chunk1);
+        $callbackAssertor->shouldReceive('doSomething')->once()->with($chunk2);
+        $callbackAssertor->shouldReceive('doSomething')->never()->with($chunk3);
+
+        $builder->chunk(2, function ($results) use ($callbackAssertor) {
+            $callbackAssertor->doSomething($results);
+        });
+    }    
+
+    /**
+     * @doesNotPerformAssertions
+     */
+    public function testChunkWithLastChunkPartial()
+    {
+        $builder = $this->getMockQueryBuilder();
+        $builder->orders[] = ['column' => 'foobar', 'direction' => 'asc'];
+
+        $chunk1 = collect(['foo1', 'foo2']);
+        $chunk2 = collect(['foo3']);
+        $builder->shouldReceive('forPage')->once()->with(1, 2)->andReturnSelf();
+        $builder->shouldReceive('forPage')->once()->with(2, 2)->andReturnSelf();
+        $builder->shouldReceive('get')->times(2)->andReturn($chunk1, $chunk2);
+
+        $callbackAssertor = m::mock(stdClass::class);
+        $callbackAssertor->shouldReceive('doSomething')->once()->with($chunk1);
+        $callbackAssertor->shouldReceive('doSomething')->once()->with($chunk2);
+
+        $builder->chunk(2, function ($results) use ($callbackAssertor) {
+            $callbackAssertor->doSomething($results);
+        });
+    }
+
+    /**
+     * @doesNotPerformAssertions
+     */
+    public function testChunkCanBeStoppedByReturningFalse()
+    {
+        $builder = $this->getMockQueryBuilder();
+        $builder->orders[] = ['column' => 'foobar', 'direction' => 'asc'];
+
+        $chunk1 = collect(['foo1', 'foo2']);
+        $chunk2 = collect(['foo3']);
+        $builder->shouldReceive('forPage')->once()->with(1, 2)->andReturnSelf();
+        $builder->shouldReceive('forPage')->never()->with(2, 2);
+        $builder->shouldReceive('get')->times(1)->andReturn($chunk1);
+
+        $callbackAssertor = m::mock(stdClass::class);
+        $callbackAssertor->shouldReceive('doSomething')->once()->with($chunk1);
+        $callbackAssertor->shouldReceive('doSomething')->never()->with($chunk2);
+
+        $builder->chunk(2, function ($results) use ($callbackAssertor) {
+            $callbackAssertor->doSomething($results);
+
+            return false;
+        });
+    }
+
+    /**
+     * @doesNotPerformAssertions
+     */    
+    public function testChunkWithCountZero()
+    {
+        $builder = $this->getMockQueryBuilder();
+        $builder->orders[] = ['column' => 'foobar', 'direction' => 'asc'];
+
+        $chunk = collect([]);
+        $builder->shouldReceive('forPage')->once()->with(1, 0)->andReturnSelf();
+        $builder->shouldReceive('get')->times(1)->andReturn($chunk);
+
+        $callbackAssertor = m::mock(stdClass::class);
+        $callbackAssertor->shouldReceive('doSomething')->never();
+
+        $builder->chunk(0, function ($results) use ($callbackAssertor) {
+            $callbackAssertor->doSomething($results);
+        });
+    }    
+
+    /**
+     * @doesNotPerformAssertions
+     */    
+    public function testChunkPaginatesUsingIdWithLastChunkComplete()
+    {
+        $builder = $this->getMockQueryBuilder();
+        $builder->orders[] = ['column' => 'foobar', 'direction' => 'asc'];
+
+        $chunk1 = collect([(object) ['someIdField' => 1], (object) ['someIdField' => 2]]);
+        $chunk2 = collect([(object) ['someIdField' => 10], (object) ['someIdField' => 11]]);
+        $chunk3 = collect([]);
+        $builder->shouldReceive('forPageAfterId')->once()->with(2, 0, 'someIdField')->andReturnSelf();
+        $builder->shouldReceive('forPageAfterId')->once()->with(2, 2, 'someIdField')->andReturnSelf();
+        $builder->shouldReceive('forPageAfterId')->once()->with(2, 11, 'someIdField')->andReturnSelf();
+        $builder->shouldReceive('get')->times(3)->andReturn($chunk1, $chunk2, $chunk3);
+
+        $callbackAssertor = m::mock(stdClass::class);
+        $callbackAssertor->shouldReceive('doSomething')->once()->with($chunk1);
+        $callbackAssertor->shouldReceive('doSomething')->once()->with($chunk2);
+        $callbackAssertor->shouldReceive('doSomething')->never()->with($chunk3);
+
+        $builder->chunkById(2, function ($results) use ($callbackAssertor) {
+            $callbackAssertor->doSomething($results);
+        }, 'someIdField');
+    }
+
+    /**
+     * @doesNotPerformAssertions
+     */    
+    public function testChunkPaginatesUsingIdWithLastChunkPartial()
+    {
+        $builder = $this->getMockQueryBuilder();
+        $builder->orders[] = ['column' => 'foobar', 'direction' => 'asc'];
+
+        $chunk1 = collect([(object) ['someIdField' => 1], (object) ['someIdField' => 2]]);
+        $chunk2 = collect([(object) ['someIdField' => 10]]);
+        $builder->shouldReceive('forPageAfterId')->once()->with(2, 0, 'someIdField')->andReturnSelf();
+        $builder->shouldReceive('forPageAfterId')->once()->with(2, 2, 'someIdField')->andReturnSelf();
+        $builder->shouldReceive('get')->times(2)->andReturn($chunk1, $chunk2);
+
+        $callbackAssertor = m::mock(stdClass::class);
+        $callbackAssertor->shouldReceive('doSomething')->once()->with($chunk1);
+        $callbackAssertor->shouldReceive('doSomething')->once()->with($chunk2);
+
+        $builder->chunkById(2, function ($results) use ($callbackAssertor) {
+            $callbackAssertor->doSomething($results);
+        }, 'someIdField');
+    }
+
+    /**
+     * @doesNotPerformAssertions
+     */    
+    public function testChunkPaginatesUsingIdWithCountZero()
+    {
+        $builder = $this->getMockQueryBuilder();
+        $builder->orders[] = ['column' => 'foobar', 'direction' => 'asc'];
+
+        $chunk = collect([]);
+        $builder->shouldReceive('forPageAfterId')->once()->with(0, 0, 'someIdField')->andReturnSelf();
+        $builder->shouldReceive('get')->times(1)->andReturn($chunk);
+
+        $callbackAssertor = m::mock(stdClass::class);
+        $callbackAssertor->shouldReceive('doSomething')->never();
+
+        $builder->chunkById(0, function ($results) use ($callbackAssertor) {
+            $callbackAssertor->doSomething($results);
+        }, 'someIdField');
+    }    
+
+    /**
+     * @doesNotPerformAssertions
+     */
+    public function testChunkPaginatesUsingIdWithAlias()
+    {
+        $builder = $this->getMockQueryBuilder();
+        $builder->orders[] = ['column' => 'foobar', 'direction' => 'asc'];
+
+        $chunk1 = collect([(object) ['table_id' => 1], (object) ['table_id' => 10]]);
+        $chunk2 = collect([]);
+        $builder->shouldReceive('forPageAfterId')->once()->with(2, 0, 'table.id')->andReturnSelf();
+        $builder->shouldReceive('forPageAfterId')->once()->with(2, 10, 'table.id')->andReturnSelf();
+        $builder->shouldReceive('get')->times(2)->andReturn($chunk1, $chunk2);
+
+        $callbackAssertor = m::mock(stdClass::class);
+        $callbackAssertor->shouldReceive('doSomething')->once()->with($chunk1);
+        $callbackAssertor->shouldReceive('doSomething')->never()->with($chunk2);
+
+        $builder->chunkById(2, function ($results) use ($callbackAssertor) {
+            $callbackAssertor->doSomething($results);
+        }, 'table.id', 'table_id');
+    }    
+
+    public function testPaginate()
+    {
+        $perPage = 16;
+        $columns = ['test'];
+        $pageName = 'page-name';
+        $page = 1;
+        $builder = $this->getMockQueryBuilder();
+        $path = 'http://foo.bar?page=3';
+
+        $results = collect([['test' => 'foo'], ['test' => 'bar']]);
+
+        $builder->shouldReceive('getCountForPagination')->once()->andReturn(2);
+        $builder->shouldReceive('forPage')->once()->with($page, $perPage)->andReturnSelf();
+        $builder->shouldReceive('get')->once()->andReturn($results);
+
+        Paginator::currentPathResolver(function () use ($path) {
+            return $path;
+        });
+
+        $result = $builder->paginate($perPage, $columns, $pageName, $page);
+
+        $this->assertEquals(new LengthAwarePaginator($results, 2, $perPage, $page, [
+            'path' => $path,
+            'pageName' => $pageName,
+        ]), $result);
+    }
+
+    public function testPaginateWithDefaultArguments()
+    {
+        $perPage = 15;
+        $pageName = 'page';
+        $page = 1;
+        $builder = $this->getMockQueryBuilder();
+        $path = 'http://foo.bar?page=3';
+
+        $results = collect([['test' => 'foo'], ['test' => 'bar']]);
+
+        $builder->shouldReceive('getCountForPagination')->once()->andReturn(2);
+        $builder->shouldReceive('forPage')->once()->with($page, $perPage)->andReturnSelf();
+        $builder->shouldReceive('get')->once()->andReturn($results);
+
+        Paginator::currentPageResolver(function () {
+            return 1;
+        });
+
+        Paginator::currentPathResolver(function () use ($path) {
+            return $path;
+        });
+
+        $result = $builder->paginate();
+
+        $this->assertEquals(new LengthAwarePaginator($results, 2, $perPage, $page, [
+            'path' => $path,
+            'pageName' => $pageName,
+        ]), $result);
+    }
+
+    public function testPaginateWhenNoResults()
+    {
+        $perPage = 15;
+        $pageName = 'page';
+        $page = 1;
+        $builder = $this->getMockQueryBuilder();
+        $path = 'http://foo.bar?page=3';
+
+        $results = [];
+
+        $builder->shouldReceive('getCountForPagination')->once()->andReturn(0);
+        $builder->shouldNotReceive('forPage');
+        $builder->shouldNotReceive('get');
+
+        Paginator::currentPageResolver(function () {
+            return 1;
+        });
+
+        Paginator::currentPathResolver(function () use ($path) {
+            return $path;
+        });
+
+        $result = $builder->paginate();
+
+        $this->assertEquals(new LengthAwarePaginator($results, 0, $perPage, $page, [
+            'path' => $path,
+            'pageName' => $pageName,
+        ]), $result);
+    }    
+
+    public function testPaginateWithSpecificColumns()
+    {
+        $perPage = 16;
+        $columns = ['id', 'name'];
+        $pageName = 'page-name';
+        $page = 1;
+        $builder = $this->getMockQueryBuilder();
+        $path = 'http://foo.bar?page=3';
+
+        $results = collect([['id' => 3, 'name' => 'Taylor'], ['id' => 5, 'name' => 'Mohamed']]);
+
+        $builder->shouldReceive('getCountForPagination')->once()->andReturn(2);
+        $builder->shouldReceive('forPage')->once()->with($page, $perPage)->andReturnSelf();
+        $builder->shouldReceive('get')->once()->andReturn($results);
+
+        Paginator::currentPathResolver(function () use ($path) {
+            return $path;
+        });
+
+        $result = $builder->paginate($perPage, $columns, $pageName, $page);
+
+        $this->assertEquals(new LengthAwarePaginator($results, 2, $perPage, $page, [
+            'path' => $path,
+            'pageName' => $pageName,
+        ]), $result);
+    }    
+
+    public function testWhereRowValues()
+    {
+        $builder = $this->getOracleBuilder();
+        $builder->select('*')->from('orders')->whereRowValues(['last_update', 'order_number'], '<', [1, 2]);
+        $this->assertSame('select * from "orders" where ("last_update", "order_number") < (?, ?)', $builder->toSql());
+
+        $builder = $this->getOracleBuilder();
+        $builder->select('*')->from('orders')->where('company_id', 1)->orWhereRowValues(['last_update', 'order_number'], '<', [1, 2]);
+        $this->assertSame('select * from "orders" where "company_id" = ? or ("last_update", "order_number") < (?, ?)', $builder->toSql());
+
+        $builder = $this->getOracleBuilder();
+        $builder->select('*')->from('orders')->whereRowValues(['last_update', 'order_number'], '<', [1, new Raw('2')]);
+        $this->assertSame('select * from "orders" where ("last_update", "order_number") < (?, 2)', $builder->toSql());
+        $this->assertEquals([1], $builder->getBindings());
+    }
+
+    public function testWhereRowValuesArityMismatch()
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('The number of columns must match the number of values');
+
+        $builder = $this->getOracleBuilder();
+        $builder->select('*')->from('orders')->whereRowValues(['last_update'], '<', [1, 2]);
+    }    
+
+    public function testWhereJsonContains()
+    {
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('does not support');
+        $builder = $this->getOracleBuilder();
+        $builder->select('*')->from('users')->whereJsonContains('options', ['en'])->toSql();
+    }    
+
+    public function testWhereJsonDoesntContain()
+    {
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('does not support');
+        $builder = $this->getOracleBuilder();
+        $builder->select('*')->from('users')->whereJsonDoesntContain('options->languages', ['en'])->toSql();
+    }    
+
+    public function testWhereJsonLength()
+    {
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('does not support');
+        $builder = $this->getOracleBuilder();
+        $builder->select('*')->from('users')->whereJsonLength('options', 0)->toSql();
+    }    
+
     public function testBasicSelectNotUsingQuotes()
     {
         $builder = $this->getOracleBuilder(false);
@@ -2061,6 +2553,59 @@ class OracleDBQueryBuilderTest extends TestCase
         $builder = $this->getOracleBuilder(false);
         $builder->select('id')->from('users')->orderBy('id');
         $this->assertEquals('select id from users order by id asc', $builder->toSql());
+    }
+
+    public function testFromSub()
+    {
+        $builder = $this->getOracleBuilder();
+        $builder->fromSub(function ($query) {
+            $query->select(new Raw('max(last_seen_at) as last_seen_at'))->from('user_sessions')->where('foo', '=', '1');
+        }, 'sessions')->where('bar', '<', '10');
+        $this->assertSame('select * from (select max(last_seen_at) as last_seen_at from "user_sessions" where "foo" = ?) as "sessions" where "bar" < ?', $builder->toSql());
+        $this->assertEquals(['1', '10'], $builder->getBindings());
+
+        $this->expectException(InvalidArgumentException::class);
+        $builder = $this->getOracleBuilder();
+        $builder->fromSub(['invalid'], 'sessions')->where('bar', '<', '10');
+    }
+
+    public function testFromSubWithPrefix()
+    {
+        $builder = $this->getOracleBuilder();
+        $builder->getGrammar()->setTablePrefix('prefix_');
+        $builder->fromSub(function ($query) {
+            $query->select(new Raw('max(last_seen_at) as last_seen_at'))->from('user_sessions')->where('foo', '=', '1');
+        }, 'sessions')->where('bar', '<', '10');
+        $this->assertSame('select * from (select max(last_seen_at) as last_seen_at from "prefix_user_sessions" where "foo" = ?) as "prefix_sessions" where "bar" < ?', $builder->toSql());
+        $this->assertEquals(['1', '10'], $builder->getBindings());
+    }
+
+    public function testFromSubWithoutBindings()
+    {
+        $builder = $this->getOracleBuilder();
+        $builder->fromSub(function ($query) {
+            $query->select(new Raw('max(last_seen_at) as last_seen_at'))->from('user_sessions');
+        }, 'sessions');
+        $this->assertSame('select * from (select max(last_seen_at) as last_seen_at from "user_sessions") as "sessions"', $builder->toSql());
+
+        $this->expectException(InvalidArgumentException::class);
+        $builder = $this->getOracleBuilder();
+        $builder->fromSub(['invalid'], 'sessions');
+    }
+
+    public function testFromRaw()
+    {
+        $builder = $this->getOracleBuilder();
+        $builder->fromRaw(new Raw('(select max(last_seen_at) as last_seen_at from "user_sessions") as "sessions"'));
+        $this->assertSame('select * from (select max(last_seen_at) as last_seen_at from "user_sessions") as "sessions"', $builder->toSql());
+    }
+
+    public function testFromRawWithWhereOnTheMainQuery()
+    {
+        $builder = $this->getOracleBuilder();
+        $builder->fromRaw(new Raw('(select max(last_seen_at) as last_seen_at from "sessions") as "last_seen_at"'))->where('last_seen_at', '>', '1520652582');
+        $this->assertSame('select * from (select max(last_seen_at) as last_seen_at from "sessions") as "last_seen_at" where "last_seen_at" > ?', $builder->toSql());
+        $this->assertEquals(['1520652582'], $builder->getBindings());
     }
 
     public function testGroupByNotUsingQuotes()
@@ -2136,4 +2681,16 @@ class OracleDBQueryBuilderTest extends TestCase
 
         return new Builder(m::mock('Illuminate\Database\ConnectionInterface'), $grammar, $processor);
     }
+
+    /**
+     * @return m\MockInterface
+     */
+    protected function getMockQueryBuilder()
+    {
+        return m::mock(Builder::class, [
+            m::mock(ConnectionInterface::class),
+            new Grammar,
+            m::mock(Processor::class),
+        ])->makePartial();
+    }    
 }
