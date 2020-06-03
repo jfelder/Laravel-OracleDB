@@ -81,7 +81,7 @@ See [Laravel Database Basic Docs](https://laravel.com/docs/6.x/database) for mor
 
 ### Unimplemented Features
 
-Some of the features available in the first-party Laravel database drivers are not implemented in this package:
+Some of the features available in the first-party Laravel database drivers are not implemented in this package. Pull requests are welcome for implementing any of these features, or for expanding this list if you find any unimplemented features not already listed.
 
 #### Query Builder
 
@@ -120,8 +120,6 @@ Some of the features available in the first-party Laravel database drivers are n
 - create a multilinestring column `$blueprint->multilinestring('coordinates')`
 - create a multipolygon column `$blueprint->multipolygon('coordinates')`
 - create a double column without specifying second or third parameters `$blueprint->double('foo')` (but `$blueprint->double('foo', 5, 2)` is supported)
-
-Pull requests are welcome for implementing any of these features, or for expanding this list if you find any unimplemented features not already listed.
 
 ### License
 
