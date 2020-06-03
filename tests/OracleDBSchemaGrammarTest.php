@@ -1,7 +1,8 @@
 <?php
 
-use Mockery as m;
+use Illuminate\Database\Query\Expression;
 use Illuminate\Database\Schema\Blueprint;
+use Mockery as m;
 use PHPUnit\Framework\TestCase;
 
 include 'mocks/PDOMocks.php';
@@ -21,6 +22,7 @@ class OracleDBSchemaGrammarTest extends TestCase
         $blueprint->string('email');
 
         $conn = $this->getConnection();
+        $conn->shouldNotReceive('getConfig');
 
         $statements = $blueprint->toSql($conn, $this->getGrammar());
 
@@ -225,6 +227,13 @@ class OracleDBSchemaGrammarTest extends TestCase
 
         $this->assertEquals(1, count($statements));
         $this->assertEquals('alter table users drop ( foo, bar )', $statements[0]);
+
+        $blueprint = new Blueprint('users');
+        $blueprint->dropColumn('foo', 'bar');
+        $statements = $blueprint->toSql($this->getConnection(), $this->getGrammar());
+
+        $this->assertCount(1, $statements);
+        $this->assertSame('alter table users drop ( foo, bar )', $statements[0]);        
     }
 
     public function testDropPrimary()
@@ -275,6 +284,27 @@ class OracleDBSchemaGrammarTest extends TestCase
 
         $this->assertEquals(1, count($statements));
         $this->assertEquals('alter table users drop ( created_at, updated_at )', $statements[0]);
+    }
+
+    public function testDropTimestampsTz()
+    {
+        $blueprint = new Blueprint('users');
+        $blueprint->dropTimestampsTz();
+        $statements = $blueprint->toSql($this->getConnection(), $this->getGrammar());
+
+        $this->assertCount(1, $statements);
+        $this->assertSame('alter table users drop ( created_at, updated_at )', $statements[0]);
+    }    
+
+    public function testDropMorphs()
+    {
+        $blueprint = new Blueprint('photos');
+        $blueprint->dropMorphs('imageable');
+        $statements = $blueprint->toSql($this->getConnection(), $this->getGrammar());
+
+        $this->assertCount(2, $statements);
+        $this->assertSame('drop index photos_imageable_type_imageable_id_index', $statements[0]);
+        $this->assertSame('alter table photos drop ( imageable_type, imageable_id )', $statements[1]);
     }
 
     public function testRenameTable()
@@ -359,6 +389,26 @@ class OracleDBSchemaGrammarTest extends TestCase
 
         $this->assertEquals(1, count($statements));
         $this->assertEquals('alter table users add ( id number(10,0) not null, constraint users_id_primary primary key ( id ) )', $statements[0]);
+    }
+
+    public function testAddingSmallIncrementingID()
+    {
+        $blueprint = new Blueprint('users');
+        $blueprint->smallIncrements('id');
+        $statements = $blueprint->toSql($this->getConnection(), $this->getGrammar());
+
+        $this->assertCount(1, $statements);
+        $this->assertSame('alter table users add ( id number(5,0) not null, constraint users_id_primary primary key ( id ) )', $statements[0]);
+    }
+
+    public function testAddingBigIncrementingID()
+    {
+        $blueprint = new Blueprint('users');
+        $blueprint->bigIncrements('id');
+        $statements = $blueprint->toSql($this->getConnection(), $this->getGrammar());
+
+        $this->assertCount(1, $statements);
+        $this->assertSame('alter table users add ( id number(19,0) not null, constraint users_id_primary primary key ( id ) )', $statements[0]);
     }
 
     public function testAddingString()
@@ -506,6 +556,26 @@ class OracleDBSchemaGrammarTest extends TestCase
         $this->assertEquals('alter table users add ( foo number(5, 2) not null )', $statements[0]);
     }
 
+    public function testAddingDoubleWithoutSecondParameter()
+    {
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('requires specifying both precision and scale');
+
+        $blueprint = new Blueprint('users');
+        $blueprint->double('foo');
+        $statements = $blueprint->toSql($this->getConnection(), $this->getGrammar());
+    }
+
+    public function testAddingDoubleWithoutThirdParameter()
+    {
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('requires specifying both precision and scale');
+
+        $blueprint = new Blueprint('users');
+        $blueprint->double('foo', 15);
+        $statements = $blueprint->toSql($this->getConnection(), $this->getGrammar());
+    }    
+
     public function testAddingDecimal()
     {
         $blueprint = new Blueprint('users');
@@ -533,7 +603,7 @@ class OracleDBSchemaGrammarTest extends TestCase
         $statements = $blueprint->toSql($this->getConnection(), $this->getGrammar());
 
         $this->assertEquals(1, count($statements));
-        $this->assertEquals('alter table users add ( foo varchar2(255) not null )', $statements[0]);
+        $this->assertEquals('alter table users add ( foo varchar2(255) check(foo in (\'bar\', \'baz\')) not null )', $statements[0]);
     }
 
     public function testAddingDate()
@@ -573,7 +643,16 @@ class OracleDBSchemaGrammarTest extends TestCase
         $statements = $blueprint->toSql($this->getConnection(), $this->getGrammar());
 
         $this->assertEquals(1, count($statements));
-        $this->assertEquals('alter table users add ( foo timestamp default 0 not null )', $statements[0]);
+        $this->assertEquals('alter table users add ( foo timestamp not null )', $statements[0]);
+    }
+
+    public function testAddingTimestampWithDefault()
+    {
+        $blueprint = new Blueprint('users');
+        $blueprint->timestamp('created_at')->default(new Expression('CURRENT_TIMESTAMP'));
+        $statements = $blueprint->toSql($this->getConnection(), $this->getGrammar());
+        $this->assertCount(1, $statements);
+        $this->assertSame("alter table users add ( created_at timestamp default CURRENT_TIMESTAMP not null )", $statements[0]);
     }
 
     public function testAddingTimeStamps()
@@ -583,7 +662,7 @@ class OracleDBSchemaGrammarTest extends TestCase
         $statements = $blueprint->toSql($this->getConnection(), $this->getGrammar());
 
         $this->assertEquals(1, count($statements));
-        $this->assertEquals('alter table users add ( created_at timestamp default 0 null, updated_at timestamp default 0 null )', $statements[0]);
+        $this->assertEquals('alter table users add ( created_at timestamp null, updated_at timestamp null )', $statements[0]);
     }
 
     public function testAddingBinary()
@@ -594,6 +673,16 @@ class OracleDBSchemaGrammarTest extends TestCase
 
         $this->assertEquals(1, count($statements));
         $this->assertEquals('alter table users add ( foo blob not null )', $statements[0]);
+    }
+
+    public function testAddingCommentDoesNothing()
+    {
+        $blueprint = new Blueprint('users');
+        $blueprint->string('foo')->comment("Escape ' when using words like it's");
+        $statements = $blueprint->toSql($this->getConnection(), $this->getGrammar());
+
+        $this->assertCount(1, $statements);
+        $this->assertSame("alter table users add ( foo varchar2(255) not null )", $statements[0]);
     }
 
     public function testBasicSelectUsingQuotes()
@@ -625,6 +714,18 @@ class OracleDBSchemaGrammarTest extends TestCase
         $this->assertEquals(1, count($statements));
         $this->assertEquals('create table users ( id number(10,0) not null, email varchar2(255) not null, constraint users_id_primary primary key ( id ) )', $statements[0]);
     }
+
+    public function testGrammarsAreMacroable()
+    {
+        // compileReplace macro.
+        $this->getGrammar()::macro('compileReplace', function () {
+            return true;
+        });
+
+        $c = $this->getGrammar()::compileReplace();
+
+        $this->assertTrue($c);
+    }    
 
     protected function getConnection()
     {

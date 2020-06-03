@@ -6,6 +6,7 @@ use Illuminate\Support\Fluent;
 use Illuminate\Database\Connection;
 use Illuminate\Database\Schema\Blueprint;
 use Config;
+use RuntimeException;
 
 class OracleGrammar extends \Illuminate\Database\Schema\Grammars\Grammar
 {
@@ -482,6 +483,10 @@ class OracleGrammar extends \Illuminate\Database\Schema\Grammars\Grammar
      */
     protected function typeDouble(Fluent $column)
     {
+        if (is_null($column->total) || is_null($column->places)) {
+            throw new RuntimeException('This database engine requires specifying both precision and scale for a "double" column.');
+        }
+        
         return "number({$column->total}, {$column->places})";
     }
 
@@ -515,7 +520,11 @@ class OracleGrammar extends \Illuminate\Database\Schema\Grammars\Grammar
      */
     protected function typeEnum(Fluent $column)
     {
-        return 'varchar2(255)';
+        return sprintf(
+            'varchar2(255) check(%s in (%s))',
+            $column->name,
+            $this->quoteString($column->allowed)
+        );        
     }
 
     /**
@@ -559,7 +568,7 @@ class OracleGrammar extends \Illuminate\Database\Schema\Grammars\Grammar
      */
     protected function typeTimestamp(Fluent $column)
     {
-        return 'timestamp default 0';
+        return 'timestamp';
     }
 
     /**
