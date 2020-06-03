@@ -2,9 +2,10 @@
 
 namespace Jfelder\OracleDB\Query\Grammars;
 
+use Config;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Database\Query\Grammars\Grammar as BaseGrammar;
-use Config;
+use RuntimeException;
 
 class OracleGrammar extends BaseGrammar
 {
@@ -19,10 +20,11 @@ class OracleGrammar extends BaseGrammar
     protected function dateBasedWhere($type, Builder $query, $where)
     {
         $date_parts = [
-            'date' => '',
+            'date' => 'YYYY-MM-DD',
             'day' => 'DD',
             'month' => 'MM',
             'year' => 'YYYY',
+            'time' => 'HH24:MI:SS'
         ];
         $value = $this->parameter($where['value']);
 
@@ -60,7 +62,7 @@ class OracleGrammar extends BaseGrammar
             $sql = $this->wrapUnion($sql).' '.$this->compileUnions($query);
         }
 
-        if ($query->limit > 0 || $query->offset > 0) {
+        if (isset($query->limit) || isset($query->offset)) {
             $sql = $this->compileAnsiOffset($query, $components);
         }
 
@@ -122,6 +124,10 @@ class OracleGrammar extends BaseGrammar
      */
     public function compileInsertGetId(Builder $query, $values, $sequence)
     {
+        if (empty($values)) {
+            throw new RuntimeException('This database engine does not support calling the insertGetId method with empty values.');
+        }
+
         if (is_null($sequence)) {
             $sequence = 'id';
         }
@@ -156,6 +162,32 @@ class OracleGrammar extends BaseGrammar
         }
 
         return ltrim($sql);
+    }
+
+    /**
+     * Compile a delete statement into SQL.
+     *
+     * @param  \Illuminate\Database\Query\Builder  $query
+     * @return string
+     */
+    public function compileDelete(Builder $query)
+    {
+        if (isset($query->joins) || isset($query->limit)) {
+            return $this->compileDeleteWithJoinsOrLimit($query);
+        }
+
+        return parent::compileDelete($query);
+    }   
+
+    /**
+     * Compile a delete statement with joins or limit into SQL.
+     *
+     * @param  \Illuminate\Database\Query\Builder  $query
+     * @return string
+     */
+    protected function compileDeleteWithJoinsOrLimit(Builder $query)
+    {
+        throw new RuntimeException('This database engine does not support delete statements that contain joins or limits.');
     }
 
     /**
@@ -220,6 +252,10 @@ class OracleGrammar extends BaseGrammar
      */
     protected function compileRowConstraint($query)
     {
+        if (isset($query->limit) && $query->limit < 1) {
+            return "< 1";
+        }
+
         $start = $query->offset + 1;
 
         if ($query->limit > 0) {
