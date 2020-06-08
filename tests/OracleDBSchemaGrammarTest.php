@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Query\Expression;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Database\Schema\ForeignIdColumnDefinition;
 use Mockery as m;
 use PHPUnit\Framework\TestCase;
 
@@ -361,6 +362,16 @@ class OracleDBSchemaGrammarTest extends TestCase
         $this->assertEquals('create index baz on users ( foo, bar )', $statements[0]);
     }
 
+    public function testAddingRawIndex()
+    {
+        $blueprint = new Blueprint('users');
+        $blueprint->rawIndex('(function(column))', 'raw_index');
+        $statements = $blueprint->toSql($this->getConnection(), $this->getGrammar());
+
+        $this->assertCount(1, $statements);
+        $this->assertSame('create index raw_index on users ( (function(column)) )', $statements[0]);
+    }    
+
     public function testAddingForeignKey()
     {
         $blueprint = new Blueprint('users');
@@ -369,6 +380,13 @@ class OracleDBSchemaGrammarTest extends TestCase
 
         $this->assertEquals(1, count($statements));
         $this->assertEquals('alter table users add constraint users_foo_id_foreign foreign key ( foo_id ) references orders ( id )', $statements[0]);
+
+        $blueprint = new Blueprint('users');
+        $blueprint->foreign('foo_id')->references('id')->on('orders')->cascadeOnDelete();
+        $statements = $blueprint->toSql($this->getConnection(), $this->getGrammar());
+
+        $this->assertCount(1, $statements);
+        $this->assertSame('alter table users add constraint users_foo_id_foreign foreign key ( foo_id ) references orders ( id ) on delete cascade', $statements[0]);        
     }
 
     public function testAddingForeignKeyWithCascadeDelete()
@@ -400,6 +418,44 @@ class OracleDBSchemaGrammarTest extends TestCase
         $this->assertCount(1, $statements);
         $this->assertSame('alter table users add ( id number(5,0) not null, constraint users_id_primary primary key ( id ) )', $statements[0]);
     }
+
+    public function testAddingID()
+    {
+        $blueprint = new Blueprint('users');
+        $blueprint->id();
+        $statements = $blueprint->toSql($this->getConnection(), $this->getGrammar());
+
+        $this->assertCount(1, $statements);
+        $this->assertSame('alter table users add ( id number(19,0) not null, constraint users_id_primary primary key ( id ) )', $statements[0]);
+
+        $blueprint = new Blueprint('users');
+        $blueprint->id('foo');
+        $statements = $blueprint->toSql($this->getConnection(), $this->getGrammar());
+
+        $this->assertCount(1, $statements);
+        $this->assertSame('alter table users add ( foo number(19,0) not null, constraint users_foo_primary primary key ( foo ) )', $statements[0]);
+    }    
+
+    public function testAddingForeignID()
+    {
+        $blueprint = new Blueprint('users');
+        $foreignId = $blueprint->foreignId('foo');
+        $blueprint->foreignId('company_id')->constrained();
+        $blueprint->foreignId('laravel_idea_id')->constrained();
+        $blueprint->foreignId('team_id')->references('id')->on('teams');
+        $blueprint->foreignId('team_column_id')->constrained('teams');
+
+        $statements = $blueprint->toSql($this->getConnection(), $this->getGrammar());
+
+        $this->assertInstanceOf(ForeignIdColumnDefinition::class, $foreignId);
+        $this->assertSame([
+            'alter table users add ( foo number(19,0) not null, company_id number(19,0) not null, laravel_idea_id number(19,0) not null, team_id number(19,0) not null, team_column_id number(19,0) not null )',
+            'alter table users add constraint users_company_id_foreign foreign key ( company_id ) references companies ( id )',
+            'alter table users add constraint users_laravel_idea_id_foreign foreign key ( laravel_idea_id ) references laravel_ideas ( id )',
+            'alter table users add constraint users_team_id_foreign foreign key ( team_id ) references teams ( id )',
+            'alter table users add constraint users_team_column_id_foreign foreign key ( team_column_id ) references teams ( id )',
+        ], $statements);
+    }    
 
     public function testAddingBigIncrementingID()
     {

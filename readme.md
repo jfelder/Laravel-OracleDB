@@ -1,6 +1,6 @@
 ## Laravel Oracle Database Package
 
-### OracleDB (updated for Laravel 6.x)
+### OracleDB (updated for Laravel 7.x)
 
 [![Latest Stable Version](https://poser.pugx.org/jfelder/oracledb/v/stable.png)](https://packagist.org/packages/jfelder/oracledb) [![Total Downloads](https://poser.pugx.org/jfelder/oracledb/downloads.png)](https://packagist.org/packages/jfelder/oracledb) [![Build Status](https://travis-ci.org/jfelder/Laravel-OracleDB.png)](https://travis-ci.org/jfelder/Laravel-OracleDB)
 
@@ -21,7 +21,7 @@ Add `jfelder/oracledb` as a requirement to composer.json:
 ```json
 {
     "require": {
-        "jfelder/oracledb": "6.*"
+        "jfelder/oracledb": "7.*"
     }
 }
 ```
@@ -77,7 +77,7 @@ in config/oracledb.php file.
 > **Note:** When using the insertGetId method, you can specify the auto-incrementing column name as the second
 parameter in insertGetId function. It will default to "id" if not specified.
 
-See [Laravel Database Basic Docs](https://laravel.com/docs/6.x/database) for more information.
+See [Laravel Database Basic Docs](https://laravel.com/docs/7.x/database) for more information.
 
 ### Unimplemented Features
 
@@ -88,6 +88,7 @@ Some of the features available in the first-party Laravel database drivers are n
 - insertOrIgnore `DB::from('users')->insertOrIgnore(['email' => 'foo']);`
 - insertGetId with empty values `DB::from('users')->insertGetId([]);` (but calling with non-empty values is supported)
 - deleting with a join `DB::from('users')->join('contacts', 'users.id', '=', 'contacts.id')->where('users.email', '=', 'foo')->delete();`
+- deleting with a limit `DB::from('users')->where('email', '=', 'foo')->orderBy('id')->take(1)->delete();`
 - json operations `DB::from('users')->where('items->sku', '=', 'foo-bar')->get();`
 
 #### Schema Builder
@@ -108,6 +109,7 @@ Some of the features available in the first-party Laravel database drivers are n
 - create a datetime with timezone column without precision `$blueprint->dateTimeTz('created_at')`, or with precision `$blueprint->timestampTz('created_at', 1)`
 - create Laravel-style timestamp columns having a timezone component `$blueprint->timestampsTz()`
 - create a uuid column `$blueprint->uuid('foo')` (oracle recommends a column of data type 16 byte raw for storing uuids)
+- create a foreign uuid column `$blueprint->foreignUuid('foo')`
 - create a column to hold IP addresses `$blueprint->ipAddress('foo')` (would be implemented as varchar2 45)
 - create a column to hold MAC addresses `$blueprint->macAddress('foo')` (would be implemented as varchar2 17)
 - create a geometry column `$blueprint->geometry('coordinates')`
@@ -120,6 +122,7 @@ Some of the features available in the first-party Laravel database drivers are n
 - create a multilinestring column `$blueprint->multilinestring('coordinates')`
 - create a multipolygon column `$blueprint->multipolygon('coordinates')`
 - create a double column without specifying second or third parameters `$blueprint->double('foo')` (but `$blueprint->double('foo', 5, 2)` is supported)
+- create a timestamp column with `useCurrent` modifier `$blueprint->timestamp('created_at')->useCurrent()`
 
 ### License
 

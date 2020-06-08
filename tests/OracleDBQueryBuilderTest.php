@@ -575,6 +575,14 @@ class OracleDBQueryBuilderTest extends TestCase
         $this->assertEquals([], $builder->getBindings());
     }
 
+    public function testOrWhereIntegerInRaw()
+    {
+        $builder = $this->getOracleBuilder();
+        $builder->select('*')->from('users')->where('id', '=', 1)->orWhereIntegerInRaw('id', ['1a', 2]);
+        $this->assertSame('select * from "users" where "id" = ? or "id" in (1, 2)', $builder->toSql());
+        $this->assertEquals([0 => 1], $builder->getBindings());
+    }
+
     public function testWhereIntegerNotInRaw()
     {
         $builder = $this->getOracleBuilder();
@@ -582,6 +590,14 @@ class OracleDBQueryBuilderTest extends TestCase
         $this->assertSame('select * from "users" where "id" not in (1, 2)', $builder->toSql());
         $this->assertEquals([], $builder->getBindings());
     }
+
+    public function testOrWhereIntegerNotInRaw()
+    {
+        $builder = $this->getOracleBuilder();
+        $builder->select('*')->from('users')->where('id', '=', 1)->orWhereIntegerNotInRaw('id', ['1a', 2]);
+        $this->assertSame('select * from "users" where "id" = ? or "id" not in (1, 2)', $builder->toSql());
+        $this->assertEquals([0 => 1], $builder->getBindings());
+    }    
 
     public function testEmptyWhereIntegerInRaw()
     {
@@ -743,6 +759,26 @@ class OracleDBQueryBuilderTest extends TestCase
         $this->assertEquals([0 => 1], $builder->getBindings());
     }
 
+    public function testJsonWhereNull()
+    {
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('does not support');
+
+        $builder = $this->getOracleBuilder();
+        $builder->select('*')->from('users')->whereNull('items->id');
+        $builder->toSql();
+    }    
+
+    public function testJsonWhereNotNull()
+    {
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('does not support');
+
+        $builder = $this->getOracleBuilder();
+        $builder->select('*')->from('users')->whereNotNull('items->id');
+        $builder->toSql();
+    }
+
     public function testArrayWhereNulls()
     {
         $builder = $this->getOracleBuilder();
@@ -838,6 +874,35 @@ class OracleDBQueryBuilderTest extends TestCase
         $this->assertSame('(select * from "posts" where "public" = ?) union all (select * from "videos" where "public" = ?) order by field(category, ?, ?) asc', $builder->toSql());
         $this->assertEquals([1, 1, 'news', 'opinion'], $builder->getBindings());
     }
+
+    public function testReorder()
+    {
+        $builder = $this->getOracleBuilder();
+        $builder->select('*')->from('users')->orderBy('name');
+        $this->assertSame('select * from "users" order by "name" asc', $builder->toSql());
+        $builder->reorder();
+        $this->assertSame('select * from "users"', $builder->toSql());
+
+        $builder = $this->getOracleBuilder();
+        $builder->select('*')->from('users')->orderBy('name');
+        $this->assertSame('select * from "users" order by "name" asc', $builder->toSql());
+        $builder->reorder('email', 'desc');
+        $this->assertSame('select * from "users" order by "email" desc', $builder->toSql());
+
+        $builder = $this->getOracleBuilder();
+        $builder->select('*')->from('first');
+        $builder->union($this->getOracleBuilder()->select('*')->from('second'));
+        $builder->orderBy('name');
+        $this->assertSame('(select * from "first") union (select * from "second") order by "name" asc', $builder->toSql());
+        $builder->reorder();
+        $this->assertSame('(select * from "first") union (select * from "second")', $builder->toSql());
+
+        $builder = $this->getOracleBuilder();
+        $builder->select('*')->from('users')->orderByRaw('?', [true]);
+        $this->assertEquals([true], $builder->getBindings());
+        $builder->reorder();
+        $this->assertEquals([], $builder->getBindings());
+    }    
 
     public function testOrderBySubQueries()
     {
@@ -1852,7 +1917,12 @@ class OracleDBQueryBuilderTest extends TestCase
         $builder = $this->getOracleBuilder();
         $builder->getConnection()->shouldReceive('delete')->once()->with('delete from "users" where "users"."id" = ?', [1])->andReturn(1);
         $result = $builder->from('users')->selectRaw('?', ['ignore'])->delete(1);
-        $this->assertEquals(1, $result);        
+        $this->assertEquals(1, $result);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('does not support');
+        $builder = $this->getOracleBuilder();
+        $builder->from('users')->where('email', '=', 'foo')->orderBy('id')->take(1)->delete();
     }
 
     public function testDeleteWithJoinMethod()
@@ -2172,6 +2242,22 @@ class OracleDBQueryBuilderTest extends TestCase
         $this->assertEquals($expectedSql, $builder->toSql());
         $this->assertEquals($expectedBindings, $builder->getBindings());
     }
+
+    public function testSubSelectResetBindings()
+    {
+        $builder = $this->getOracleBuilder();
+        $builder->from('one')->selectSub(function ($query) {
+            $query->from('two')->select('baz')->where('subkey', '=', 'subval');
+        }, 'sub');
+
+        $this->assertEquals('select (select "baz" from "two" where "subkey" = ?) as "sub" from "one"', $builder->toSql());
+        $this->assertEquals(['subval'], $builder->getBindings());
+
+        $builder->select('*');
+
+        $this->assertEquals('select * from "one"', $builder->toSql());
+        $this->assertEquals([], $builder->getBindings());
+    }    
 
     public function testUppercaseLeadingBooleansAreRemoved()
     {
