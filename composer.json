@@ -1,7 +1,7 @@
 {
   "name": "jfelder/oracledb",
   "description": "Oracle DB driver for Laravel",
-  "keywords": ["oracle", "laravel", "laravel 6", "pdo_oci", "oci8"],
+  "keywords": ["oracle", "laravel", "laravel 7", "pdo_oci", "oci8"],
   "license": "MIT",
   "authors": [
       {
@@ -10,15 +10,14 @@
       }
   ],
   "require": {
-    "php": "^7.2",
-    "illuminate/support": "^6.0",
-    "illuminate/database": "^6.0",
-    "illuminate/pagination": "^6.0"
+    "php": "^7.2.5",
+    "illuminate/support": "^7.0",
+    "illuminate/database": "^7.0",
+    "illuminate/pagination": "^7.0"
   },
   "require-dev": {
-    "fzaninotto/faker": "^1.9.1",
-    "mockery/mockery": "^1.0",
-    "phpunit/phpunit": "^8.0"
+    "mockery/mockery": "^1.3.1",
+    "phpunit/phpunit": "^9.0"
   },
   "autoload": {
     "psr-4": {
