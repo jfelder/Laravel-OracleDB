@@ -342,7 +342,7 @@ class OCIStatement extends \PDOStatement
 
         $rs = oci_fetch_all($this->stmt, $temprs, 0, -1, \OCI_FETCHSTATEMENT_BY_ROW + \OCI_ASSOC);
 
-        if ($rs !== false) {
+        if (oci_error($this->stmt) === false) {
             // convert to type requested from PDO options
             foreach ($temprs as $k => $v) {
                 $temprs[$k] = $this->processFetchOptions($v);
@@ -350,7 +350,7 @@ class OCIStatement extends \PDOStatement
             $rs = $temprs;
         }
 
-        if (! $rs) {
+        if($rs === false) {
             $this->setErrorInfo('07000');
         }
 
