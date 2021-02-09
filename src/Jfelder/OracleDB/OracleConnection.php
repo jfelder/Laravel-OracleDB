@@ -3,10 +3,11 @@
 namespace Jfelder\OracleDB;
 
 use Illuminate\Database\Connection;
-use Jfelder\OracleDB\Schema\OracleBuilder;
+use Jfelder\OracleDB\Schema\OracleBuilder as OracleSchemaBuilder;
 use Jfelder\OracleDB\Query\Processors\OracleProcessor;
 use Doctrine\DBAL\Driver\OCI8\Driver as DoctrineDriver;
 use Jfelder\OracleDB\Query\Grammars\OracleGrammar as QueryGrammer;
+use Jfelder\OracleDB\Query\OracleBuilder as OracleQueryBuilder;
 use Jfelder\OracleDB\Schema\Grammars\OracleGrammar as SchemaGrammer;
 use PDO;
 
@@ -15,7 +16,7 @@ class OracleConnection extends Connection
     /**
      * Get a schema builder instance for the connection.
      *
-     * @return \Illuminate\Database\Schema\OracleBuilder
+     * @return \Jfelder\OracleDB\Schema\OracleBuilder
      */
     public function getSchemaBuilder()
     {
@@ -23,7 +24,19 @@ class OracleConnection extends Connection
             $this->useDefaultSchemaGrammar();
         }
 
-        return new OracleBuilder($this);
+        return new OracleSchemaBuilder($this);
+    }
+
+    /**
+     * Get a new query builder instance.
+     *
+     * @return \Jfelder\OracleDB\Query\OracleBuilder
+     */
+    public function query()
+    {
+        return new OracleQueryBuilder(
+            $this, $this->getQueryGrammar(), $this->getPostProcessor()
+        );
     }
 
     /**

@@ -7,18 +7,22 @@ namespace {
     $OCIExecuteStatus = true;
     $OCIFetchStatus = true;
     $OCIBindChangeStatus = false;
+    $OCIBindByNameTypeReceived = null;
 }
 
 namespace Jfelder\OracleDB\OCI_PDO {
-    // Generic
+    // OCI specific
     if (! function_exists("Jfelder\OracleDB\OCI_PDO\oci_error")) {
         function oci_error($a = '')
         {
-            return ['code' => 0,'message' => '', 'sqltext' => ''];
+            global $OCIExecuteStatus, $OCIFetchStatus, $OCITransactionStatus;
+
+            return ($OCIExecuteStatus && $OCIFetchStatus && $OCITransactionStatus)
+                ? false
+                : ['code' => 0,'message' => '', 'sqltext' => ''];
         }
     }
 
-    // OCI specific
     if (! function_exists("Jfelder\OracleDB\OCI_PDO\oci_connect")) {
         function oci_connect($a = '')
         {
@@ -79,7 +83,10 @@ namespace Jfelder\OracleDB\OCI_PDO {
     if (! function_exists("Jfelder\OracleDB\OCI_PDO\oci_bind_by_name")) {
         function oci_bind_by_name($a = '', $b = '', &$c, $d = '', $e = '')
         {
-            global $OCIStatementStatus, $OCIBindChangeStatus;
+            global $OCIStatementStatus, $OCIBindChangeStatus, $OCIBindByNameTypeReceived;
+
+            $OCIBindByNameTypeReceived = $e;
+
             if ($OCIBindChangeStatus) {
                 $c = 'oci_bind_by_name';
             }

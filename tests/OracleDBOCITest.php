@@ -2,6 +2,7 @@
 
 use Jfelder\OracleDB\OCI_PDO\OCI;
 use Jfelder\OracleDB\OCI_PDO\OCIException;
+use Jfelder\OracleDB\OCI_PDO\OCIStatement;
 use Mockery as m;
 use PHPUnit\Framework\TestCase;
 
@@ -37,14 +38,14 @@ class OracleDBOCITest extends TestCase
     public function testConstructorSuccessWithPersistentConnection()
     {
         $oci = new OCI('dsn', null, null, [\PDO::ATTR_PERSISTENT => 1]);
-        $this->assertInstanceOf('Jfelder\OracleDB\OCI_PDO\OCI', $oci);
+        $this->assertInstanceOf(OCI::class, $oci);
         $this->assertEquals(1, $oci->getAttribute(\PDO::ATTR_PERSISTENT));
     }
 
     public function testConstructorSuccessWithoutPersistentConnection()
     {
         $oci = new OCI('dsn', null, null, [\PDO::ATTR_PERSISTENT => 0]);
-        $this->assertInstanceOf('Jfelder\OracleDB\OCI_PDO\OCI', $oci);
+        $this->assertInstanceOf(OCI::class, $oci);
         $this->assertEquals(0, $oci->getAttribute(\PDO::ATTR_PERSISTENT));
     }
 
@@ -154,7 +155,7 @@ class OracleDBOCITest extends TestCase
         $property = $reflection->getProperty('stmt');
         $property->setAccessible(true);
         $oci_stmt = $property->getValue($oci);
-        $this->assertInstanceOf('Jfelder\OracleDB\OCI_PDO\OCIStatement', $oci_stmt);
+        $this->assertInstanceOf(OCIStatement::class, $oci_stmt);
 
         // use reflection to test values of protected properties of OCIStatement object
         $reflection = new \ReflectionClass($oci_stmt);
@@ -189,11 +190,6 @@ class OracleDBOCITest extends TestCase
         $this->assertEquals(null, $this->oci->getAttribute('doesnotexist'));
     }
 
-//    public function testGetAvailableDrivers ()
-//    {
-//        $this->assertArrayHasKey(0, $this->oci->getAvailableDrivers());
-//    }
-
     public function testInTransactionWhileNotInTransaction()
     {
         $this->assertFalse($this->oci->inTransaction());
@@ -222,7 +218,7 @@ class OracleDBOCITest extends TestCase
         $sql = 'select * from table';
         $oci = new \TestOCIStub();
         $stmt = $oci->prepare($sql);
-        $this->assertInstanceOf('Jfelder\OracleDB\OCI_PDO\OCIStatement', $stmt);
+        $this->assertInstanceOf(OCIStatement::class, $stmt);
 
         // use reflection to test values of protected properties
         $reflection = new \ReflectionClass($stmt);
@@ -248,7 +244,7 @@ class OracleDBOCITest extends TestCase
         $sql = 'select * from table where id = ? and date = ?';
         $oci = new \TestOCIStub();
         $stmt = $oci->prepare($sql);
-        $this->assertInstanceOf('Jfelder\OracleDB\OCI_PDO\OCIStatement', $stmt);
+        $this->assertInstanceOf(OCIStatement::class, $stmt);
 
         // use reflection to test values of protected properties
         $reflection = new \ReflectionClass($stmt);
@@ -284,7 +280,7 @@ class OracleDBOCITest extends TestCase
         $sql = 'select * from table';
         $oci = new \TestOCIStub();
         $stmt = $oci->query($sql);
-        $this->assertInstanceOf('Jfelder\OracleDB\OCI_PDO\OCIStatement', $stmt);
+        $this->assertInstanceOf(OCIStatement::class, $stmt);
 
         // use reflection to test values of protected properties
         $reflection = new \ReflectionClass($stmt);
@@ -310,7 +306,7 @@ class OracleDBOCITest extends TestCase
         $sql = 'select * from table';
         $oci = new \TestOCIStub();
         $stmt = $oci->query($sql, \PDO::FETCH_CLASS, 'stdClass', []);
-        $this->assertInstanceOf('Jfelder\OracleDB\OCI_PDO\OCIStatement', $stmt);
+        $this->assertInstanceOf(OCIStatement::class, $stmt);
 
         // use reflection to test values of protected properties
         $reflection = new \ReflectionClass($stmt);
