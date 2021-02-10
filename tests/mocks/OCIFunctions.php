@@ -7,6 +7,7 @@ namespace {
     $OCIExecuteStatus = true;
     $OCIFetchStatus = true;
     $OCIBindChangeStatus = false;
+    $OCIBindByNameTypeReceived = null;
 }
 
 namespace Jfelder\OracleDB\OCI_PDO {
@@ -79,7 +80,10 @@ namespace Jfelder\OracleDB\OCI_PDO {
     if (! function_exists("Jfelder\OracleDB\OCI_PDO\oci_bind_by_name")) {
         function oci_bind_by_name($a = '', $b = '', &$c, $d = '', $e = '')
         {
-            global $OCIStatementStatus, $OCIBindChangeStatus;
+            global $OCIStatementStatus, $OCIBindChangeStatus, $OCIBindByNameTypeReceived;
+
+            $OCIBindByNameTypeReceived = $e;
+            
             if ($OCIBindChangeStatus) {
                 $c = 'oci_bind_by_name';
             }
