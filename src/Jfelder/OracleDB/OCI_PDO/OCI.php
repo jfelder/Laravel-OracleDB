@@ -213,16 +213,6 @@ class OCI extends \PDO
     }
 
     /**
-     * Return an array of available PDO drivers.
-     *
-     * @return array Array of PDO driver names.
-     */
-    public static function getAvailableDrivers()
-    {
-        return parent::getAvailableDrivers();
-    }
-
-    /**
      * Checks if inside a transaction.
      *
      * @return bool Returns TRUE if a transaction is currently active, and FALSE if not.

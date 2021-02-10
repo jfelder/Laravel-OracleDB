@@ -1,5 +1,7 @@
 <?php
 
+use Jfelder\OracleDB\OracleConnection;
+use Jfelder\OracleDB\Query\OracleBuilder;
 use Mockery as m;
 use PHPUnit\Framework\TestCase;
 
@@ -29,10 +31,10 @@ class OracleDBOCIProcessorTest extends TestCase
         $pdo = m::mock(new ProcessorTestOCIStub());
         $pdo->shouldReceive('prepare')->once()->with('sql')->andReturn($stmt);
 
-        $connection = m::mock('Illuminate\Database\Connection');
+        $connection = m::mock(OracleConnection::class);
         $connection->shouldReceive('getPdo')->once()->andReturn($pdo);
 
-        $builder = m::mock('Illuminate\Database\Query\Builder');
+        $builder = m::mock(OracleBuilder::class);
         $builder->shouldReceive('getConnection')->once()->andReturn($connection);
 
         $processor = new Jfelder\OracleDB\Query\Processors\OracleProcessor;

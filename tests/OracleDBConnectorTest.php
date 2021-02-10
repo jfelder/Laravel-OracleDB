@@ -1,5 +1,7 @@
 <?php
 
+use Illuminate\Database\Connectors\Connector;
+use Jfelder\OracleDB\Connectors\OracleConnector;
 use Mockery as m;
 use PHPUnit\Framework\TestCase;
 
@@ -12,7 +14,7 @@ class OracleDBConnectorTest extends TestCase
 
     public function testOptionResolution()
     {
-        $connector = new Illuminate\Database\Connectors\Connector;
+        $connector = new Connector;
         $connector->setDefaultOptions([0 => 'foo', 1 => 'bar']);
         $this->assertEquals([0 => 'baz', 1 => 'bar', 2 => 'boom'], $connector->getOptions(['options' => [0 => 'baz', 2 => 'boom']]));
     }
@@ -22,11 +24,10 @@ class OracleDBConnectorTest extends TestCase
      */
     public function testOracleConnectCallsCreateConnectionWithProperArguments($dsn, $config)
     {
-        $connection = m::mock('stdClass');
-        $connector = $this->getMockBuilder('Jfelder\OracleDB\Connectors\OracleConnector')->setMethods(['createConnection', 'getOptions'])->getMock();
-        $connector->expects($this->once())->method('getOptions')->with($this->equalTo($config))->will($this->returnValue(['options']));
-        $connector->expects($this->once())->method('createConnection')->with($this->equalTo($dsn), $this->equalTo($config), $this->equalTo(['options']))->will($this->returnValue($connection));
-        
+        $connector = $this->getMockBuilder(OracleConnector::class)->onlyMethods(['createConnection', 'getOptions'])->getMock();
+        $connection = m::mock(\stdClass::class);
+        $connector->expects($this->once())->method('getOptions')->with($this->equalTo($config))->willReturn(['options']);
+        $connector->expects($this->once())->method('createConnection')->with($this->equalTo($dsn), $this->equalTo($config), $this->equalTo(['options']))->willReturn($connection);
         $result = $connector->connect($config);
 
         $this->assertSame($result, $connection);

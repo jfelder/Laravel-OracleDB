@@ -99,6 +99,10 @@ class OracleGrammar extends \Illuminate\Database\Schema\Grammars\Grammar
             if (! is_null($foreign->onDelete)) {
                 $sql .= " on delete {$foreign->onDelete}";
             }
+
+            if (! is_null($foreign->onUpdate)) {
+                $sql .= " on update {$foreign->onUpdate}";
+            }            
         }
 
         return $sql;
@@ -200,6 +204,10 @@ class OracleGrammar extends \Illuminate\Database\Schema\Grammars\Grammar
             if (! is_null($command->onDelete)) {
                 $sql .= " on delete {$command->onDelete}";
             }
+
+            if (! is_null($command->onUpdate)) {
+                $sql .= " on update {$command->onUpdate}";
+            }                        
 
             return $sql;
         }

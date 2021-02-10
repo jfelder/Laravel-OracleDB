@@ -14,11 +14,9 @@ class OracleDBServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        $this->publishes(
-            [
-                __DIR__.'/../../config/oracledb.php' => config_path('oracledb.php'),
-            ]
-        );
+        $this->publishes([
+            __DIR__.'/../../config/oracledb.php' => config_path('oracledb.php'),
+        ], 'oracledb-config');
     }
 
     /**

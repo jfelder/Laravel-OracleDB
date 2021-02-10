@@ -34,7 +34,8 @@ class OCIStatement extends \PDOStatement
      */
     protected $datatypes = [
         \PDO::PARAM_BOOL => \SQLT_INT,
-        \PDO::PARAM_NULL => \SQLT_INT,
+        // there is no SQLT_NULL, but oracle will insert a null value if it receives an empty string
+        \PDO::PARAM_NULL => \SQLT_CHR,
         \PDO::PARAM_INT => \SQLT_INT,
         \PDO::PARAM_STR => \SQLT_CHR,
         \PDO::PARAM_INPUT_OUTPUT => \SQLT_CHR,
@@ -195,6 +196,8 @@ class OCIStatement extends \PDOStatement
 
     /**
      * Closes the cursor, enabling the statement to be executed again.
+     * 
+     * Todo implement this method instead of always returning true
      *
      * @return bool Returns TRUE on success or FALSE on failure.
      */

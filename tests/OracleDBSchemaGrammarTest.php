@@ -3,6 +3,8 @@
 use Illuminate\Database\Query\Expression;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Schema\ForeignIdColumnDefinition;
+use Jfelder\OracleDB\OracleConnection;
+use Jfelder\OracleDB\Schema\Grammars\OracleGrammar;
 use Mockery as m;
 use PHPUnit\Framework\TestCase;
 
@@ -14,6 +16,26 @@ class OracleDBSchemaGrammarTest extends TestCase
     {
         m::close();
     }
+
+    public function testCreateDatabase()
+    {
+        $grammar = new class extends OracleGrammar {};
+
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessage('This database driver does not support creating databases.');
+
+        $grammar->compileCreateDatabase('foo', m::mock(OracleConnection::class));
+    }    
+
+    public function testDropDatabaseIfExists()
+    {
+        $grammar = new class extends OracleGrammar {};
+
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessage('This database driver does not support dropping databases.');
+
+        $grammar->compileDropDatabaseIfExists('foo');
+    }    
 
     public function testBasicCreateTable()
     {
@@ -27,8 +49,20 @@ class OracleDBSchemaGrammarTest extends TestCase
 
         $statements = $blueprint->toSql($conn, $this->getGrammar());
 
-        $this->assertEquals(1, count($statements));
-        $this->assertEquals('create table users ( id number(10,0) not null, email varchar2(255) not null, constraint users_id_primary primary key ( id ) )', $statements[0]);
+        $this->assertCount(1, $statements);
+        $this->assertSame('create table users ( id number(10,0) not null, email varchar2(255) not null, constraint users_id_primary primary key ( id ) )', $statements[0]);
+
+        $blueprint = new Blueprint('users');
+        $blueprint->increments('id');
+        $blueprint->string('email');        
+
+        $conn = $this->getConnection();
+        $conn->shouldNotReceive('getConfig');        
+
+        $statements = $blueprint->toSql($conn, $this->getGrammar());
+
+        $this->assertCount(1, $statements);
+        $this->assertSame('alter table users add ( id number(10,0) not null, email varchar2(255) not null, constraint users_id_primary primary key ( id ) )', $statements[0]);        
     }
 
     public function testBasicCreateTableWithPrimary()
@@ -132,6 +166,23 @@ class OracleDBSchemaGrammarTest extends TestCase
         $this->assertEquals(1, count($statements));
         $this->assertEquals('create table prefix_users ( id number(10,0) not null, email varchar2(255) not null, foo_id number(10,0) not null, constraint users_foo_id_foreign foreign key ( foo_id ) references prefix_orders ( id ) on delete cascade, constraint users_id_primary primary key ( id ) )', $statements[0]);
     }
+
+    public function testAutoIncrementStartingValue()
+    {
+        // calling ->startingValue() should have no effect on the generated sql because it hasn't been implemented
+
+        $blueprint = new Blueprint('users');
+        $blueprint->create();
+        $blueprint->increments('id')->startingValue(1000);
+        $blueprint->string('email');
+
+        $conn = $this->getConnection();
+
+        $statements = $blueprint->toSql($conn, $this->getGrammar());
+
+        $this->assertCount(1, $statements);
+        $this->assertSame('create table users ( id number(10,0) not null, email varchar2(255) not null, constraint users_id_primary primary key ( id ) )', $statements[0]);
+    }    
 
     public function testBasicAlterTable()
     {
@@ -387,6 +438,13 @@ class OracleDBSchemaGrammarTest extends TestCase
 
         $this->assertCount(1, $statements);
         $this->assertSame('alter table users add constraint users_foo_id_foreign foreign key ( foo_id ) references orders ( id ) on delete cascade', $statements[0]);        
+
+        $blueprint = new Blueprint('users');
+        $blueprint->foreign('foo_id')->references('id')->on('orders')->cascadeOnUpdate();
+        $statements = $blueprint->toSql($this->getConnection(), $this->getGrammar());
+
+        $this->assertCount(1, $statements);
+        $this->assertSame('alter table users add constraint users_foo_id_foreign foreign key ( foo_id ) references orders ( id ) on update cascade', $statements[0]);        
     }
 
     public function testAddingForeignKeyWithCascadeDelete()
@@ -562,6 +620,18 @@ class OracleDBSchemaGrammarTest extends TestCase
         $this->assertEquals('alter table users add ( foo number(10,0) not null, constraint users_foo_primary primary key ( foo ) )', $statements[0]);
     }
 
+    public function testAddingIncrementsWithStartingValues()
+    {
+        // calling ->startingValue() should have no effect on the generated sql because it hasn't been implemented
+
+        $blueprint = new Blueprint('users');
+        $blueprint->id()->startingValue(1000);
+        $statements = $blueprint->toSql($this->getConnection(), $this->getGrammar());
+
+        $this->assertCount(1, $statements);
+        $this->assertSame('alter table users add ( id number(19,0) not null, constraint users_id_primary primary key ( id ) )', $statements[0]);
+    }    
+
     public function testAddingMediumInteger()
     {
         $blueprint = new Blueprint('users');
@@ -731,8 +801,10 @@ class OracleDBSchemaGrammarTest extends TestCase
         $this->assertEquals('alter table users add ( foo blob not null )', $statements[0]);
     }
 
-    public function testAddingCommentDoesNothing()
+    public function testAddingComment()
     {
+        // calling ->comment() on a column should have no effect on the generated sql because it hasn't been implemented
+
         $blueprint = new Blueprint('users');
         $blueprint->string('foo')->comment("Escape ' when using words like it's");
         $statements = $blueprint->toSql($this->getConnection(), $this->getGrammar());
@@ -773,7 +845,6 @@ class OracleDBSchemaGrammarTest extends TestCase
 
     public function testGrammarsAreMacroable()
     {
-        // compileReplace macro.
         $this->getGrammar()::macro('compileReplace', function () {
             return true;
         });
@@ -785,7 +856,7 @@ class OracleDBSchemaGrammarTest extends TestCase
 
     protected function getConnection()
     {
-        return m::mock('Illuminate\Database\Connection');
+        return m::mock(OracleConnection::class);
     }
 
     public function getGrammar($quote = false)

@@ -169,13 +169,20 @@ class OracleDBOCIStatementTest extends TestCase
         $this->assertTrue($this->stmt->bindValue('param', 'hello'));
     }
 
+    public function testBindValueWithNullDataType()
+    {
+        global $OCIBindByNameTypeReceived;
+        $this->assertTrue($this->stmt->bindValue('param', null, \PDO::PARAM_NULL));
+        $this->assertSame(\SQLT_CHR, $OCIBindByNameTypeReceived);
+    }    
+
     public function testBindValueWithInvalidDataType()
     {
         $this->expectException(InvalidArgumentException::class);
         $this->stmt->bindValue(0, 'hello', 8);
     }
 
-    // method not yet implemented
+    // todo update this test once this method has been implemented
     public function testCloseCursor()
     {
         $this->assertTrue($this->stmt->closeCursor());

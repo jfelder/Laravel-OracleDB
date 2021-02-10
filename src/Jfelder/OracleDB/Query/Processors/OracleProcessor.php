@@ -4,6 +4,7 @@ namespace Jfelder\OracleDB\Query\Processors;
 
 use Illuminate\Database\Query\Builder;
 use Illuminate\Database\Query\Processors\Processor as Processor;
+use Jfelder\OracleDB\OCI_PDO\OCI;
 
 class OracleProcessor extends Processor
 {
@@ -29,7 +30,7 @@ class OracleProcessor extends Processor
 
         // PDO driver params are 1-based so ++ has to be before bindValue
         // OCI driver params are 0-based so no ++ before bindValue
-        if (get_class($pdo) != 'Jfelder\OracleDB\OCI_PDO\OCI') {
+        if (get_class($pdo) != OCI::class) {
             $counter++;
         }
 

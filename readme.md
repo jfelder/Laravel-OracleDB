@@ -1,11 +1,13 @@
 ## Laravel Oracle Database Package
 
-### OracleDB (updated for Laravel 7.x)
+### OracleDB (updated for Laravel 8.x)
 
 [![Latest Stable Version](https://poser.pugx.org/jfelder/oracledb/v/stable.png)](https://packagist.org/packages/jfelder/oracledb) [![Total Downloads](https://poser.pugx.org/jfelder/oracledb/downloads.png)](https://packagist.org/packages/jfelder/oracledb) [![Build Status](https://travis-ci.org/jfelder/Laravel-OracleDB.png)](https://travis-ci.org/jfelder/Laravel-OracleDB)
 
 
-OracleDB is an Oracle Database Driver package for [Laravel Framework](https://laravel.com) - thanks [@taylorotwell](https://github.com/taylorotwell). OracleDB is an extension of [Illuminate/Database](https://github.com/illuminate/database) that uses either the [PDO_OCI] (https://www.php.net/manual/en/ref.pdo-oci.php) extension or the [OCI8 Functions](https://www.php.net/manual/en/ref.oci8.php) wrapped into the PDO namespace.
+OracleDB is an Oracle Database Driver package for [Laravel Framework](https://laravel.com) - thanks [@taylorotwell](https://github.com/taylorotwell). OracleDB is an extension of [Illuminate/Database](https://github.com/illuminate/database) that uses either the [PDO_OCI](https://www.php.net/manual/en/ref.pdo-oci.php) extension or the [OCI8 Functions](https://www.php.net/manual/en/ref.oci8.php) wrapped into the PDO namespace.
+
+_NOTE: This package has not been tested in PHP 8._
 
 **Please report any bugs you may find.**
 
@@ -16,48 +18,51 @@ OracleDB is an Oracle Database Driver package for [Laravel Framework](https://la
 
 ### Installation
 
-Add `jfelder/oracledb` as a requirement to composer.json:
+With [Composer](https://getcomposer.org):
 
-```json
-{
-    "require": {
-        "jfelder/oracledb": "7.*"
-    }
-}
+```sh
+composer require jfelder/oracledb
 ```
-And then run `composer update`
 
-Once Composer has installed or updated your packages you need to register OracleDB. Open up `config/app.php` and find
-the `providers` key and add:
+During this command, Laravel's "Auto-Discovery" feature should automatically register OracleDB's service
+provider.
+
+Next, publish OracleDB's configuration file using the vendor:publish Artisan command. This will copy OracleDB's
+configuration file to `config/oracledb.php` in your project.
+
+```sh
+php artisan vendor:publish --tag=oracledb-config
+```
+
+To finish the installation, set your environment variables (typically in your .env file) to the corresponding
+env variables used in `config/oracledb.php`: such as `DB_HOST`, `DB_USERNAME`, etc.  
+
+Additionally, it may be necessary for your app to configure the NLS_DATE_FORMAT of the database connection session, 
+before any queries are executed. One way to accomplish this is to run a statement in your `AppServiceProvider`'s `boot` 
+method, for example:
 
 ```php
-Jfelder\OracleDB\OracleDBServiceProvider::class,
+if (config('database.default') === 'oracle') {
+	DB::statement("ALTER SESSION SET NLS_DATE_FORMAT='YYYY-MM-DD HH24:MI:SS'");
+}
 ```
-
-Finally you need to publish a configuration file by running the following Artisan command.
-
-```terminal
-$ php artisan vendor:publish
-```
-This will copy the configuration file to config/oracledb.php
-
 
 ### Basic Usage
-The configuration file for this package is located at 'config/oracledb.php'.
-In this file you define all of your oracle database connections. If you need to make more than one connection, just
+The configuration file for this package is located at `config/oracledb.php`.
+In this file, you define all of your oracle database connections. If you need to make more than one connection, just
 copy the example one. If you want to make one of these connections the default connection, enter the name you gave the
-connection into the "Default Database Connection Name" section in 'config/database.php'.
+connection into the "Default Database Connection Name" section in `config/database.php`.
 
-Once you have configured the OracleDB database connection(s), you may run queries using the 'DB' class as normal.
+Once you have configured the OracleDB database connection(s), you may run queries using the `DB` facade as normal.
 
-#### NEW: The oci8 library in now the default library. If you want to use the pdo library, enter "pdo" as the driver and the code will automatically use the pdo library instead of the oci8 library. Any other value will result in the oci8 library being used.
+_NOTE: OCI8 is the default driver. If you want to use the PDO_OCI driver, change the `driver` value to `'pdo'` in the `config/oracledb.php` file for whichever connections you wish to have utilize PDO_OCI. Setting the driver to `'pdo'` will make OracleDB use the [PDO_OCI](https://www.php.net/manual/en/ref.pdo-oci.php) extension. Given any other `driver` value, OracleDB will use the [OCI8 Functions](https://www.php.net/manual/en/ref.oci8.php)._
 
 ```php
 $results = DB::select('select * from users where id = ?', [1]);
 ```
 
 The above statement assumes you have set the default connection to be the oracle connection you setup in
-config/database.php file and will always return an 'array' of results.
+config/database.php file and will always return an `array` of results.
 
 ```php
 $results = DB::connection('oracle')->select('select * from users where id = ?', [1]);
@@ -77,16 +82,19 @@ in config/oracledb.php file.
 > **Note:** When using the insertGetId method, you can specify the auto-incrementing column name as the second
 parameter in insertGetId function. It will default to "id" if not specified.
 
-See [Laravel Database Basic Docs](https://laravel.com/docs/7.x/database) for more information.
+See [Laravel Database Basic Docs](https://laravel.com/docs/8.x/database) for more information.
 
 ### Unimplemented Features
 
-Some of the features available in the first-party Laravel database drivers are not implemented in this package. Pull requests are welcome for implementing any of these features, or for expanding this list if you find any unimplemented features not already listed.
+Some of the features available in the first-party Laravel database drivers are not implemented in this package. Pull 
+requests are welcome for implementing any of these features, or for expanding this list if you find any unimplemented 
+features not already listed.
 
 #### Query Builder
 
 - insertOrIgnore `DB::from('users')->insertOrIgnore(['email' => 'foo']);`
 - insertGetId with empty values `DB::from('users')->insertGetId([]);` (but calling with non-empty values is supported)
+- upserts `DB::from('users')->upsert([['email' => 'foo', 'name' => 'bar'], ['name' => 'bar2', 'email' => 'foo2']], 'email');`
 - deleting with a join `DB::from('users')->join('contacts', 'users.id', '=', 'contacts.id')->where('users.email', '=', 'foo')->delete();`
 - deleting with a limit `DB::from('users')->where('email', '=', 'foo')->orderBy('id')->take(1)->delete();`
 - json operations `DB::from('users')->where('items->sku', '=', 'foo-bar')->get();`
@@ -99,6 +107,7 @@ Some of the features available in the first-party Laravel database drivers are n
 - set collation on a column `$blueprint->string('some_column')->collation('BINARY_CI')`
 - set comments on a table `$blueprint->comment("This table is great.")`
 - set comments on a column `$blueprint->string('foo')->comment("Some helpful info about the foo column")`
+- set the starting value of an auto-incrementing column `$blueprint->increments('id')->startingValue(1000)`
 - create a private temporary table `$blueprint->temporary()`
 - rename an index `$blueprint->renameIndex('foo', 'bar')`
 - specify an algorithm when creating an index via the third argument `$blueprint->index(['foo', 'bar'], 'baz', 'hash')`

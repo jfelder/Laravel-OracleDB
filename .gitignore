@@ -6,5 +6,4 @@ composer.lock
 atlassian-ide-plugin.xml
 /vagrant
 Vagrantfile
-
-
+.phpunit.result.cache
