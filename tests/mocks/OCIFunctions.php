@@ -15,7 +15,11 @@ namespace Jfelder\OracleDB\OCI_PDO {
     if (! function_exists("Jfelder\OracleDB\OCI_PDO\oci_error")) {
         function oci_error($a = '')
         {
-            return ['code' => 0,'message' => '', 'sqltext' => ''];
+            global $OCIExecuteStatus, $OCIFetchStatus, $OCITransactionStatus;
+
+            return ($OCIExecuteStatus && $OCIFetchStatus && $OCITransactionStatus)
+                ? false
+                : ['code' => 0,'message' => '', 'sqltext' => ''];
         }
     }
 
