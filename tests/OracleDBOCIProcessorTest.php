@@ -1,7 +1,12 @@
 <?php
 
+namespace Jfelder\OracleDB\Tests;
+
+use ProcessorTestOCIStub;
+use ProcessorTestOCIStatementStub;
 use Jfelder\OracleDB\OracleConnection;
 use Jfelder\OracleDB\Query\OracleBuilder;
+use Jfelder\OracleDB\Query\Processors\OracleProcessor;
 use Mockery as m;
 use PHPUnit\Framework\TestCase;
 
@@ -37,7 +42,7 @@ class OracleDBOCIProcessorTest extends TestCase
         $builder = m::mock(OracleBuilder::class);
         $builder->shouldReceive('getConnection')->once()->andReturn($connection);
 
-        $processor = new Jfelder\OracleDB\Query\Processors\OracleProcessor;
+        $processor = new OracleProcessor;
 
         $result = $processor->processInsertGetId($builder, 'sql', [1, 'foo', true, null], 'id');
         $this->assertSame(0, $result);
@@ -45,7 +50,7 @@ class OracleDBOCIProcessorTest extends TestCase
 
     public function testProcessColumnListing()
     {
-        $processor = new Jfelder\OracleDB\Query\Processors\OracleProcessor();
+        $processor = new OracleProcessor;
         $listing = [['column_name' => 'id'], ['column_name' => 'name'], ['column_name' => 'email']];
         $expected = ['id', 'name', 'email'];
         $this->assertEquals($expected, $processor->processColumnListing($listing));

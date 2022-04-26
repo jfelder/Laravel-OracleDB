@@ -9,7 +9,7 @@ if (! class_exists('ProcessorTestPDOStub')) {
         {
         }
 
-        public function lastInsertId($sequence = null)
+        public function lastInsertId(?string $name = null): string|false
         {
         }
     }

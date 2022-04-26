@@ -39,7 +39,7 @@ class OracleGrammar extends BaseGrammar
      */
     public function compileSelect(Builder $query)
     {
-        if ($query->unions && $query->aggregate) {
+        if (($query->unions || $query->havings) && $query->aggregate) {
             return $this->compileUnionAggregate($query);
         }
 
@@ -177,7 +177,7 @@ class OracleGrammar extends BaseGrammar
         }
 
         return parent::compileDelete($query);
-    }   
+    }
 
     /**
      * Compile a delete statement with joins or limit into SQL.

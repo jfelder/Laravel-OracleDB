@@ -2,7 +2,10 @@
 
 namespace Jfelder\OracleDB\OCI_PDO;
 
-class OCIStatement extends \PDOStatement
+use PDO;
+use PDOStatement;
+
+class OCIStatement extends PDOStatement
 {
     /**
      * @var oci8 statement Statement handle
@@ -33,13 +36,13 @@ class OCIStatement extends \PDOStatement
      * @var array PDO => OCI data types conversion var
      */
     protected $datatypes = [
-        \PDO::PARAM_BOOL => \SQLT_INT,
+        PDO::PARAM_BOOL => \SQLT_INT,
         // there is no SQLT_NULL, but oracle will insert a null value if it receives an empty string
-        \PDO::PARAM_NULL => \SQLT_CHR,
-        \PDO::PARAM_INT => \SQLT_INT,
-        \PDO::PARAM_STR => \SQLT_CHR,
-        \PDO::PARAM_INPUT_OUTPUT => \SQLT_CHR,
-        \PDO::PARAM_LOB => \SQLT_BLOB,
+        PDO::PARAM_NULL => \SQLT_CHR,
+        PDO::PARAM_INT => \SQLT_INT,
+        PDO::PARAM_STR => \SQLT_CHR,
+        PDO::PARAM_INPUT_OUTPUT => \SQLT_CHR,
+        PDO::PARAM_LOB => \SQLT_BLOB,
     ];
 
     /**
@@ -70,11 +73,11 @@ class OCIStatement extends \PDOStatement
      *
      * @throws OCIException if $stmt is not a vaild oci8 statement resource
      */
-    public function __construct($stmt, \Jfelder\OracleDB\OCI_PDO\OCI $oci, $sql = '', $options = [])
+    public function __construct($stmt, OCI $oci, $sql = '', $options = [])
     {
         $resource_type = strtolower(get_resource_type($stmt));
 
-        if ($resource_type != 'oci8 statement') {
+        if ($resource_type !== 'oci8 statement') {
             throw new OCIException($this->setErrorInfo('0A000', '9999', "Invalid resource received: {$resource_type}"));
         }
 
@@ -100,30 +103,30 @@ class OCIStatement extends \PDOStatement
      * Bind a column to a PHP variable.
      *
      * @param  mixed $column Number of the column (1-indexed) in the result set
-     * @param  mixed $param Name of the PHP variable to which the column will be bound.
+     * @param  mixed $var Name of the PHP variable to which the column will be bound.
      * @param  int $type Data type of the parameter, specified by the PDO::PARAM_* constants.
-     * @param  int $maxlen A hint for pre-allocation.
-     * @param  mixed $driverdata Optional parameter(s) for the driver.
+     * @param  int $maxLength A hint for pre-allocation.
+     * @param  mixed $driverOptions Optional parameter(s) for the driver.
      *
      * @throws \InvalidArgumentException If an unknown data type is passed in
      *
      * @return bool Returns TRUE on success or FALSE on failure.
      */
-    public function bindColumn($column, &$param, $data_type = null, $maxlen = null, $driverdata = null)
+    public function bindColumn(string|int $column, mixed &$var, int $type = null, int $maxLength = 0, mixed $driverOptions = null): bool
     {
         if (! is_numeric($column) || $column < 1) {
             throw new \InvalidArgumentException("Invalid column specified: {$column}");
         }
 
-        if (! isset($this->datatypes[$data_type])) {
-            throw new \InvalidArgumentException("Unknown data type in oci_bind_by_name: {$data_type}");
+        if (! isset($this->datatypes[$type])) {
+            throw new \InvalidArgumentException("Unknown data type in oci_bind_by_name: {$type}");
         }
 
         $this->bindings[$column] = [
-            'var' => &$param,
-            'data_type' => $data_type,
-            'max_length' => $maxlen,
-            'driverdata' => $driverdata,
+            'var' => &$var,
+            'data_type' => $type,
+            'max_length' => $maxLength,
+            'driverdata' => $driverOptions,
         ];
 
         return true;
@@ -132,35 +135,34 @@ class OCIStatement extends \PDOStatement
     /**
      * Binds a parameter to the specified variable name.
      *
-     * @param  mixed $parameter Parameter identifier
-     * @param  mixed $variable Name of the PHP variable to bind to the SQL statement parameter
-     * @param  int $data_type Explicit data type for the parameter using the PDO::PARAM_* constants
-     * @param  int $length Length of the data type
-     * @param  mixed $driver_options
+     * @param  mixed $param Parameter identifier
+     * @param  mixed $var Name of the PHP variable to bind to the SQL statement parameter
+     * @param  int $type Explicit data type for the parameter using the PDO::PARAM_* constants
+     * @param  int $maxLength Length of the data type
+     * @param  mixed $driverOptions
      *
      * @throws \InvalidArgumentException If an unknown data type is passed in
      *
      * @return bool Returns TRUE on success or FALSE on failure
      */
-    public function bindParam($parameter, &$variable, $data_type = \PDO::PARAM_STR, $length = -1, $driver_options = null)
+    public function bindParam(string|int $param, mixed &$var, int $type = PDO::PARAM_STR, int $maxLength = -1, mixed $driverOptions = null): bool
     {
-        if (is_numeric($parameter)) {
-            $parameter = ":{$parameter}";
+        if (is_numeric($param)) {
+            $param = ":{$param}";
         }
 
-        $this->addParameter($parameter, $variable, $data_type, $length, $driver_options);
+        $this->addParameter($param, $var, $type, $maxLength, $driverOptions);
 
-        if (! isset($this->datatypes[$data_type])) {
-            if ($data_type === (\PDO::PARAM_INT | \PDO::PARAM_INPUT_OUTPUT)) {
-                $data_type = \PDO::PARAM_STR;
-                $length = $length > 40 ? $length : 40;
+        if (! isset($this->datatypes[$type])) {
+            if ($type === (PDO::PARAM_INT | PDO::PARAM_INPUT_OUTPUT)) {
+                $type = PDO::PARAM_STR;
+                $maxLength = $maxLength > 40 ? $maxLength : 40;
             } else {
-                throw new \InvalidArgumentException("Unknown data type in oci_bind_by_name: {$data_type}");
+                throw new \InvalidArgumentException("Unknown data type in oci_bind_by_name: {$type}");
             }
         }
 
-        //Bind the parameter
-        $result = oci_bind_by_name($this->stmt, $parameter, $variable, $length, $this->datatypes[$data_type]);
+        $result = oci_bind_by_name($this->stmt, $param, $var, $maxLength, $this->datatypes[$type]);
 
         return $result;
     }
@@ -168,40 +170,39 @@ class OCIStatement extends \PDOStatement
     /**
      * Binds a value to a parameter.
      *
-     * @param  mixed $parameter Parameter identifier.
+     * @param  mixed $param Parameter identifier.
      * @param  mixed $value The value to bind to the parameter
-     * @param  int $data_type Explicit data type for the parameter using the PDO::PARAM_* constants
+     * @param  int $type Explicit data type for the parameter using the PDO::PARAM_* constants
      *
      * @throws \InvalidArgumentException If an unknown data type is passed in
      *
      * @return bool Returns TRUE on success or FALSE on failure.
      */
-    public function bindValue($parameter, $value, $data_type = \PDO::PARAM_STR)
+    public function bindValue(string|int $param, mixed $value, int $type = PDO::PARAM_STR): bool
     {
-        if (is_numeric($parameter)) {
-            $parameter = ":{$parameter}";
+        if (is_numeric($param)) {
+            $param = ":{$param}";
         }
 
-        $this->addParameter($parameter, $value, $data_type);
+        $this->addParameter($param, $value, $type);
 
-        if (! isset($this->datatypes[$data_type])) {
-            throw new \InvalidArgumentException("Unknown data type in oci_bind_by_name: {$data_type}");
+        if (! isset($this->datatypes[$type])) {
+            throw new \InvalidArgumentException("Unknown data type in oci_bind_by_name: {$type}");
         }
 
-        //Bind the parameter
-        $result = oci_bind_by_name($this->stmt, $parameter, $value, -1, $this->datatypes[$data_type]);
+        $result = oci_bind_by_name($this->stmt, $param, $value, -1, $this->datatypes[$type]);
 
         return $result;
     }
 
     /**
      * Closes the cursor, enabling the statement to be executed again.
-     * 
+     *
      * Todo implement this method instead of always returning true
      *
      * @return bool Returns TRUE on success or FALSE on failure.
      */
-    public function closeCursor()
+    public function closeCursor(): bool
     {
         return true;
     }
@@ -212,19 +213,19 @@ class OCIStatement extends \PDOStatement
      * @return int Returns the number of columns in the result set represented by the PDOStatement object.
      *             If there is no result set, returns 0.
      */
-    public function columnCount()
+    public function columnCount(): int
     {
         return oci_num_fields($this->stmt);
     }
 
     /**
-     * Dump an SQL prepared command.
+     * Dump an SQL prepared command directly to the normal output.
      *
-     * @return string print_r of the sql and parameters array
+     * @return bool Returns true.
      */
-    public function debugDumpParams()
+    public function debugDumpParams(): ?bool
     {
-        return print_r(['sql' => $this->sql, 'params' => $this->parameters], true);
+        return print_r(['sql' => $this->sql, 'params' => $this->parameters]);
     }
 
     /**
@@ -232,13 +233,9 @@ class OCIStatement extends \PDOStatement
      *
      * @return mixed Returns an SQLSTATE or NULL if no operation has been run
      */
-    public function errorCode()
+    public function errorCode(): ?string
     {
-        if (! empty($this->error[0])) {
-            return $this->error[0];
-        }
-
-        return;
+        return empty($this->error[0]) ? null : $this->error[0];
     }
 
     /**
@@ -246,7 +243,7 @@ class OCIStatement extends \PDOStatement
      *
      * @return array array of error information about the last operation performed
      */
-    public function errorInfo()
+    public function errorInfo(): array
     {
         return $this->error;
     }
@@ -254,16 +251,16 @@ class OCIStatement extends \PDOStatement
     /**
      * Executes a prepared statement.
      *
-     * @param  array $input_parameters An array of values with as many elements as there are bound parameters in the
+     * @param  array $params An array of values with as many elements as there are bound parameters in the
      *                                 SQL statement being executed
      *
      * @return bool Returns TRUE on success or FALSE on failure.
      */
-    public function execute($input_parameters = null)
+    public function execute(?array $params = null): bool
     {
-        if (is_array($input_parameters)) {
-            foreach ($input_parameters as $k => $v) {
-                $this->bindParam($k, $input_parameters[$k]);
+        if (is_array($params)) {
+            foreach ($params as $k => $v) {
+                $this->bindParam($k, $params[$k]);
             }
         }
 
@@ -281,30 +278,29 @@ class OCIStatement extends \PDOStatement
     /**
      * Fetches the next row from a result set.
      *
-     * @param  int $fetch_style Controls how the next row will be returned to the caller. This value must be one of
+     * @param  int $mode Controls how the next row will be returned to the caller. This value must be one of
      *                          the PDO::FETCH_* constants
-     * @param  int $cursor_orientation For a Statement object representing a scrollable cursor, this value determines
-     *                                 which row will be returned to the caller.
-     * @param  int $cursor_offset Specifies the absolute number of the row in the result set that shall be fetched
+     * @param  int $cursorOrientation Has no effect; was only included to extend parent.
+     * @param  int $cursorOffset Has no effect; was only included to extend parent.
      *
      * @return mixed The return value of this function on success depends on the fetch type.
      *               In all cases, FALSE is returned on failure.
      */
-    public function fetch($fetch_style = \PDO::FETCH_CLASS, $cursor_orientation = \PDO::FETCH_ORI_NEXT, $cursor_offset = 0)
+    public function fetch(int $mode = PDO::FETCH_CLASS, int $cursorOrientation = PDO::FETCH_ORI_NEXT, int $cursorOffset = 0): mixed
     {
         // set global fetch_style
-        $this->setAttribute(\PDO::ATTR_DEFAULT_FETCH_MODE, $fetch_style);
+        $this->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, $mode);
 
         // init return value
         $rs = false;
 
         // determine what oci_fetch_* to run
-        switch ($fetch_style) {
-            case \PDO::FETCH_CLASS:
-            case \PDO::FETCH_ASSOC:
+        switch ($mode) {
+            case PDO::FETCH_CLASS:
+            case PDO::FETCH_ASSOC:
                 $rs = oci_fetch_assoc($this->stmt);
                 break;
-            case \PDO::FETCH_NUM:
+            case PDO::FETCH_NUM:
                 $rs = oci_fetch_row($this->stmt);
                 break;
             default:
@@ -324,112 +320,81 @@ class OCIStatement extends \PDOStatement
     /**
      * Returns an array containing all of the result set rows.
      *
-     * @param int|null $fetch_style    Controls how the next row will be returned to the caller. This value must be one
+     * @param int|null $mode    Controls how the next row will be returned to the caller. This value must be one
      *                                 of the PDO::FETCH_* constants
-     * @param mixed    $fetch_argument This argument have a different meaning depending on the value of the
-     *                                 fetch_style parameter
-     * @param array    $ctor_args      Arguments of custom class constructor when the fetch_style parameter is
-     *                                 PDO::FETCH_CLASS.
+     * @param mixed    ...$args Has no effect; was only included to extend parent.
      *
      * @return array
      */
-    public function fetchAll($fetch_style = \PDO::FETCH_CLASS, $fetch_argument = null, $ctor_args = [])
+    public function fetchAll(int $mode = PDO::FETCH_CLASS, mixed ...$args): array
     {
-        if ($fetch_style != \PDO::FETCH_CLASS && $fetch_style != \PDO::FETCH_ASSOC) {
+        if ($mode != PDO::FETCH_CLASS && $mode != PDO::FETCH_ASSOC) {
             throw new \InvalidArgumentException(
-                "Invalid fetch style requested: {$fetch_style}. Only PDO::FETCH_CLASS and PDO::FETCH_ASSOC suported."
+                "Invalid fetch style requested: {$mode}. Only PDO::FETCH_CLASS and PDO::FETCH_ASSOC suported."
             );
         }
 
-        $this->setAttribute(\PDO::ATTR_DEFAULT_FETCH_MODE, $fetch_style);
+        $this->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, $mode);
 
-        $rs = oci_fetch_all($this->stmt, $temprs, 0, -1, \OCI_FETCHSTATEMENT_BY_ROW + \OCI_ASSOC);
+        oci_fetch_all($this->stmt, $results, 0, -1, \OCI_FETCHSTATEMENT_BY_ROW + \OCI_ASSOC);
 
-        if (oci_error($this->stmt) === false) {
-            // convert to type requested from PDO options
-            foreach ($temprs as $k => $v) {
-                $temprs[$k] = $this->processFetchOptions($v);
-            }
-            $rs = $temprs;
+        foreach ($results as $k => $v) {
+            $results[$k] = $this->processFetchOptions($v);
         }
 
-        if($rs === false) {
-            $this->setErrorInfo('07000');
-        }
-
-        return $rs;
+        return $results;
     }
 
     /**
      * Returns a single column from the next row of a result set.
      *
-     * @param  int $column_number 0-indexed number of the column you wish to retrieve from the row.
+     * @param  int $column 0-indexed number of the column you wish to retrieve from the row.
      *                            If no value is supplied, fetchColumn fetches the first column.
      *
      * @return mixed single column in the next row of a result set
      */
-    public function fetchColumn($column_number = 0)
+    public function fetchColumn(int $column = 0): mixed
     {
-        if (! is_int($column_number)) {
-            throw new OCIException($this->setErrorInfo(
-                '0A000',
-                '9999',
-                "Invalid Column type specfied: {$column_number}. Expecting an int."
-            ));
-        }
+        $rs = $this->fetch(PDO::FETCH_NUM);
 
-        $rs = $this->fetch(\PDO::FETCH_NUM);
-
-        return isset($rs[$column_number]) ? $rs[$column_number] : false;
+        return isset($rs[$column]) ? $rs[$column] : false;
     }
 
     /**
      * Fetches the next row and returns it as an object.
      *
-     * @param string $class_name Name of the created class
-     * @param array $ctor_args Elements of this array are passed to the constructor
+     * @param string $class Name of the created class
+     * @param array $constructorArgs Elements of this array are passed to the constructor
      *
      * @return bool Returns an instance of the required class with property names that correspond to the column names
      *              or FALSE on failure.
      */
-    public function fetchObject($class_name = 'stdClass', $ctor_args = null)
+    public function fetchObject(?string $class = 'stdClass', array $constructorArgs = []): object|false
     {
-        $this->setFetchMode(\PDO::FETCH_CLASS, $class_name, $ctor_args);
+        $this->setFetchMode(PDO::FETCH_CLASS, $class, $constructorArgs);
 
-        return $this->fetch(\PDO::FETCH_CLASS);
+        return $this->fetch(PDO::FETCH_CLASS);
     }
 
     /**
      * Retrieve a statement attribute.
      *
-     * @param int $attribute The attribute number
+     * @param int $name The attribute number
      * @return mixed Returns the value of the attribute on success or null on failure
      */
-    public function getAttribute($attribute)
+    public function getAttribute(int $name): mixed
     {
-        if (isset($this->attributes[$attribute])) {
-            return $this->attributes[$attribute];
-        }
-
-        return;
+        return $this->attributes[$name] ?? null;
     }
 
     /**
      * Returns metadata for a column in a result set.
      *
-     * @param int #column The 0-indexed column in the result set.
+     * @param int $column The 0-indexed column in the result set.
      * @return array Returns an associative array representing the metadata for a single column
      */
-    public function getColumnMeta($column)
+    public function getColumnMeta(int $column): array|false
     {
-        if (! is_int($column)) {
-            throw new OCIException($this->setErrorInfo(
-                '0A000',
-                '9999',
-                "Invalid Column type specfied: {$column}. Expecting an int."
-            ));
-        }
-
         $column++;
 
         return [
@@ -446,7 +411,7 @@ class OCIStatement extends \PDOStatement
      *
      * @return bool Returns TRUE on success or FALSE on failure
      */
-    public function nextRowset()
+    public function nextRowset(): bool
     {
         return true;
     }
@@ -456,7 +421,7 @@ class OCIStatement extends \PDOStatement
      *
      * @return int Returns the number of rows affected as an integer, or FALSE on errors.
      */
-    public function rowCount()
+    public function rowCount(): int
     {
         return oci_num_rows($this->stmt);
     }
@@ -468,7 +433,7 @@ class OCIStatement extends \PDOStatement
      * @param mixed $value Value of named attribute
      * @return bool Returns TRUE
      */
-    public function setAttribute($attribute, $value)
+    public function setAttribute(int $attribute, mixed $value): bool
     {
         $this->attributes[$attribute] = $value;
 
@@ -479,11 +444,10 @@ class OCIStatement extends \PDOStatement
      * Set the default fetch mode for this statement.
      *
      * @param int $mode The fetch mode must be one of the PDO::FETCH_* constants.
-     * @param mixed $type Column number, class name or object depending on PDO::FETCH_* constant used
-     * @param array $ctorargs Constructor arguments
+     * @param mixed ...$args Has no effect; was only included to extend parent.
      * @return bool Returns TRUE on success or FALSE on failure
      */
-    public function setFetchMode($mode, $type = null, $ctorargs = [])
+    public function setFetchMode(int $mode, mixed ...$args)
     {
         return true;
     }
@@ -496,11 +460,12 @@ class OCIStatement extends \PDOStatement
      */
 
     /**
-     * Stores query parameters for debugDumpParams putput.
+     * Stores query parameters for debugDumpParams output.
      */
-    private function addParameter($parameter, $variable, $data_type = \PDO::PARAM_STR, $length = -1, $driver_options = null)
+    private function addParameter($parameter, $variable, $data_type = PDO::PARAM_STR, $length = -1, $driver_options = null)
     {
         $param_count = count($this->parameters);
+
         $this->parameters[$param_count] = [
             'paramno' => $param_count,
             'name' => $parameter,
@@ -547,11 +512,11 @@ class OCIStatement extends \PDOStatement
     private function processFetchOptions($rec)
     {
         if ($rec !== false) {
-            if ($this->conn->getAttribute(\PDO::ATTR_CASE) == \PDO::CASE_LOWER) {
+            if ($this->conn->getAttribute(PDO::ATTR_CASE) == PDO::CASE_LOWER) {
                 $rec = array_change_key_case($rec, \CASE_LOWER);
             }
 
-            $rec = ($this->getAttribute(\PDO::ATTR_DEFAULT_FETCH_MODE) != \PDO::FETCH_CLASS) ? $rec : (object) $rec;
+            $rec = ($this->getAttribute(PDO::ATTR_DEFAULT_FETCH_MODE) != PDO::FETCH_CLASS) ? $rec : (object) $rec;
         }
 
         return $rec;

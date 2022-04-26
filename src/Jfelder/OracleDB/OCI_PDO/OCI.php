@@ -2,7 +2,9 @@
 
 namespace Jfelder\OracleDB\OCI_PDO;
 
-class OCI extends \PDO
+use PDO;
+
+class OCI extends PDO
 {
     /**
      * @var string
@@ -35,10 +37,11 @@ class OCI extends \PDO
     /**
      * @var array Database connection attributes
      */
-    protected $attributes = [\PDO::ATTR_AUTOCOMMIT => 1,
-        \PDO::ATTR_ERRMODE => 0,
-        \PDO::ATTR_CASE => 0,
-        \PDO::ATTR_ORACLE_NULLS => 0,
+    protected $attributes = [
+        PDO::ATTR_AUTOCOMMIT => 1,
+        PDO::ATTR_ERRMODE => 0,
+        PDO::ATTR_CASE => 0,
+        PDO::ATTR_ORACLE_NULLS => 0,
     ];
 
     /**
@@ -90,13 +93,13 @@ class OCI extends \PDO
         $this->attributes = $driver_options + $this->attributes;
         $this->charset = $charset;
 
-        if ($this->getAttribute(\PDO::ATTR_PERSISTENT)) {
+        if ($this->getAttribute(PDO::ATTR_PERSISTENT)) {
             $this->conn = oci_pconnect($username, $password, $dsn, $charset);
         } else {
             $this->conn = oci_connect($username, $password, $dsn, $charset);
         }
 
-        //Check if connection was successful
+        // Check if connection was successful
         if (! $this->conn) {
             throw new OCIException($this->setErrorInfo('08006'));
         }
@@ -107,7 +110,7 @@ class OCI extends \PDO
      */
     public function __destruct()
     {
-        if (strtolower(get_resource_type($this->conn)) == 'oci8') {
+        if (strtolower(get_resource_type($this->conn)) === 'oci8') {
             oci_close($this->conn);
         }
     }
@@ -119,7 +122,7 @@ class OCI extends \PDO
      *
      * @return bool Returns TRUE on success
      */
-    public function beginTransaction()
+    public function beginTransaction(): bool
     {
         if ($this->inTransaction()) {
             throw new OCIException($this->setErrorInfo('25000', '9999', 'Already in a transaction'));
@@ -137,12 +140,12 @@ class OCI extends \PDO
      *
      * @return bool Returns TRUE on success or FALSE on failure
      */
-    public function commit()
+    public function commit(): bool
     {
         if ($this->inTransaction()) {
             $r = oci_commit($this->conn);
             if (! $r) {
-                throw new OCIException('08007');
+                throw new OCIException($this->setErrorInfo('08007'));
             }
             $this->transaction = ! $this->flipExecuteMode();
 
@@ -155,15 +158,11 @@ class OCI extends \PDO
     /**
      * Fetch the SQLSTATE associated with the last operation on the database handle.
      *
-     * @return mixed Returns SQLSTATE if available or null
+     * @return mixed Returns SQLSTATE if available, otherwise null
      */
-    public function errorCode()
+    public function errorCode(): ?string
     {
-        if (! empty($this->error[0])) {
-            return $this->error[0];
-        }
-
-        return;
+        return empty($this->error[0]) ? null : $this->error[0];
     }
 
     /**
@@ -171,7 +170,7 @@ class OCI extends \PDO
      *
      * @return array Array of error information about the last operation performed
      */
-    public function errorInfo()
+    public function errorInfo(): array
     {
         return $this->error;
     }
@@ -183,17 +182,13 @@ class OCI extends \PDO
      *
      * @return int Returns the number of rows that were modified or deleted by the statement
      */
-    public function exec($statement)
+    public function exec(string $statement): int|false
     {
         $this->prepare($statement);
 
         $result = $this->stmt->execute();
 
-        if (! $result) {
-            return false;
-        }
-
-        return $this->stmt->rowCount();
+        return $result ? $this->stmt->rowCount() : false;
     }
 
     /**
@@ -203,13 +198,9 @@ class OCI extends \PDO
      *
      * @return mixed The value of the requested PDO attribute or null if it does not exist.
      */
-    public function getAttribute($attribute)
+    public function getAttribute(int $attribute): mixed
     {
-        if (isset($this->attributes[$attribute])) {
-            return $this->attributes[$attribute];
-        }
-
-        return;
+        return $this->attributes[$attribute] ?? null;
     }
 
     /**
@@ -217,7 +208,7 @@ class OCI extends \PDO
      *
      * @return bool Returns TRUE if a transaction is currently active, and FALSE if not.
      */
-    public function inTransaction()
+    public function inTransaction(): bool
     {
         return $this->transaction;
     }
@@ -227,7 +218,7 @@ class OCI extends \PDO
      *
      * @throws OCIException This feature is not supported
      */
-    public function lastInsertId($name = null)
+    public function lastInsertId(?string $name = null): string|false
     {
         throw new OCIException($this->setErrorInfo('IM001', '0000', 'Driver does not support this function'));
     }
@@ -235,27 +226,27 @@ class OCI extends \PDO
     /**
      * Prepares a statement for execution and returns a Jfelder\OracleDB\OCI_PDO\OCIStatement object.
      *
-     * @param  string $statement Valid SQL statement for the target database server.
-     * @param  array $driver_options Attribute values for the OCIStatement object
+     * @param  string $query Valid SQL statement for the target database server.
+     * @param  array $options Attribute values for the OCIStatement object
      *
      * @return mixed Returns a OCIStatement on success, false otherwise
      */
-    public function prepare($statement, $driver_options = [])
+    public function prepare(string $query, array $options = []): OCIStatement|false
     {
-        $tokens = explode('?', $statement);
+        $tokens = explode('?', $query);
 
         $count = count($tokens) - 1;
         if ($count) {
-            $statement = '';
+            $query = '';
             for ($i = 0; $i < $count; $i++) {
-                $statement .= trim($tokens[$i])." :{$i} ";
+                $query .= trim($tokens[$i])." :{$i} ";
             }
-            $statement .= trim($tokens[$i]);
+            $query .= trim($tokens[$i]);
         }
 
-        $this->queryString = $statement;
+        $this->queryString = $query;
         $stmt = oci_parse($this->conn, $this->queryString);
-        $this->stmt = new OCIStatement($stmt, $this, $this->queryString, $driver_options);
+        $this->stmt = new OCIStatement($stmt, $this, $this->queryString, $options);
 
         return $this->stmt;
     }
@@ -264,38 +255,34 @@ class OCI extends \PDO
      * Executes an SQL statement, returning a result set as a Jfelder\OracleDB\OCI_PDO\OCIStatement object
      * on success or false on failure.
      *
-     * @param  string $statement Valid SQL statement for the target database server.
-     * @param  int $mode The fetch mode must be one of the PDO::FETCH_* constants.
-     * @param  mixed $type Column number, class name or object depending on PDO::FETCH_* constant used
-     * @param  array $ctorargs Constructor arguments
+     * @param  string $query Valid SQL statement for the target database server.
+     * @param  int $fetchMode The fetch mode must be one of the PDO::FETCH_* constants.
+     * @param  mixed ...$fetchModeArgs Has no effect; was only included to extend parent.
      *
      * @return mixed Returns a OCIStatement on success, false otherwise
      */
-    public function query($statement, $mode = null, $type = null, $ctorargs = [])
+    public function query(string $query, ?int $fetchMode = null, mixed ...$fetchModeArgs): OCIStatement|false
     {
-        $this->prepare($statement);
-        if ($mode) {
-            $this->stmt->setFetchMode($mode, $type, $ctorargs);
+        $this->prepare($query);
+
+        if ($fetchMode) {
+            $this->stmt->setFetchMode($fetchMode, $fetchModeArgs);
         }
 
         $result = $this->stmt->execute();
 
-        if (! $result) {
-            return false;
-        }
-
-        return $this->stmt;
+        return $result ? $this->stmt : false;
     }
 
     /**
      * Quotes a string for use in a query.
      *
      * @param  string $string The string to be quoted.
-     * @param  int $parameter_type Provides a data type hint for drivers that have alternate quoting styles.
+     * @param  int $type Provides a data type hint for drivers that have alternate quoting styles.
      *
      * @return string Returns false
      */
-    public function quote($string, $parameter_type = \PDO::PARAM_STR)
+    public function quote(string $string, int $type = PDO::PARAM_STR): string|false
     {
         return false;
     }
@@ -307,7 +294,7 @@ class OCI extends \PDO
      *
      * @return bool Returns TRUE on success or FALSE on failure.
      */
-    public function rollBack()
+    public function rollBack(): bool
     {
         if ($this->inTransaction()) {
             $r = oci_rollback($this->conn);
@@ -330,7 +317,7 @@ class OCI extends \PDO
      *
      * @return true
      */
-    public function setAttribute($attribute, $value)
+    public function setAttribute(int $attribute, mixed $value): bool
     {
         $this->attributes[$attribute] = $value;
 

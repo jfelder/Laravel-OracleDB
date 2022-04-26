@@ -1,5 +1,8 @@
 <?php
 
+namespace Jfelder\OracleDB\Tests;
+
+use ProcessorTestPDOStub;
 use Illuminate\Database\Connection;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Database\Query\Processors\Processor;
@@ -17,7 +20,7 @@ class OracleDBPDOProcessorTest extends TestCase
 
     public function testInsertGetIdProcessing()
     {
-        $pdo = $this->getMockBuilder('ProcessorTestPDOStub')->getMock();
+        $pdo = $this->getMockBuilder(ProcessorTestPDOStub::class)->getMock();
         $pdo->expects($this->once())->method('lastInsertId')->with($this->equalTo('id'))->willReturn('1');
 
         $connection = m::mock(Connection::class);

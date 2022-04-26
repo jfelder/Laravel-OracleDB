@@ -1,5 +1,9 @@
 <?php
 
+namespace Jfelder\OracleDB\Tests;
+
+use PDO;
+use TestOCIStub;
 use Jfelder\OracleDB\OCI_PDO\OCI;
 use Jfelder\OracleDB\OCI_PDO\OCIException;
 use Jfelder\OracleDB\OCI_PDO\OCIStatement;
@@ -26,7 +30,7 @@ class OracleDBOCITest extends TestCase
             $OCIStatementStatus = true;
             $OCIExecuteStatus = true;
 
-            $this->oci = m::mock(new \TestOCIStub('', null, null, [\PDO::ATTR_CASE => \PDO::CASE_LOWER]));
+            $this->oci = m::mock(new TestOCIStub('', null, null, [PDO::ATTR_CASE => PDO::CASE_LOWER]));
         }
     }
 
@@ -37,16 +41,16 @@ class OracleDBOCITest extends TestCase
 
     public function testConstructorSuccessWithPersistentConnection()
     {
-        $oci = new OCI('dsn', null, null, [\PDO::ATTR_PERSISTENT => 1]);
+        $oci = new OCI('dsn', null, null, [PDO::ATTR_PERSISTENT => 1]);
         $this->assertInstanceOf(OCI::class, $oci);
-        $this->assertEquals(1, $oci->getAttribute(\PDO::ATTR_PERSISTENT));
+        $this->assertEquals(1, $oci->getAttribute(PDO::ATTR_PERSISTENT));
     }
 
     public function testConstructorSuccessWithoutPersistentConnection()
     {
-        $oci = new OCI('dsn', null, null, [\PDO::ATTR_PERSISTENT => 0]);
+        $oci = new OCI('dsn', null, null, [PDO::ATTR_PERSISTENT => 0]);
         $this->assertInstanceOf(OCI::class, $oci);
-        $this->assertEquals(0, $oci->getAttribute(\PDO::ATTR_PERSISTENT));
+        $this->assertEquals(0, $oci->getAttribute(PDO::ATTR_PERSISTENT));
     }
 
     public function testConstructorFailWithPersistentConnection()
@@ -54,7 +58,7 @@ class OracleDBOCITest extends TestCase
         global $OCITransactionStatus;
         $OCITransactionStatus = false;
         $this->expectException(OCIException::class);
-        $oci = new OCI('dsn', null, null, [\PDO::ATTR_PERSISTENT => 1]);
+        $oci = new OCI('dsn', null, null, [PDO::ATTR_PERSISTENT => 1]);
     }
 
     public function testConstructorFailWithoutPersistentConnection()
@@ -62,7 +66,7 @@ class OracleDBOCITest extends TestCase
         global $OCITransactionStatus;
         $OCITransactionStatus = false;
         $this->expectException(OCIException::class);
-        $oci = new OCI('dsn', null, null, [\PDO::ATTR_PERSISTENT => 0]);
+        $oci = new OCI('dsn', null, null, [PDO::ATTR_PERSISTENT => 0]);
     }
 
     public function testDestructor()
@@ -111,7 +115,7 @@ class OracleDBOCITest extends TestCase
 
     public function testErrorCode()
     {
-        $oci = new \TestOCIStub();
+        $oci = new TestOCIStub();
         $this->assertNull($oci->errorCode());
 
         // use reflection to test values of protected properties
@@ -127,7 +131,7 @@ class OracleDBOCITest extends TestCase
 
     public function testErrorInfo()
     {
-        $oci = new \TestOCIStub();
+        $oci = new TestOCIStub();
         $this->assertEquals([0 => '', 1 => null, 2 => null], $oci->errorInfo());
 
         // use reflection to test values of protected properties
@@ -144,7 +148,7 @@ class OracleDBOCITest extends TestCase
     public function testExec()
     {
         $sql = 'select * from table';
-        $oci = new \TestOCIStub();
+        $oci = new TestOCIStub();
         $stmt = $oci->exec($sql);
         $this->assertEquals(1, $stmt);
 
@@ -175,19 +179,20 @@ class OracleDBOCITest extends TestCase
         global $OCIExecuteStatus;
         $OCIExecuteStatus = false;
         $sql = 'select * from table';
-        $oci = new \TestOCIStub();
+        $oci = new TestOCIStub();
         $stmt = $oci->exec($sql);
         $this->assertFalse($stmt);
     }
 
     public function testGetAttributeForValidAttribute()
     {
-        $this->assertEquals(1, $this->oci->getAttribute(\PDO::ATTR_AUTOCOMMIT));
+        $this->assertEquals(1, $this->oci->getAttribute(PDO::ATTR_AUTOCOMMIT));
     }
 
     public function testGetAttributeForInvalidAttribute()
     {
-        $this->assertEquals(null, $this->oci->getAttribute('doesnotexist'));
+        $nonExistantAttr = 12345;
+        $this->assertEquals(null, $this->oci->getAttribute($nonExistantAttr));
     }
 
     public function testInTransactionWhileNotInTransaction()
@@ -216,7 +221,7 @@ class OracleDBOCITest extends TestCase
     public function testPrepareWithNonParameterQuery()
     {
         $sql = 'select * from table';
-        $oci = new \TestOCIStub();
+        $oci = new TestOCIStub();
         $stmt = $oci->prepare($sql);
         $this->assertInstanceOf(OCIStatement::class, $stmt);
 
@@ -242,7 +247,7 @@ class OracleDBOCITest extends TestCase
     public function testPrepareWithParameterQuery()
     {
         $sql = 'select * from table where id = ? and date = ?';
-        $oci = new \TestOCIStub();
+        $oci = new TestOCIStub();
         $stmt = $oci->prepare($sql);
         $this->assertInstanceOf(OCIStatement::class, $stmt);
 
@@ -270,7 +275,7 @@ class OracleDBOCITest extends TestCase
         global $OCIStatementStatus;
         $OCIStatementStatus = false;
         $sql = 'select * from table where id = ? and date = ?';
-        $oci = new \TestOCIStub();
+        $oci = new TestOCIStub();
         $this->expectException(OCIException::class);
         $stmt = $oci->prepare($sql);
     }
@@ -278,7 +283,7 @@ class OracleDBOCITest extends TestCase
     public function testQuery()
     {
         $sql = 'select * from table';
-        $oci = new \TestOCIStub();
+        $oci = new TestOCIStub();
         $stmt = $oci->query($sql);
         $this->assertInstanceOf(OCIStatement::class, $stmt);
 
@@ -304,8 +309,8 @@ class OracleDBOCITest extends TestCase
     public function testQueryWithModeParams()
     {
         $sql = 'select * from table';
-        $oci = new \TestOCIStub();
-        $stmt = $oci->query($sql, \PDO::FETCH_CLASS, 'stdClass', []);
+        $oci = new TestOCIStub();
+        $stmt = $oci->query($sql, PDO::FETCH_CLASS, 'stdClass', []);
         $this->assertInstanceOf(OCIStatement::class, $stmt);
 
         // use reflection to test values of protected properties
@@ -332,7 +337,7 @@ class OracleDBOCITest extends TestCase
         global $OCIExecuteStatus;
         $OCIExecuteStatus = false;
         $sql = 'select * from table';
-        $oci = new \TestOCIStub();
+        $oci = new TestOCIStub();
         $stmt = $oci->query($sql);
         $this->assertFalse($stmt);
     }
@@ -340,7 +345,7 @@ class OracleDBOCITest extends TestCase
     public function testQuote()
     {
         $this->assertFalse($this->oci->quote('String'));
-        $this->assertFalse($this->oci->quote('String', \PDO::PARAM_STR));
+        $this->assertFalse($this->oci->quote('String', PDO::PARAM_STR));
     }
 
     public function testRollBackInTransactionPasses()
@@ -365,10 +370,12 @@ class OracleDBOCITest extends TestCase
 
     public function testSetAttribute()
     {
-        $this->oci->setAttribute('attribute', 'value');
-        $this->assertEquals('value', $this->oci->getAttribute('attribute'));
-        $this->oci->setAttribute('attribute', 4);
-        $this->assertEquals(4, $this->oci->getAttribute('attribute'));
+        $attr = 12345;
+
+        $this->oci->setAttribute($attr, 'value');
+        $this->assertEquals('value', $this->oci->getAttribute($attr));
+        $this->oci->setAttribute($attr, 4);
+        $this->assertEquals(4, $this->oci->getAttribute($attr));
     }
 
     public function testFlipExecuteMode()

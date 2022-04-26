@@ -22,7 +22,7 @@ class OracleProcessor extends Processor
         $counter = 0;
         $last_insert_id = 0;
 
-        //Get PDO object
+        // Get PDO object
         $pdo = $query->getConnection()->getPdo();
 
         // get PDO statment object
@@ -39,7 +39,7 @@ class OracleProcessor extends Processor
             $stmt->bindValue($counter++, $v, $this->bindType($v));
         }
 
-        // bind output param for the returning cluase
+        // bind output param for the returning clause
         $stmt->bindParam($counter, $last_insert_id, \PDO::PARAM_INT | \PDO::PARAM_INPUT_OUTPUT, 8);
 
         // execute statement
@@ -67,7 +67,7 @@ class OracleProcessor extends Processor
 
     /*
      * Determine parameter type passed in
-     * 
+     *
      * @param mixed $param
      * @return \PDO::PARAM_* type
      */
