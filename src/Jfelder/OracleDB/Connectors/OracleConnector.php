@@ -2,6 +2,7 @@
 
 namespace Jfelder\OracleDB\Connectors;
 
+use InvalidArgumentException;
 use Illuminate\Database\Connectors\Connector as Connector;
 use Illuminate\Database\Connectors\ConnectorInterface as ConnectorInterface;
 use Jfelder\OracleDB\OCI_PDO\OCI as OCI;
@@ -26,14 +27,17 @@ class OracleConnector extends Connector implements ConnectorInterface
      * @param  array   $config
      * @param  array   $options
      * @return PDO
+     * @throws InvalidArgumentException
      */
     public function createConnection($dsn, array $config, array $options)
     {
-        if ($config['driver'] == 'pdo') {
+        if ($config['driver'] === 'pdo') {
             return parent::createConnection($dsn, $config, $options);
-        } else {
+        } elseif ($config['driver'] === 'oci8') {
             return new OCI($dsn, $config['username'], $config['password'], $options, $config['charset']);
         }
+
+        throw new InvalidArgumentException('Unsupported driver ['.$config['driver'].'].');
     }
 
     /**

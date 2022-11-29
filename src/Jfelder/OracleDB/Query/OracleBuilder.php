@@ -24,5 +24,5 @@ class OracleBuilder extends \Illuminate\Database\Query\Builder
         $this->joins[] = $this->newJoinClause($this, 'cross', new Expression($expression));
 
         return $this;
-    }    
+    }
 }

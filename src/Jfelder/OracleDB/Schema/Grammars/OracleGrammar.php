@@ -102,7 +102,7 @@ class OracleGrammar extends \Illuminate\Database\Schema\Grammars\Grammar
 
             if (! is_null($foreign->onUpdate)) {
                 $sql .= " on update {$foreign->onUpdate}";
-            }            
+            }
         }
 
         return $sql;
@@ -207,7 +207,7 @@ class OracleGrammar extends \Illuminate\Database\Schema\Grammars\Grammar
 
             if (! is_null($command->onUpdate)) {
                 $sql .= " on update {$command->onUpdate}";
-            }                        
+            }
 
             return $sql;
         }
@@ -494,7 +494,7 @@ class OracleGrammar extends \Illuminate\Database\Schema\Grammars\Grammar
         if (is_null($column->total) || is_null($column->places)) {
             throw new RuntimeException('This database engine requires specifying both precision and scale for a "double" column.');
         }
-        
+
         return "number({$column->total}, {$column->places})";
     }
 
@@ -532,7 +532,7 @@ class OracleGrammar extends \Illuminate\Database\Schema\Grammars\Grammar
             'varchar2(255) check(%s in (%s))',
             $column->name,
             $this->quoteString($column->allowed)
-        );        
+        );
     }
 
     /**

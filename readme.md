@@ -1,13 +1,13 @@
 ## Laravel Oracle Database Package
 
-### OracleDB (updated for Laravel 8.x)
+### OracleDB (updated for Laravel 9)
 
 [![Latest Stable Version](https://poser.pugx.org/jfelder/oracledb/v/stable.png)](https://packagist.org/packages/jfelder/oracledb) [![Total Downloads](https://poser.pugx.org/jfelder/oracledb/downloads.png)](https://packagist.org/packages/jfelder/oracledb) [![Build Status](https://travis-ci.org/jfelder/Laravel-OracleDB.png)](https://travis-ci.org/jfelder/Laravel-OracleDB)
 
 
 OracleDB is an Oracle Database Driver package for [Laravel Framework](https://laravel.com) - thanks [@taylorotwell](https://github.com/taylorotwell). OracleDB is an extension of [Illuminate/Database](https://github.com/illuminate/database) that uses either the [PDO_OCI](https://www.php.net/manual/en/ref.pdo-oci.php) extension or the [OCI8 Functions](https://www.php.net/manual/en/ref.oci8.php) wrapped into the PDO namespace.
 
-_NOTE: This package has not been tested in PHP 8._
+> **Note:** This package is designed to run in PHP 8.1, and has not been tested in PHP 8.0
 
 **Please report any bugs you may find.**
 
@@ -55,7 +55,10 @@ connection into the "Default Database Connection Name" section in `config/databa
 
 Once you have configured the OracleDB database connection(s), you may run queries using the `DB` facade as normal.
 
-_NOTE: OCI8 is the default driver. If you want to use the PDO_OCI driver, change the `driver` value to `'pdo'` in the `config/oracledb.php` file for whichever connections you wish to have utilize PDO_OCI. Setting the driver to `'pdo'` will make OracleDB use the [PDO_OCI](https://www.php.net/manual/en/ref.pdo-oci.php) extension. Given any other `driver` value, OracleDB will use the [OCI8 Functions](https://www.php.net/manual/en/ref.oci8.php)._
+> **Note:** The default driver, `'oci8'`, makes OracleDB use the
+[OCI8 Functions](https://www.php.net/manual/en/ref.oci8.php) under the hood. If you want to use
+[PDO_OCI](https://www.php.net/manual/en/ref.pdo-oci.php) instead, change the `driver` value to `'pdo'` in the
+`config/oracledb.php` file.
 
 ```php
 $results = DB::select('select * from users where id = ?', [1]);
@@ -74,15 +77,15 @@ in config/oracledb.php file.
 #### Inserting Records Into A Table With An Auto-Incrementing ID
 
 ```php
-	$id = DB::connection('oracle')->table('users')->insertGetId(
-		['email' => 'john@example.com', 'votes' => 0], 'userid'
-	);
+$id = DB::connection('oracle')->table('users')->insertGetId(
+    ['email' => 'john@example.com', 'votes' => 0], 'userid'
+);
 ```
 
 > **Note:** When using the insertGetId method, you can specify the auto-incrementing column name as the second
 parameter in insertGetId function. It will default to "id" if not specified.
 
-See [Laravel Database Basic Docs](https://laravel.com/docs/8.x/database) for more information.
+See [Laravel Database Basic Docs](https://laravel.com/docs/9.x/database) for more information.
 
 ### Unimplemented Features
 
@@ -98,6 +101,7 @@ features not already listed.
 - deleting with a join `DB::from('users')->join('contacts', 'users.id', '=', 'contacts.id')->where('users.email', '=', 'foo')->delete();`
 - deleting with a limit `DB::from('users')->where('email', '=', 'foo')->orderBy('id')->take(1)->delete();`
 - json operations `DB::from('users')->where('items->sku', '=', 'foo-bar')->get();`
+- whereFulltext `DB::table('users')->whereFulltext('description', 'Hello World');`
 
 #### Schema Builder
 

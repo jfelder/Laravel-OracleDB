@@ -1,6 +1,10 @@
 <?php
 
-use Illuminate\Database\Query\Expression;
+namespace Jfelder\OracleDB\Tests;
+
+use LogicException;
+use RuntimeException;
+use Illuminate\Database\Query\Expression as Raw;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Schema\ForeignIdColumnDefinition;
 use Jfelder\OracleDB\OracleConnection;
@@ -25,7 +29,7 @@ class OracleDBSchemaGrammarTest extends TestCase
         $this->expectExceptionMessage('This database driver does not support creating databases.');
 
         $grammar->compileCreateDatabase('foo', m::mock(OracleConnection::class));
-    }    
+    }
 
     public function testDropDatabaseIfExists()
     {
@@ -35,7 +39,7 @@ class OracleDBSchemaGrammarTest extends TestCase
         $this->expectExceptionMessage('This database driver does not support dropping databases.');
 
         $grammar->compileDropDatabaseIfExists('foo');
-    }    
+    }
 
     public function testBasicCreateTable()
     {
@@ -54,15 +58,15 @@ class OracleDBSchemaGrammarTest extends TestCase
 
         $blueprint = new Blueprint('users');
         $blueprint->increments('id');
-        $blueprint->string('email');        
+        $blueprint->string('email');
 
         $conn = $this->getConnection();
-        $conn->shouldNotReceive('getConfig');        
+        $conn->shouldNotReceive('getConfig');
 
         $statements = $blueprint->toSql($conn, $this->getGrammar());
 
         $this->assertCount(1, $statements);
-        $this->assertSame('alter table users add ( id number(10,0) not null, email varchar2(255) not null, constraint users_id_primary primary key ( id ) )', $statements[0]);        
+        $this->assertSame('alter table users add ( id number(10,0) not null, email varchar2(255) not null, constraint users_id_primary primary key ( id ) )', $statements[0]);
     }
 
     public function testBasicCreateTableWithPrimary()
@@ -182,7 +186,7 @@ class OracleDBSchemaGrammarTest extends TestCase
 
         $this->assertCount(1, $statements);
         $this->assertSame('create table users ( id number(10,0) not null, email varchar2(255) not null, constraint users_id_primary primary key ( id ) )', $statements[0]);
-    }    
+    }
 
     public function testBasicAlterTable()
     {
@@ -285,7 +289,7 @@ class OracleDBSchemaGrammarTest extends TestCase
         $statements = $blueprint->toSql($this->getConnection(), $this->getGrammar());
 
         $this->assertCount(1, $statements);
-        $this->assertSame('alter table users drop ( foo, bar )', $statements[0]);        
+        $this->assertSame('alter table users drop ( foo, bar )', $statements[0]);
     }
 
     public function testDropPrimary()
@@ -346,7 +350,7 @@ class OracleDBSchemaGrammarTest extends TestCase
 
         $this->assertCount(1, $statements);
         $this->assertSame('alter table users drop ( created_at, updated_at )', $statements[0]);
-    }    
+    }
 
     public function testDropMorphs()
     {
@@ -421,7 +425,7 @@ class OracleDBSchemaGrammarTest extends TestCase
 
         $this->assertCount(1, $statements);
         $this->assertSame('create index raw_index on users ( (function(column)) )', $statements[0]);
-    }    
+    }
 
     public function testAddingForeignKey()
     {
@@ -437,14 +441,14 @@ class OracleDBSchemaGrammarTest extends TestCase
         $statements = $blueprint->toSql($this->getConnection(), $this->getGrammar());
 
         $this->assertCount(1, $statements);
-        $this->assertSame('alter table users add constraint users_foo_id_foreign foreign key ( foo_id ) references orders ( id ) on delete cascade', $statements[0]);        
+        $this->assertSame('alter table users add constraint users_foo_id_foreign foreign key ( foo_id ) references orders ( id ) on delete cascade', $statements[0]);
 
         $blueprint = new Blueprint('users');
         $blueprint->foreign('foo_id')->references('id')->on('orders')->cascadeOnUpdate();
         $statements = $blueprint->toSql($this->getConnection(), $this->getGrammar());
 
         $this->assertCount(1, $statements);
-        $this->assertSame('alter table users add constraint users_foo_id_foreign foreign key ( foo_id ) references orders ( id ) on update cascade', $statements[0]);        
+        $this->assertSame('alter table users add constraint users_foo_id_foreign foreign key ( foo_id ) references orders ( id ) on update cascade', $statements[0]);
     }
 
     public function testAddingForeignKeyWithCascadeDelete()
@@ -492,7 +496,7 @@ class OracleDBSchemaGrammarTest extends TestCase
 
         $this->assertCount(1, $statements);
         $this->assertSame('alter table users add ( foo number(19,0) not null, constraint users_foo_primary primary key ( foo ) )', $statements[0]);
-    }    
+    }
 
     public function testAddingForeignID()
     {
@@ -513,7 +517,7 @@ class OracleDBSchemaGrammarTest extends TestCase
             'alter table users add constraint users_team_id_foreign foreign key ( team_id ) references teams ( id )',
             'alter table users add constraint users_team_column_id_foreign foreign key ( team_column_id ) references teams ( id )',
         ], $statements);
-    }    
+    }
 
     public function testAddingBigIncrementingID()
     {
@@ -549,7 +553,7 @@ class OracleDBSchemaGrammarTest extends TestCase
         $this->assertEquals('alter table users add ( foo varchar2(100) default \'bar\' null )', $statements[0]);
 
         $blueprint = new Blueprint('users');
-        $blueprint->string('foo', 100)->nullable()->default(new Illuminate\Database\Query\Expression('CURRENT TIMESTAMP'));
+        $blueprint->string('foo', 100)->nullable()->default(new Raw('CURRENT TIMESTAMP'));
         $statements = $blueprint->toSql($this->getConnection(), $this->getGrammar());
 
         $this->assertEquals(1, count($statements));
@@ -630,7 +634,7 @@ class OracleDBSchemaGrammarTest extends TestCase
 
         $this->assertCount(1, $statements);
         $this->assertSame('alter table users add ( id number(19,0) not null, constraint users_id_primary primary key ( id ) )', $statements[0]);
-    }    
+    }
 
     public function testAddingMediumInteger()
     {
@@ -700,7 +704,7 @@ class OracleDBSchemaGrammarTest extends TestCase
         $blueprint = new Blueprint('users');
         $blueprint->double('foo', 15);
         $statements = $blueprint->toSql($this->getConnection(), $this->getGrammar());
-    }    
+    }
 
     public function testAddingDecimal()
     {
@@ -775,7 +779,7 @@ class OracleDBSchemaGrammarTest extends TestCase
     public function testAddingTimestampWithDefault()
     {
         $blueprint = new Blueprint('users');
-        $blueprint->timestamp('created_at')->default(new Expression('CURRENT_TIMESTAMP'));
+        $blueprint->timestamp('created_at')->default(new Raw('CURRENT_TIMESTAMP'));
         $statements = $blueprint->toSql($this->getConnection(), $this->getGrammar());
         $this->assertCount(1, $statements);
         $this->assertSame("alter table users add ( created_at timestamp default CURRENT_TIMESTAMP not null )", $statements[0]);
@@ -852,7 +856,7 @@ class OracleDBSchemaGrammarTest extends TestCase
         $c = $this->getGrammar()::compileReplace();
 
         $this->assertTrue($c);
-    }    
+    }
 
     protected function getConnection()
     {
@@ -864,6 +868,6 @@ class OracleDBSchemaGrammarTest extends TestCase
         global $ConfigReturnValue;
         $ConfigReturnValue = $quote;
 
-        return new Jfelder\OracleDB\Schema\Grammars\OracleGrammar;
+        return new OracleGrammar;
     }
 }

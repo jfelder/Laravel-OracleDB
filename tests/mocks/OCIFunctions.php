@@ -6,12 +6,13 @@ namespace {
     $OCIConnectionStatus = true;
     $OCIExecuteStatus = true;
     $OCIFetchStatus = true;
+    $OCIFetchAllReturnEmpty = false;
     $OCIBindChangeStatus = false;
     $OCIBindByNameTypeReceived = null;
 }
 
 namespace Jfelder\OracleDB\OCI_PDO {
-    // OCI specific
+    // For testing OCI.php
     if (! function_exists("Jfelder\OracleDB\OCI_PDO\oci_error")) {
         function oci_error($a = '')
         {
@@ -22,7 +23,6 @@ namespace Jfelder\OracleDB\OCI_PDO {
                 : ['code' => 0,'message' => '', 'sqltext' => ''];
         }
     }
-
     if (! function_exists("Jfelder\OracleDB\OCI_PDO\oci_connect")) {
         function oci_connect($a = '')
         {
@@ -71,7 +71,7 @@ namespace Jfelder\OracleDB\OCI_PDO {
         }
     }
 
-    // OCI Statement specific
+    // For testing OCIStatement.php
     if (! function_exists("Jfelder\OracleDB\OCI_PDO\get_resource_type")) {
         function get_resource_type($a = '')
         {
@@ -81,7 +81,7 @@ namespace Jfelder\OracleDB\OCI_PDO {
         }
     }
     if (! function_exists("Jfelder\OracleDB\OCI_PDO\oci_bind_by_name")) {
-        function oci_bind_by_name($a = '', $b = '', &$c, $d = '', $e = '')
+        function oci_bind_by_name($a = '', $b = '', &$c = '', $d = '', $e = '')
         {
             global $OCIStatementStatus, $OCIBindChangeStatus, $OCIBindByNameTypeReceived;
 
@@ -140,12 +140,15 @@ namespace Jfelder\OracleDB\OCI_PDO {
         }
     }
     if (! function_exists("Jfelder\OracleDB\OCI_PDO\oci_fetch_all")) {
-        function oci_fetch_all($a = '', &$b)
+        function oci_fetch_all($a = '', &$b = '')
         {
-            global $OCIFetchStatus;
-            $b = [['FNAME' => 'Test', 'LNAME' => 'Testerson', 'EMAIL' => 'tester@testing.com']];
+            global $OCIFetchAllReturnEmpty;
 
-            return $OCIFetchStatus;
+            $b = $OCIFetchAllReturnEmpty
+                ? []
+                : [['FNAME' => 'Test', 'LNAME' => 'Testerson', 'EMAIL' => 'tester@testing.com']];
+
+            return count($b);
         }
     }
     if (! function_exists("Jfelder\OracleDB\OCI_PDO\oci_field_type")) {
