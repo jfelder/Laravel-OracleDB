@@ -2,8 +2,6 @@
 
 namespace Jfelder\OracleDB\Tests;
 
-use ProcessorTestOCIStub;
-use ProcessorTestOCIStatementStub;
 use Jfelder\OracleDB\OracleConnection;
 use Jfelder\OracleDB\Query\OracleBuilder;
 use Jfelder\OracleDB\Query\Processors\OracleProcessor;
@@ -28,24 +26,15 @@ class OracleDBOCIProcessorTest extends TestCase
 
     public function testInsertGetIdProcessing()
     {
-        $stmt = m::mock(new ProcessorTestOCIStatementStub());
-        $stmt->shouldReceive('bindValue')->times(4)->withAnyArgs();
-        $stmt->shouldReceive('bindParam')->once()->with(5, 0, \PDO::PARAM_INT | \PDO::PARAM_INPUT_OUTPUT, 8);
-        $stmt->shouldReceive('execute')->once()->withNoArgs();
-
-        $pdo = m::mock(new ProcessorTestOCIStub());
-        $pdo->shouldReceive('prepare')->once()->with('sql')->andReturn($stmt);
-
         $connection = m::mock(OracleConnection::class);
-        $connection->shouldReceive('getPdo')->once()->andReturn($pdo);
+        $connection->shouldReceive('oracleInsertGetId')->once()->with('sql', [1, 'foo', true, null])->andReturn(1234);
 
         $builder = m::mock(OracleBuilder::class);
         $builder->shouldReceive('getConnection')->once()->andReturn($connection);
 
         $processor = new OracleProcessor;
-
-        $result = $processor->processInsertGetId($builder, 'sql', [1, 'foo', true, null], 'id');
-        $this->assertSame(0, $result);
+        $result = $processor->processInsertGetId($builder, 'sql', [1, 'foo', true, null]);
+        $this->assertSame(1234, $result);
     }
 
     public function testProcessColumnListing()
