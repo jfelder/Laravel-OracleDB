@@ -92,10 +92,41 @@ class OracleConnection extends Connection
             $statement->bindValue(
                 $key,
                 $value,
-                is_int($value) ? PDO::PARAM_INT : PDO::PARAM_STR
+                match (true) {
+                    is_int($value) => PDO::PARAM_INT,
+                    is_bool($value) => PDO::PARAM_BOOL,
+                    is_null($value) => PDO::PARAM_NULL,
+                    is_resource($value) => PDO::PARAM_LOB,
+                    default => PDO::PARAM_STR
+                },
             );
         }
     }
 
+    /**
+     * Run an "insert get ID" statement against an oracle database.
+     *
+     * @param  string  $query
+     * @param  array  $bindings
+     * @return int
+     */
+    public function oracleInsertGetId($query, $bindings = [])
+    {
+        return $this->run($query, $bindings, function ($query, $bindings) {
+            $last_insert_id = 0;
 
+            $statement = $this->getPdo()->prepare($query);
+
+            $this->bindValues($statement, $this->prepareBindings($bindings));
+
+            // bind final param to a var to capture the id obtained by the query's "returning id into" clause
+            $statement->bindParam(count($bindings), $last_insert_id, PDO::PARAM_INT | PDO::PARAM_INPUT_OUTPUT, 8);
+
+            $this->recordsHaveBeenModified();
+
+            $statement->execute();
+
+            return (int) $last_insert_id;
+        });
+    }
 }
