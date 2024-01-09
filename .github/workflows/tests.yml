@@ -15,11 +15,18 @@ permissions:
 jobs:
   tests:
     runs-on: ubuntu-latest
+    services:
+      oracle:
+        image: deepdiver/docker-oracle-xe-11g:2.0
+        ports:
+          - 49160:22
+          - 49161:1521
 
     strategy:
       fail-fast: true
       matrix:
         php: [8.1, 8.2, 8.3]
+        stability: [prefer-stable]
 
     name: PHP ${{ matrix.php }}
 
@@ -32,8 +39,21 @@ jobs:
         with:
           php-version: ${{ matrix.php }}
           extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, sqlite, pdo_sqlite
+          tools: composer:v2, pecl
           coverage: none
 
+      - name: Setup OCI8 for PHP 8.1
+        run: ./scripts/oci81.sh
+        if: matrix.php == 8.1
+  
+      - name: Setup OCI8 for PHP 8.2
+        run: ./scripts/oci82.sh
+        if: matrix.php == 8.2
+  
+      - name: Setup OCI8 for PHP 8.3
+        run: ./scripts/oci83.sh
+        if: matrix.php == 8.3
+  
       - name: Install Composer dependencies
         run: composer install --prefer-dist --no-interaction --no-progress
 
