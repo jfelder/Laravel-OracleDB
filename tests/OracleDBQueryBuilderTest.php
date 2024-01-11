@@ -2,13 +2,11 @@
 
 namespace Jfelder\OracleDB\Tests;
 
+
 use BadMethodCallException;
+use Carbon\Carbon;
 use Closure;
 use DateTime;
-use RuntimeException;
-use InvalidArgumentException;
-use Mockery as m;
-use Carbon\Carbon;
 use Illuminate\Database\ConnectionInterface;
 use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 use Illuminate\Database\Query\Builder;
@@ -19,15 +17,21 @@ use Illuminate\Pagination\AbstractPaginator as Paginator;
 use Illuminate\Pagination\Cursor;
 use Illuminate\Pagination\CursorPaginator;
 use Illuminate\Pagination\LengthAwarePaginator;
+use InvalidArgumentException;
 use Jfelder\OracleDB\Query\Grammars\OracleGrammar;
 use Jfelder\OracleDB\Query\OracleBuilder as OracleQueryBuilder;
 use Jfelder\OracleDB\Query\Processors\OracleProcessor;
+use Mockery as m;
 use PHPUnit\Framework\TestCase;
+use RuntimeException;
+use stdClass;
 
 include 'mocks/PDOMocks.php';
 
 class OracleDBQueryBuilderTest extends TestCase
 {
+    protected $called;
+
     public function tearDown(): void
     {
         m::close();
@@ -514,11 +518,12 @@ class OracleDBQueryBuilderTest extends TestCase
         $this->assertSame('select * from "users" where "id" between 1 and 2', $builder->toSql());
         $this->assertEquals([], $builder->getBindings());
 
+        // custom long carbon period date
         $builder = $this->getOracleBuilder();
-        $period = Carbon::now()->toPeriod(Carbon::now()->addDay());
+        $period = Carbon::now()->toPeriod(Carbon::now()->addMonth());
         $builder->select('*')->from('users')->whereBetween('created_at', $period);
         $this->assertSame('select * from "users" where "created_at" between ? and ?', $builder->toSql());
-        $this->assertEquals($period->toArray(), $builder->getBindings());
+        $this->assertEquals([$period->start, $period->end], $builder->getBindings());
 
         $builder = $this->getOracleBuilder();
         $builder->select('*')->from('users')->whereBetween('id', collect([1, 2]));
@@ -1948,12 +1953,16 @@ class OracleDBQueryBuilderTest extends TestCase
     {
         $builder = $this->getOracleBuilder();
         $builder->getConnection()->shouldReceive('select')->once()->with('select count(*) as aggregate from "users"', [], true)->andReturn([['aggregate' => 1]]);
-        $builder->getProcessor()->shouldReceive('processSelect')->once()->andReturnUsing(function ($builder, $results) { return $results; });
-        $builder->from('users')->selectSub(function ($query) { $query->from('posts')->select('foo', 'bar')->where('title', 'foo'); }, 'post');
+        $builder->getProcessor()->shouldReceive('processSelect')->once()->andReturnUsing(function ($builder, $results) {
+            return $results;
+        });
+        $builder->from('users')->selectSub(function ($query) {
+            $query->from('posts')->select('foo', 'bar')->where('title', 'foo');
+        }, 'post');
         $count = $builder->count();
         $this->assertEquals(1, $count);
-        $this->assertSame('(select "foo", "bar" from "posts" where "title" = ?) as "post"', $builder->columns[0]->getValue());
-        $this->assertEquals(['foo'], $builder->getBindings());
+        $this->assertSame('(select "foo", "bar" from "posts" where "title" = ?) as "post"', $builder->getGrammar()->getValue($builder->columns[0]));
+        $this->assertEquals(['foo'], $builder->getBindings());        
     }
 
     public function testSubqueriesBindings()
@@ -2258,11 +2267,11 @@ class OracleDBQueryBuilderTest extends TestCase
     public function testPreservedAreAppliedByInsertUsing()
     {
         $builder = $this->getOracleBuilder();
-        $builder->getConnection()->shouldReceive('affectingStatement')->once()->with('insert into "users" () select *', []);
+        $builder->getConnection()->shouldReceive('affectingStatement')->once()->with('insert into "users" ("email") select *', []);
         $builder->beforeQuery(function ($builder) {
             $builder->from('users');
         });
-        $builder->insertUsing([], $this->getOracleBuilder());
+        $builder->insertUsing(['email'], $this->getOracleBuilder());
     }
 
     // NOTE: testPreservedAreAppliedByUpsert omitted since ->upsert is on the "not implemented" list
