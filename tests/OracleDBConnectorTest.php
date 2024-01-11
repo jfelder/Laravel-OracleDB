@@ -27,7 +27,7 @@ class OracleDBConnectorTest extends TestCase
         $this->assertSame($result, $connection);
     }
 
-    public function oracleConnectProvider()
+    public static function oracleConnectProvider()
     {
         return [
             [
