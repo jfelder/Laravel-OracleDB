@@ -2,12 +2,12 @@
 
 namespace Jfelder\OracleDB\Tests;
 
-use ProcessorTestPDOStub;
 use Illuminate\Database\Connection;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Database\Query\Processors\Processor;
 use Mockery as m;
 use PHPUnit\Framework\TestCase;
+use ProcessorTestPDOStub;
 
 include 'mocks/PDOMocks.php';
 

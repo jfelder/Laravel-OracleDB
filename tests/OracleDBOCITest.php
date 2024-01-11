@@ -2,13 +2,13 @@
 
 namespace Jfelder\OracleDB\Tests;
 
-use PDO;
-use TestOCIStub;
 use Jfelder\OracleDB\OCI_PDO\OCI;
 use Jfelder\OracleDB\OCI_PDO\OCIException;
 use Jfelder\OracleDB\OCI_PDO\OCIStatement;
 use Mockery as m;
+use PDO;
 use PHPUnit\Framework\TestCase;
+use TestOCIStub;
 
 include 'mocks/OCIMocks.php';
 include 'mocks/OCIFunctions.php';
@@ -21,7 +21,7 @@ class OracleDBOCITest extends TestCase
     {
         if (! extension_loaded('oci8')) {
             $this->markTestSkipped(
-              'The oci8 extension is not available.'
+                'The oci8 extension is not available.'
             );
         } else {
             global $OCITransactionStatus, $OCIStatementStatus, $OCIExecuteStatus;

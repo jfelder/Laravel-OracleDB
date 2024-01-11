@@ -9,7 +9,7 @@ class OCIException extends PDOException
     /**
      * Create a new query exception instance.
      *
-     * @param string $e
+     * @param  string  $e
      */
     public function __construct($e)
     {

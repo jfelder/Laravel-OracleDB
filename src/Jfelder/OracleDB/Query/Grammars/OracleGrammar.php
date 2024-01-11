@@ -13,7 +13,6 @@ class OracleGrammar extends BaseGrammar
      * Compile a date based where clause.
      *
      * @param  string  $type
-     * @param  \Illuminate\Database\Query\Builder  $query
      * @param  array  $where
      * @return string
      */
@@ -24,7 +23,7 @@ class OracleGrammar extends BaseGrammar
             'day' => 'DD',
             'month' => 'MM',
             'year' => 'YYYY',
-            'time' => 'HH24:MI:SS'
+            'time' => 'HH24:MI:SS',
         ];
         $value = $this->parameter($where['value']);
 
@@ -74,8 +73,6 @@ class OracleGrammar extends BaseGrammar
     /**
      * Compile an insert statement into SQL.
      *
-     * @param  \Illuminate\Database\Query\Builder  $query
-     * @param  array  $values
      * @return string
      */
     public function compileInsert(Builder $query, array $values)
@@ -117,8 +114,7 @@ class OracleGrammar extends BaseGrammar
     /**
      * Compile an insert and get ID statement into SQL.
      *
-     * @param  \Illuminate\Database\Query\Builder  $query
-     * @param  array   $values
+     * @param  array  $values
      * @param  string  $sequence
      * @return string
      */
@@ -138,7 +134,6 @@ class OracleGrammar extends BaseGrammar
     /**
      * Compile the "union" queries attached to the main query.
      *
-     * @param  \Illuminate\Database\Query\Builder  $query
      * @return string
      */
     protected function compileUnions(Builder $query)
@@ -167,7 +162,6 @@ class OracleGrammar extends BaseGrammar
     /**
      * Compile a delete statement into SQL.
      *
-     * @param  \Illuminate\Database\Query\Builder  $query
      * @return string
      */
     public function compileDelete(Builder $query)
@@ -182,7 +176,6 @@ class OracleGrammar extends BaseGrammar
     /**
      * Compile a delete statement with joins or limit into SQL.
      *
-     * @param  \Illuminate\Database\Query\Builder  $query
      * @return string
      */
     protected function compileDeleteWithJoinsOrLimit(Builder $query)
@@ -193,7 +186,6 @@ class OracleGrammar extends BaseGrammar
     /**
      * Compile an exists statement into SQL.
      *
-     * @param \Illuminate\Database\Query\Builder $query
      * @return string
      */
     public function compileExists(Builder $query)
@@ -206,7 +198,6 @@ class OracleGrammar extends BaseGrammar
     /**
      * Compile the lock into SQL.
      *
-     * @param  \Illuminate\Database\Query\Builder  $query
      * @param  bool|string  $value
      * @return string
      */
@@ -222,7 +213,6 @@ class OracleGrammar extends BaseGrammar
     /**
      * Create a full ANSI offset clause for the query.
      *
-     * @param  \Illuminate\Database\Query\Builder  $query
      * @param  array  $components
      * @return string
      */
@@ -253,7 +243,7 @@ class OracleGrammar extends BaseGrammar
     protected function compileRowConstraint($query)
     {
         if (isset($query->limit) && $query->limit < 1) {
-            return "< 1";
+            return '< 1';
         }
 
         $start = $query->offset + 1;
@@ -286,7 +276,6 @@ class OracleGrammar extends BaseGrammar
     /**
      * Compile the "limit" portions of the query.
      *
-     * @param  \Illuminate\Database\Query\Builder  $query
      * @param  int  $limit
      * @return string
      */
@@ -298,7 +287,6 @@ class OracleGrammar extends BaseGrammar
     /**
      * Compile the "offset" portions of the query.
      *
-     * @param  \Illuminate\Database\Query\Builder  $query
      * @param  int  $offset
      * @return string
      */

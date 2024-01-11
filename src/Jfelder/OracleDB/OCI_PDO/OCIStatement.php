@@ -67,9 +67,9 @@ class OCIStatement extends PDOStatement
     /**
      * Constructor.
      *
-     * @param resource $stmt Statement handle created with oci_parse()
-     * @param OCI $oci The OCI object for this statement
-     * @param array $options Options for the statement handle
+     * @param  resource  $stmt Statement handle created with oci_parse()
+     * @param  OCI  $oci The OCI object for this statement
+     * @param  array  $options Options for the statement handle
      *
      * @throws OCIException if $stmt is not a vaild oci8 statement resource
      */
@@ -102,17 +102,16 @@ class OCIStatement extends PDOStatement
     /**
      * Bind a column to a PHP variable.
      *
-     * @param  mixed $column Number of the column (1-indexed) in the result set
-     * @param  mixed $var Name of the PHP variable to which the column will be bound.
-     * @param  int $type Data type of the parameter, specified by the PDO::PARAM_* constants.
-     * @param  int $maxLength A hint for pre-allocation.
-     * @param  mixed $driverOptions Optional parameter(s) for the driver.
+     * @param  mixed  $column Number of the column (1-indexed) in the result set
+     * @param  mixed  $var Name of the PHP variable to which the column will be bound.
+     * @param  int  $type Data type of the parameter, specified by the PDO::PARAM_* constants.
+     * @param  int  $maxLength A hint for pre-allocation.
+     * @param  mixed  $driverOptions Optional parameter(s) for the driver.
+     * @return bool Returns TRUE on success or FALSE on failure.
      *
      * @throws \InvalidArgumentException If an unknown data type is passed in
-     *
-     * @return bool Returns TRUE on success or FALSE on failure.
      */
-    public function bindColumn(string|int $column, mixed &$var, int $type = null, int $maxLength = 0, mixed $driverOptions = null): bool
+    public function bindColumn(string|int $column, mixed &$var, ?int $type = null, int $maxLength = 0, mixed $driverOptions = null): bool
     {
         if (! is_numeric($column) || $column < 1) {
             throw new \InvalidArgumentException("Invalid column specified: {$column}");
@@ -135,15 +134,13 @@ class OCIStatement extends PDOStatement
     /**
      * Binds a parameter to the specified variable name.
      *
-     * @param  mixed $param Parameter identifier
-     * @param  mixed $var Name of the PHP variable to bind to the SQL statement parameter
-     * @param  int $type Explicit data type for the parameter using the PDO::PARAM_* constants
-     * @param  int $maxLength Length of the data type
-     * @param  mixed $driverOptions
+     * @param  mixed  $param Parameter identifier
+     * @param  mixed  $var Name of the PHP variable to bind to the SQL statement parameter
+     * @param  int  $type Explicit data type for the parameter using the PDO::PARAM_* constants
+     * @param  int  $maxLength Length of the data type
+     * @return bool Returns TRUE on success or FALSE on failure
      *
      * @throws \InvalidArgumentException If an unknown data type is passed in
-     *
-     * @return bool Returns TRUE on success or FALSE on failure
      */
     public function bindParam(string|int $param, mixed &$var, int $type = PDO::PARAM_STR, int $maxLength = -1, mixed $driverOptions = null): bool
     {
@@ -170,13 +167,12 @@ class OCIStatement extends PDOStatement
     /**
      * Binds a value to a parameter.
      *
-     * @param  mixed $param Parameter identifier.
-     * @param  mixed $value The value to bind to the parameter
-     * @param  int $type Explicit data type for the parameter using the PDO::PARAM_* constants
+     * @param  mixed  $param Parameter identifier.
+     * @param  mixed  $value The value to bind to the parameter
+     * @param  int  $type Explicit data type for the parameter using the PDO::PARAM_* constants
+     * @return bool Returns TRUE on success or FALSE on failure.
      *
      * @throws \InvalidArgumentException If an unknown data type is passed in
-     *
-     * @return bool Returns TRUE on success or FALSE on failure.
      */
     public function bindValue(string|int $param, mixed $value, int $type = PDO::PARAM_STR): bool
     {
@@ -251,9 +247,8 @@ class OCIStatement extends PDOStatement
     /**
      * Executes a prepared statement.
      *
-     * @param  array $params An array of values with as many elements as there are bound parameters in the
+     * @param  array  $params An array of values with as many elements as there are bound parameters in the
      *                                 SQL statement being executed
-     *
      * @return bool Returns TRUE on success or FALSE on failure.
      */
     public function execute(?array $params = null): bool
@@ -278,11 +273,10 @@ class OCIStatement extends PDOStatement
     /**
      * Fetches the next row from a result set.
      *
-     * @param  int $mode Controls how the next row will be returned to the caller. This value must be one of
+     * @param  int  $mode Controls how the next row will be returned to the caller. This value must be one of
      *                          the PDO::FETCH_* constants
-     * @param  int $cursorOrientation Has no effect; was only included to extend parent.
-     * @param  int $cursorOffset Has no effect; was only included to extend parent.
-     *
+     * @param  int  $cursorOrientation Has no effect; was only included to extend parent.
+     * @param  int  $cursorOffset Has no effect; was only included to extend parent.
      * @return mixed The return value of this function on success depends on the fetch type.
      *               In all cases, FALSE is returned on failure.
      */
@@ -320,11 +314,9 @@ class OCIStatement extends PDOStatement
     /**
      * Returns an array containing all of the result set rows.
      *
-     * @param int|null $mode    Controls how the next row will be returned to the caller. This value must be one
+     * @param  int|null  $mode    Controls how the next row will be returned to the caller. This value must be one
      *                                 of the PDO::FETCH_* constants
-     * @param mixed    ...$args Has no effect; was only included to extend parent.
-     *
-     * @return array
+     * @param  mixed  ...$args Has no effect; was only included to extend parent.
      */
     public function fetchAll(int $mode = PDO::FETCH_CLASS, mixed ...$args): array
     {
@@ -348,9 +340,8 @@ class OCIStatement extends PDOStatement
     /**
      * Returns a single column from the next row of a result set.
      *
-     * @param  int $column 0-indexed number of the column you wish to retrieve from the row.
+     * @param  int  $column 0-indexed number of the column you wish to retrieve from the row.
      *                            If no value is supplied, fetchColumn fetches the first column.
-     *
      * @return mixed single column in the next row of a result set
      */
     public function fetchColumn(int $column = 0): mixed
@@ -363,9 +354,8 @@ class OCIStatement extends PDOStatement
     /**
      * Fetches the next row and returns it as an object.
      *
-     * @param string $class Name of the created class
-     * @param array $constructorArgs Elements of this array are passed to the constructor
-     *
+     * @param  string  $class Name of the created class
+     * @param  array  $constructorArgs Elements of this array are passed to the constructor
      * @return bool Returns an instance of the required class with property names that correspond to the column names
      *              or FALSE on failure.
      */
@@ -379,7 +369,7 @@ class OCIStatement extends PDOStatement
     /**
      * Retrieve a statement attribute.
      *
-     * @param int $name The attribute number
+     * @param  int  $name The attribute number
      * @return mixed Returns the value of the attribute on success or null on failure
      */
     public function getAttribute(int $name): mixed
@@ -390,7 +380,7 @@ class OCIStatement extends PDOStatement
     /**
      * Returns metadata for a column in a result set.
      *
-     * @param int $column The 0-indexed column in the result set.
+     * @param  int  $column The 0-indexed column in the result set.
      * @return array Returns an associative array representing the metadata for a single column
      */
     public function getColumnMeta(int $column): array|false
@@ -429,8 +419,8 @@ class OCIStatement extends PDOStatement
     /**
      * Set a statement attribute.
      *
-     * @param int $attribute The attribute number
-     * @param mixed $value Value of named attribute
+     * @param  int  $attribute The attribute number
+     * @param  mixed  $value Value of named attribute
      * @return bool Returns TRUE
      */
     public function setAttribute(int $attribute, mixed $value): bool
@@ -443,8 +433,8 @@ class OCIStatement extends PDOStatement
     /**
      * Set the default fetch mode for this statement.
      *
-     * @param int $mode The fetch mode must be one of the PDO::FETCH_* constants.
-     * @param mixed ...$args Has no effect; was only included to extend parent.
+     * @param  int  $mode The fetch mode must be one of the PDO::FETCH_* constants.
+     * @param  mixed  ...$args Has no effect; was only included to extend parent.
      * @return bool Returns TRUE on success or FALSE on failure
      */
     public function setFetchMode(int $mode, mixed ...$args)
@@ -488,7 +478,7 @@ class OCIStatement extends PDOStatement
     /**
      * Single location to process all the bindings on a resultset.
      *
-     * @param array $rs The fetched array to be modified
+     * @param  array  $rs The fetched array to be modified
      */
     private function processBindings($rs)
     {
@@ -506,7 +496,7 @@ class OCIStatement extends PDOStatement
     /**
      * Single location to process all the fetch options on a resultset.
      *
-     * @param array $rec The fetched array to be modified
+     * @param  array  $rec The fetched array to be modified
      * @return mixed The modified resultset
      */
     private function processFetchOptions($rec)
@@ -525,9 +515,9 @@ class OCIStatement extends PDOStatement
     /**
      * Single location to process all errors and set necessary fields.
      *
-     * @param string $code The SQLSTATE error code. defualts to custom 'JF000'
-     * @param string $error The driver based error code. If null, oci_error is called
-     * @param string $message The error message
+     * @param  string  $code The SQLSTATE error code. defualts to custom 'JF000'
+     * @param  string  $error The driver based error code. If null, oci_error is called
+     * @param  string  $message The error message
      * @return array The local error array
      */
     private function setErrorInfo($code = null, $error = null, $message = null)

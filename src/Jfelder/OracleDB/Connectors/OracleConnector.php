@@ -2,9 +2,9 @@
 
 namespace Jfelder\OracleDB\Connectors;
 
-use InvalidArgumentException;
 use Illuminate\Database\Connectors\Connector as Connector;
 use Illuminate\Database\Connectors\ConnectorInterface as ConnectorInterface;
+use InvalidArgumentException;
 use Jfelder\OracleDB\OCI_PDO\OCI as OCI;
 
 class OracleConnector extends Connector implements ConnectorInterface
@@ -24,9 +24,8 @@ class OracleConnector extends Connector implements ConnectorInterface
      * Create a new PDO connection.
      *
      * @param  string  $dsn
-     * @param  array   $config
-     * @param  array   $options
      * @return PDO
+     *
      * @throws InvalidArgumentException
      */
     public function createConnection($dsn, array $config, array $options)
@@ -43,7 +42,6 @@ class OracleConnector extends Connector implements ConnectorInterface
     /**
      * Establish a database connection.
      *
-     * @param  array  $config
      * @return PDO
      */
     public function connect(array $config)
@@ -60,7 +58,6 @@ class OracleConnector extends Connector implements ConnectorInterface
     /**
      * Create a DSN string from a configuration.
      *
-     * @param  array   $config
      * @return string
      */
     protected function getDsn(array $config)

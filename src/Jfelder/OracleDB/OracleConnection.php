@@ -2,13 +2,13 @@
 
 namespace Jfelder\OracleDB;
 
-use Illuminate\Database\Connection;
-use Jfelder\OracleDB\Schema\OracleBuilder as OracleSchemaBuilder;
-use Jfelder\OracleDB\Query\Processors\OracleProcessor;
 use Doctrine\DBAL\Driver\OCI8\Driver as DoctrineDriver;
+use Illuminate\Database\Connection;
 use Jfelder\OracleDB\Query\Grammars\OracleGrammar as QueryGrammer;
 use Jfelder\OracleDB\Query\OracleBuilder as OracleQueryBuilder;
+use Jfelder\OracleDB\Query\Processors\OracleProcessor;
 use Jfelder\OracleDB\Schema\Grammars\OracleGrammar as SchemaGrammer;
+use Jfelder\OracleDB\Schema\OracleBuilder as OracleSchemaBuilder;
 use PDO;
 
 class OracleConnection extends Connection
@@ -82,7 +82,7 @@ class OracleConnection extends Connection
     /**
      * Bind values to their parameters in the given statement.
      *
-     * @param  \PDOStatement $statement
+     * @param  \PDOStatement  $statement
      * @param  array  $bindings
      * @return void
      */

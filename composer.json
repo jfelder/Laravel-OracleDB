@@ -16,7 +16,8 @@
   },
   "require-dev": {
     "mockery/mockery": "^1.5.1",
-    "phpunit/phpunit": "^10.0.7"
+    "phpunit/phpunit": "^10.0.7",
+    "laravel/pint": "^1.13"
 },
   "autoload": {
     "psr-4": {

@@ -2,15 +2,15 @@
 
 namespace Jfelder\OracleDB\Tests;
 
-use LogicException;
-use RuntimeException;
 use Illuminate\Database\Query\Expression as Raw;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Schema\ForeignIdColumnDefinition;
 use Jfelder\OracleDB\OracleConnection;
 use Jfelder\OracleDB\Schema\Grammars\OracleGrammar;
+use LogicException;
 use Mockery as m;
 use PHPUnit\Framework\TestCase;
+use RuntimeException;
 
 include 'mocks/PDOMocks.php';
 
@@ -23,7 +23,9 @@ class OracleDBSchemaGrammarTest extends TestCase
 
     public function testCreateDatabase()
     {
-        $grammar = new class extends OracleGrammar {};
+        $grammar = new class extends OracleGrammar
+        {
+        };
 
         $this->expectException(LogicException::class);
         $this->expectExceptionMessage('This database driver does not support creating databases.');
@@ -33,7 +35,9 @@ class OracleDBSchemaGrammarTest extends TestCase
 
     public function testDropDatabaseIfExists()
     {
-        $grammar = new class extends OracleGrammar {};
+        $grammar = new class extends OracleGrammar
+        {
+        };
 
         $this->expectException(LogicException::class);
         $this->expectExceptionMessage('This database driver does not support dropping databases.');
@@ -782,7 +786,7 @@ class OracleDBSchemaGrammarTest extends TestCase
         $blueprint->timestamp('created_at')->default(new Raw('CURRENT_TIMESTAMP'));
         $statements = $blueprint->toSql($this->getConnection(), $this->getGrammar());
         $this->assertCount(1, $statements);
-        $this->assertSame("alter table users add ( created_at timestamp default CURRENT_TIMESTAMP not null )", $statements[0]);
+        $this->assertSame('alter table users add ( created_at timestamp default CURRENT_TIMESTAMP not null )', $statements[0]);
     }
 
     public function testAddingTimeStamps()
@@ -814,7 +818,7 @@ class OracleDBSchemaGrammarTest extends TestCase
         $statements = $blueprint->toSql($this->getConnection(), $this->getGrammar());
 
         $this->assertCount(1, $statements);
-        $this->assertSame("alter table users add ( foo varchar2(255) not null )", $statements[0]);
+        $this->assertSame('alter table users add ( foo varchar2(255) not null )', $statements[0]);
     }
 
     public function testBasicSelectUsingQuotes()

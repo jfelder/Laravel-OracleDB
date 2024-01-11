@@ -2,10 +2,10 @@
 
 namespace Jfelder\OracleDB\Schema\Grammars;
 
-use Illuminate\Support\Fluent;
+use Config;
 use Illuminate\Database\Connection;
 use Illuminate\Database\Schema\Blueprint;
-use Config;
+use Illuminate\Support\Fluent;
 use RuntimeException;
 
 class OracleGrammar extends \Illuminate\Database\Schema\Grammars\Grammar
@@ -55,7 +55,6 @@ class OracleGrammar extends \Illuminate\Database\Schema\Grammars\Grammar
     /**
      * Get the primary key syntax for a table creation statement.
      *
-     * @param  \Illuminate\Database\Schema\Blueprint  $blueprint
      * @return string|null
      */
     protected function addPrimaryKeys(Blueprint $blueprint)
@@ -72,7 +71,6 @@ class OracleGrammar extends \Illuminate\Database\Schema\Grammars\Grammar
     /**
      * Get the foreign key syntax for a table creation statement.
      *
-     * @param  \Illuminate\Database\Schema\Blueprint  $blueprint
      * @return string|null
      */
     protected function addForeignKeys(Blueprint $blueprint)
@@ -174,8 +172,6 @@ class OracleGrammar extends \Illuminate\Database\Schema\Grammars\Grammar
     /**
      * Compile a foreign key command.
      *
-     * @param  \Illuminate\Database\Schema\Blueprint  $blueprint
-     * @param  \Illuminate\Support\Fluent  $command
      * @return string
      */
     public function compileForeign(Blueprint $blueprint, Fluent $command)
@@ -344,9 +340,6 @@ class OracleGrammar extends \Illuminate\Database\Schema\Grammars\Grammar
     /**
      * Compile a rename column command.
      *
-     * @param  \Illuminate\Database\Schema\Blueprint  $blueprint
-     * @param  \Illuminate\Support\Fluent  $command
-     * @param  \Illuminate\Database\Connection  $connection
      * @return array
      */
     public function compileRenameColumn(Blueprint $blueprint, Fluent $command, Connection $connection)
@@ -387,7 +380,6 @@ class OracleGrammar extends \Illuminate\Database\Schema\Grammars\Grammar
     /**
      * Create the column definition for a long text type.
      *
-     * @param  \Illuminate\Support\Fluent  $column
      * @return string
      */
     protected function typeLongText(Fluent $column)
@@ -398,7 +390,6 @@ class OracleGrammar extends \Illuminate\Database\Schema\Grammars\Grammar
     /**
      * Create the column definition for a medium text type.
      *
-     * @param  \Illuminate\Support\Fluent  $column
      * @return string
      */
     protected function typeMediumText(Fluent $column)
@@ -464,7 +455,6 @@ class OracleGrammar extends \Illuminate\Database\Schema\Grammars\Grammar
     /**
      * Create the column definition for a tiny integer type.
      *
-     * @param  \Illuminate\Support\Fluent  $column
      * @return string
      */
     protected function typeTinyInteger(Fluent $column)
@@ -486,7 +476,6 @@ class OracleGrammar extends \Illuminate\Database\Schema\Grammars\Grammar
     /**
      * Create the column definition for a double type.
      *
-     * @param  \Illuminate\Support\Fluent  $column
      * @return string
      */
     protected function typeDouble(Fluent $column)

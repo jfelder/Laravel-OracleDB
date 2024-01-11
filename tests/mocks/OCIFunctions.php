@@ -20,7 +20,7 @@ namespace Jfelder\OracleDB\OCI_PDO {
 
             return ($OCIExecuteStatus && $OCIFetchStatus && $OCITransactionStatus)
                 ? false
-                : ['code' => 0,'message' => '', 'sqltext' => ''];
+                : ['code' => 0, 'message' => '', 'sqltext' => ''];
         }
     }
     if (! function_exists("Jfelder\OracleDB\OCI_PDO\oci_connect")) {

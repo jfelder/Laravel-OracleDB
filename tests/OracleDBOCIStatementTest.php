@@ -3,14 +3,14 @@
 namespace Jfelder\OracleDB\Tests;
 
 use InvalidArgumentException;
-use PDO;
-use ReflectionClass;
-use TestOCIStub;
-use TestOCIStatementStub;
 use Jfelder\OracleDB\OCI_PDO\OCIException;
 use Jfelder\OracleDB\OCI_PDO\OCIStatement;
 use Mockery as m;
+use PDO;
 use PHPUnit\Framework\TestCase;
+use ReflectionClass;
+use TestOCIStatementStub;
+use TestOCIStub;
 
 include 'mocks/OCIMocks.php';
 include 'mocks/OCIFunctions.php';
@@ -21,7 +21,7 @@ class OracleDBOCIStatementTest extends TestCase
     {
         if (! extension_loaded('oci8')) {
             $this->markTestSkipped(
-              'The oci8 extension is not available.'
+                'The oci8 extension is not available.'
             );
         } else {
             global $OCIStatementStatus, $OCIExecuteStatus, $OCIFetchStatus, $OCIFetchAllReturnEmpty, $OCIBindChangeStatus;
@@ -228,7 +228,7 @@ class OracleDBOCIStatementTest extends TestCase
                         'name' => ':0',
                         'value' => $var,
                         'is_param' => 1,
-                        'param_type' => PDO::PARAM_INPUT_OUTPUT
+                        'param_type' => PDO::PARAM_INPUT_OUTPUT,
                     ],
                     [
                         'paramno' => 1,
@@ -237,7 +237,7 @@ class OracleDBOCIStatementTest extends TestCase
                         'is_param' => 1,
                         'param_type' => PDO::PARAM_STR,
                     ],
-                ]
+                ],
             ],
             true
         );
