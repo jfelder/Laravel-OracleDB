@@ -2,7 +2,9 @@
 
 namespace Jfelder\OracleDB;
 
+use Illuminate\Database\Connection;
 use Illuminate\Support\ServiceProvider;
+use Jfelder\OracleDB\Connectors\OracleConnector;
 
 /**
  * Class OracleDBServiceProvider.
@@ -26,25 +28,29 @@ class OracleDBServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        if (file_exists(config_path('oracledb.php'))) {
-            // merge config with other connections
-            $this->mergeConfigFrom(config_path('oracledb.php'), 'database.connections');
+        // merge default config
+        $this->mergeConfigFrom(__DIR__.'/../config/oracle.php', 'database.connections');
 
-            // get only oracle configs to loop thru and extend DB
-            $config = $this->app['config']->get('oracledb', []);
+        // override any default configs with user config
+        if (file_exists(config_path('oracle.php'))) {
+            $this->mergeConfigFrom(config_path('oracle.php'), 'database.connections');
+        }
 
-            $connection_keys = array_keys($config);
+        // get only oracle configs to loop thru and extend DB
+        $config = $this->app['config']->get('oracledb', []);
 
-            if (is_array($connection_keys)) {
-                foreach ($connection_keys as $key) {
-                    $this->app['db']->extend($key, function ($config) {
-                        $oConnector = new Connectors\OracleConnector();
+        $connection_keys = array_keys($config);
 
-                        $connection = $oConnector->connect($config);
-
-                        return new OracleConnection($connection, $config['database'], $config['prefix']);
-                    });
-                }
+        if (is_array($connection_keys)) {
+            foreach ($connection_keys as $key) {
+                // setup connection resolver
+                Connection::resolverFor('oracle', function ($connection, $database, $prefix, $config) {
+                    $oConnector = new OracleConnector();
+                    
+                    $oConnection = $oConnector->connect($config);
+                    
+                    return new OracleConnection($oConnection, $config['database'], $config['prefix'], $config);
+                });
             }
         }
     }
