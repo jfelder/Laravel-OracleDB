@@ -2,12 +2,13 @@
 
 namespace Jfelder\OracleDB;
 
-use Doctrine\DBAL\Driver\OCI8\Driver as DoctrineDriver;
+use Exception;
 use Illuminate\Database\Connection;
-use Jfelder\OracleDB\Query\Grammars\OracleGrammar as QueryGrammer;
+use Jfelder\OracleDB\PDO\OracleDriver;
+use Jfelder\OracleDB\Query\Grammars\OracleGrammar as QueryGrammar;
 use Jfelder\OracleDB\Query\OracleBuilder as OracleQueryBuilder;
 use Jfelder\OracleDB\Query\Processors\OracleProcessor;
-use Jfelder\OracleDB\Schema\Grammars\OracleGrammar as SchemaGrammer;
+use Jfelder\OracleDB\Schema\Grammars\OracleGrammar as SchemaGrammar;
 use Jfelder\OracleDB\Schema\OracleBuilder as OracleSchemaBuilder;
 use PDO;
 
@@ -46,17 +47,21 @@ class OracleConnection extends Connection
      */
     protected function getDefaultQueryGrammar()
     {
-        return $this->withTablePrefix(new QueryGrammer);
+        ($grammar = new QueryGrammar)->setConnection($this);
+
+        return $this->withTablePrefix($grammar);
     }
 
     /**
      * Get the default schema grammar instance.
      *
-     * @return \Jfelder\OracleDB\Schema\Grammars\OracleGrammar
+     * @return \Jfelder\OracleDB\Schema\Grammars\OracleGrammar|null
      */
     protected function getDefaultSchemaGrammar()
     {
-        return $this->withTablePrefix(new SchemaGrammer);
+        ($grammar = new SchemaGrammar)->setConnection($this);
+
+        return $this->withTablePrefix($grammar);
     }
 
     /**
@@ -76,7 +81,7 @@ class OracleConnection extends Connection
      */
     protected function getDoctrineDriver()
     {
-        return new DoctrineDriver;
+        return new OracleDriver;
     }
 
     /**
@@ -128,5 +133,15 @@ class OracleConnection extends Connection
 
             return (int) $last_insert_id;
         });
+    }
+
+    /**
+     * Determine if the given database exception was caused by a unique constraint violation.
+     *
+     * @return bool
+     */
+    protected function isUniqueConstraintError(Exception $exception)
+    {
+        return boolval(preg_match('#ORA-00001: unique constraint#i', $exception->getMessage()));
     }
 }

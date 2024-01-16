@@ -2,9 +2,10 @@
 
 namespace Jfelder\OracleDB\Query;
 
+use Illuminate\Database\Query\Builder;
 use Illuminate\Database\Query\Expression;
 
-class OracleBuilder extends \Illuminate\Database\Query\Builder
+class OracleBuilder extends Builder
 {
     /**
      * Add a subquery cross join to the query.
