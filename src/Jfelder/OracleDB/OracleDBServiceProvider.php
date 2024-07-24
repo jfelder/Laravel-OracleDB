@@ -29,11 +29,11 @@ class OracleDBServiceProvider extends ServiceProvider
     public function register()
     {
         // merge default config
-        $this->mergeConfigFrom(__DIR__.'/../config/oracle.php', 'database.connections');
+        $this->mergeConfigFrom(__DIR__.'/../../config/oracledb.php', 'database.connections');
 
         // override any default configs with user config
-        if (file_exists(config_path('oracle.php'))) {
-            $this->mergeConfigFrom(config_path('oracle.php'), 'database.connections');
+        if (file_exists(config_path('oracledb.php'))) {
+            $this->mergeConfigFrom(config_path('oracledb.php'), 'database.connections');
         }
 
         // get only oracle configs to loop thru and extend DB
