@@ -31,16 +31,21 @@ class OracleDBServiceProvider extends ServiceProvider
         // merge default config
         $this->mergeConfigFrom(__DIR__.'/../../config/oracledb.php', 'database.connections');
 
-        // override any default configs with user config
+        // load default configs
+        $config = [
+            "oracle" => config('database.connections.oracle')
+        ];
+
+        // override any default configs with user config and load those configs
         if (file_exists(config_path('oracledb.php'))) {
             $this->mergeConfigFrom(config_path('oracledb.php'), 'database.connections');
+            
+            $config = $this->app['config']->get('oracledb');
         }
-
-        // get only oracle configs to loop thru and extend DB
-        $config = $this->app['config']->get('oracledb', []);
 
         $connection_keys = array_keys($config);
 
+        // loop thru oracle configs to extend DB
         if (is_array($connection_keys)) {
             foreach ($connection_keys as $key) {
                 $this->app['db']->extend($key, function ($config) {
