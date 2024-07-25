@@ -2,9 +2,7 @@
 
 namespace Jfelder\OracleDB;
 
-use Illuminate\Database\Connection;
 use Illuminate\Support\ServiceProvider;
-use Jfelder\OracleDB\Connectors\OracleConnector;
 
 /**
  * Class OracleDBServiceProvider.
@@ -33,13 +31,13 @@ class OracleDBServiceProvider extends ServiceProvider
 
         // load default configs
         $config = [
-            "oracle" => config('database.connections.oracle')
+            'oracle' => config('database.connections.oracle'),
         ];
 
         // override any default configs with user config and load those configs
         if (file_exists(config_path('oracledb.php'))) {
             $this->mergeConfigFrom(config_path('oracledb.php'), 'database.connections');
-            
+
             $config = $this->app['config']->get('oracledb');
         }
 

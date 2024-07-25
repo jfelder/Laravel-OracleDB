@@ -3,9 +3,9 @@
 ### OracleDB (updated for Laravel 10)
 
 <a href="https://github.com/jfelder/Laravel-OracleDB/actions"><img src="https://github.com/jfelder/Laravel-OracleDB/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/jfelder/oracledb" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/jfelder/oracledb" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/jfelder/oracledb" alt="License"></a>
+<a href="https://packagist.org/packages/jfelder/oracledb"><img src="https://img.shields.io/packagist/dt/jfelder/oracledb" alt="Total Downloads"></a>
+<a href="https://packagist.org/packages/jfelder/oracledb"><img src="https://img.shields.io/packagist/v/jfelder/oracledb" alt="Latest Stable Version"></a>
+<a href="https://packagist.org/packages/jfelder/oracledb"><img src="https://img.shields.io/packagist/l/jfelder/oracledb" alt="License"></a>
 
 
 OracleDB is an Oracle Database Driver package for [Laravel Framework](https://laravel.com) - thanks [@taylorotwell](https://github.com/taylorotwell). OracleDB is an extension of [Illuminate/Database](https://github.com/illuminate/database) that uses the [OCI8 Functions](https://www.php.net/manual/en/ref.oci8.php) wrapped into the PDO namespace.
