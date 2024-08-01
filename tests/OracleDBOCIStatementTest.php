@@ -17,6 +17,38 @@ include 'mocks/OCIFunctions.php';
 
 class OracleDBOCIStatementTest extends TestCase
 {
+    public $oci;
+
+    public $stmt;
+
+    public $resultUpperArray;
+
+    public $resultUpperObject;
+
+    public $resultLowerArray;
+
+    public $resultLowerObject;
+
+    public $resultNumArray;
+
+    public $resultBothUpperArray;
+
+    public $resultBothLowerArray;
+
+    public $resultAllUpperArray;
+
+    public $resultAllUpperObject;
+
+    public $resultAllLowerArray;
+
+    public $resultAllLowerObject;
+
+    public $resultAllNumArray;
+
+    public $resultAllBothUpperArray;
+
+    public $resultAllBothLowerArray;
+
     protected function setUp(): void
     {
         if (! extension_loaded('oci8')) {
