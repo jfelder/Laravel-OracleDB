@@ -4,7 +4,6 @@ namespace Jfelder\OracleDB;
 
 use Exception;
 use Illuminate\Database\Connection;
-use Jfelder\OracleDB\PDO\OracleDriver;
 use Jfelder\OracleDB\Query\Grammars\OracleGrammar as QueryGrammar;
 use Jfelder\OracleDB\Query\OracleBuilder as OracleQueryBuilder;
 use Jfelder\OracleDB\Query\Processors\OracleProcessor;
@@ -14,6 +13,24 @@ use PDO;
 
 class OracleConnection extends Connection
 {
+    /**
+     * {@inheritdoc}
+     */
+    public function getDriverTitle()
+    {
+        return 'Oracle';
+    }
+
+    /**
+     * Get the server version for the connection.
+     *
+     * @return string
+     */
+    public function getServerVersion(): string
+    {
+        return 'Run SELECT * FROM V$VERSION; to get the Oracle server version.';
+    }
+
     /**
      * Get a schema builder instance for the connection.
      *
@@ -75,16 +92,6 @@ class OracleConnection extends Connection
     }
 
     /**
-     * Get the Doctrine DBAL driver.
-     *
-     * @return \Doctrine\DBAL\Driver\OCI8\Driver
-     */
-    protected function getDoctrineDriver()
-    {
-        return new OracleDriver;
-    }
-
-    /**
      * Bind values to their parameters in the given statement.
      *
      * @param  \PDOStatement  $statement
@@ -143,5 +150,15 @@ class OracleConnection extends Connection
     protected function isUniqueConstraintError(Exception $exception)
     {
         return boolval(preg_match('#ORA-00001: unique constraint#i', $exception->getMessage()));
+    }
+
+    /**
+     * Get the schema state for the connection.
+     *
+     * @throws \RuntimeException
+     */
+    public function getSchemaState(string $dummyArg1 = null, string $dummyArg2 = null)
+    {
+        throw new RuntimeException('Schema dumping is not supported when using Oracle.');
     }
 }

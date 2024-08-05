@@ -21,6 +21,7 @@ use Jfelder\OracleDB\Query\Grammars\OracleGrammar;
 use Jfelder\OracleDB\Query\OracleBuilder as OracleQueryBuilder;
 use Jfelder\OracleDB\Query\Processors\OracleProcessor;
 use Mockery as m;
+use PHPUnit\Framework\Attributes\DoesNotPerformAssertions;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 use stdClass;
@@ -70,9 +71,7 @@ class OracleDBQueryBuilderTest extends TestCase
         $this->assertNull($builder->columns);
     }
 
-    /**
-     * @doesNotPerformAssertions
-     */
+    #[DoesNotPerformAssertions]
     public function testBasicSelectUseWritePdo()
     {
         $builder = $this->getOracleBuilderWithProcessor();
@@ -794,9 +793,7 @@ class OracleDBQueryBuilderTest extends TestCase
         $this->assertEquals('select t2.* from ( select rownum AS "rn", t1.* from ((select * from "users") union (select * from "dogs")) t1 ) t2 where t2."rn" between 6 and 15', $builder->toSql());
     }
 
-    /**
-     * @doesNotPerformAssertions
-     */
+    #[DoesNotPerformAssertions]
     public function testUnionAggregate()
     {
         $expected = 'select count(*) as aggregate from ((select * from "posts") union (select * from "videos")) as "temp_table"';
@@ -806,9 +803,7 @@ class OracleDBQueryBuilderTest extends TestCase
         $builder->from('posts')->union($this->getOracleBuilder()->from('videos'))->count();
     }
 
-    /**
-     * @doesNotPerformAssertions
-     */
+    #[DoesNotPerformAssertions]
     public function testHavingAggregate()
     {
         $expected = 'select count(*) as aggregate from (select (select "count(*)" from "videos" where "posts"."id" = "videos"."post_id") as "videos_count" from "posts" having "videos_count" > ?) as "temp_table"';
@@ -2220,9 +2215,7 @@ class OracleDBQueryBuilderTest extends TestCase
         $builder->from('users')->join('contacts', 'users.id', '=', 'contacts.id')->where('users.email', '=', 'foo')->orderBy('users.id')->limit(1)->delete();
     }
 
-    /**
-     * @doesNotPerformAssertions
-     */
+    #[DoesNotPerformAssertions]
     public function testTruncateMethod()
     {
         $builder = $this->getOracleBuilder();
@@ -2259,9 +2252,7 @@ class OracleDBQueryBuilderTest extends TestCase
         $this->assertEquals(['bar'], $builder->getBindings());
     }
 
-    /**
-     * @doesNotPerformAssertions
-     */
+    #[DoesNotPerformAssertions]
     public function testPreservedAreAppliedByInsert()
     {
         $builder = $this->getOracleBuilder();
@@ -2272,9 +2263,7 @@ class OracleDBQueryBuilderTest extends TestCase
         $builder->insert(['email' => 'foo']);
     }
 
-    /**
-     * @doesNotPerformAssertions
-     */
+    #[DoesNotPerformAssertions]
     public function testPreservedAreAppliedByInsertGetId()
     {
         $this->called = false;
@@ -2286,9 +2275,7 @@ class OracleDBQueryBuilderTest extends TestCase
         $builder->insertGetId(['email' => 'foo'], 'id');
     }
 
-    /**
-     * @doesNotPerformAssertions
-     */
+    #[DoesNotPerformAssertions]
     public function testPreservedAreAppliedByInsertUsing()
     {
         $builder = $this->getOracleBuilder();
@@ -2301,9 +2288,7 @@ class OracleDBQueryBuilderTest extends TestCase
 
     // NOTE: testPreservedAreAppliedByUpsert omitted since ->upsert is on the "not implemented" list
 
-    /**
-     * @doesNotPerformAssertions
-     */
+    #[DoesNotPerformAssertions]
     public function testPreservedAreAppliedByUpdate()
     {
         $builder = $this->getOracleBuilder();
@@ -2314,9 +2299,7 @@ class OracleDBQueryBuilderTest extends TestCase
         $builder->update(['email' => 'foo']);
     }
 
-    /**
-     * @doesNotPerformAssertions
-     */
+    #[DoesNotPerformAssertions]
     public function testPreservedAreAppliedByDelete()
     {
         $builder = $this->getOracleBuilder();
@@ -2327,9 +2310,7 @@ class OracleDBQueryBuilderTest extends TestCase
         $builder->delete();
     }
 
-    /**
-     * @doesNotPerformAssertions
-     */
+    #[DoesNotPerformAssertions]
     public function testPreservedAreAppliedByTruncate()
     {
         $builder = $this->getOracleBuilder();
@@ -2340,9 +2321,7 @@ class OracleDBQueryBuilderTest extends TestCase
         $builder->truncate();
     }
 
-    /**
-     * @doesNotPerformAssertions
-     */
+    #[DoesNotPerformAssertions]
     public function testPreservedAreAppliedByExists()
     {
         $builder = $this->getOracleBuilder();
@@ -2513,9 +2492,7 @@ class OracleDBQueryBuilderTest extends TestCase
         $this->assertEquals($builder, $builder->dynamicWhere($method, $parameters));
     }
 
-    /**
-     * @doesNotPerformAssertions
-     */
+    #[DoesNotPerformAssertions]
     public function testDynamicWhereIsNotGreedy()
     {
         $method = 'whereIosVersionAndAndroidVersionOrOrientation';
@@ -2574,9 +2551,7 @@ class OracleDBQueryBuilderTest extends TestCase
         $this->assertEquals(['baz'], $builder->getBindings());
     }
 
-    /**
-     * @doesNotPerformAssertions
-     */
+    #[DoesNotPerformAssertions]
     public function testSelectWithLockUsesWritePdo()
     {
         $builder = $this->getOracleBuilderWithProcessor();
@@ -2700,9 +2675,7 @@ class OracleDBQueryBuilderTest extends TestCase
         $this->assertSame('select * from "users" where "name" = ?', $builder->toSql());
     }
 
-    /**
-     * @doesNotPerformAssertions
-     */
+    #[DoesNotPerformAssertions]
     public function testChunkWithLastChunkComplete()
     {
         $builder = $this->getMockQueryBuilder();
@@ -2726,9 +2699,7 @@ class OracleDBQueryBuilderTest extends TestCase
         });
     }
 
-    /**
-     * @doesNotPerformAssertions
-     */
+    #[DoesNotPerformAssertions]
     public function testChunkWithLastChunkPartial()
     {
         $builder = $this->getMockQueryBuilder();
@@ -2749,9 +2720,7 @@ class OracleDBQueryBuilderTest extends TestCase
         });
     }
 
-    /**
-     * @doesNotPerformAssertions
-     */
+    #[DoesNotPerformAssertions]
     public function testChunkCanBeStoppedByReturningFalse()
     {
         $builder = $this->getMockQueryBuilder();
@@ -2774,9 +2743,7 @@ class OracleDBQueryBuilderTest extends TestCase
         });
     }
 
-    /**
-     * @doesNotPerformAssertions
-     */
+    #[DoesNotPerformAssertions]
     public function testChunkWithCountZero()
     {
         $builder = $this->getMockQueryBuilder();
@@ -2794,9 +2761,7 @@ class OracleDBQueryBuilderTest extends TestCase
         });
     }
 
-    /**
-     * @doesNotPerformAssertions
-     */
+    #[DoesNotPerformAssertions]
     public function testChunkPaginatesUsingIdWithLastChunkComplete()
     {
         $builder = $this->getMockQueryBuilder();
@@ -2820,9 +2785,7 @@ class OracleDBQueryBuilderTest extends TestCase
         }, 'someIdField');
     }
 
-    /**
-     * @doesNotPerformAssertions
-     */
+    #[DoesNotPerformAssertions]
     public function testChunkPaginatesUsingIdWithLastChunkPartial()
     {
         $builder = $this->getMockQueryBuilder();
@@ -2843,9 +2806,7 @@ class OracleDBQueryBuilderTest extends TestCase
         }, 'someIdField');
     }
 
-    /**
-     * @doesNotPerformAssertions
-     */
+    #[DoesNotPerformAssertions]
     public function testChunkPaginatesUsingIdWithCountZero()
     {
         $builder = $this->getMockQueryBuilder();
@@ -2863,9 +2824,7 @@ class OracleDBQueryBuilderTest extends TestCase
         }, 'someIdField');
     }
 
-    /**
-     * @doesNotPerformAssertions
-     */
+    #[DoesNotPerformAssertions]
     public function testChunkPaginatesUsingIdWithAlias()
     {
         $builder = $this->getMockQueryBuilder();

@@ -132,7 +132,7 @@ class OracleGrammar extends \Illuminate\Database\Schema\Grammars\Grammar
     }
 
     /**
-     * Compile a create table command.
+     * Compile a column addition table command.
      *
      * @param  Illuminate\Database\Schema\Blueprint  $blueprint
      * @param  Illuminate\Support\Fluent  $command
@@ -140,11 +140,15 @@ class OracleGrammar extends \Illuminate\Database\Schema\Grammars\Grammar
      */
     public function compileAdd(Blueprint $blueprint, Fluent $command)
     {
-        $columns = implode(', ', $this->getColumns($blueprint));
+        $column = $this->getColumn($blueprint, $command->column);
 
-        $sql = 'alter table '.$this->wrapTable($blueprint)." add ( $columns";
+        $sql = 'alter table '.$this->wrapTable($blueprint)." add ( $column";
 
-        $sql .= (string) $this->addPrimaryKeys($blueprint);
+        $primary = $this->getCommandByName($blueprint, 'primary');
+
+        if (! is_null($primary) && in_array($command->column->name, $primary->columns)) {
+            $sql .= ", constraint {$primary->index} primary key ( {$command->column->name} )";
+        }
 
         return $sql .= ' )';
     }
@@ -470,7 +474,11 @@ class OracleGrammar extends \Illuminate\Database\Schema\Grammars\Grammar
      */
     protected function typeFloat(Fluent $column)
     {
-        return "number({$column->total}, {$column->places})";
+        if ($column->precision) {
+            return "float({$column->precision})";
+        }
+
+        return 'float';
     }
 
     /**
@@ -480,11 +488,7 @@ class OracleGrammar extends \Illuminate\Database\Schema\Grammars\Grammar
      */
     protected function typeDouble(Fluent $column)
     {
-        if (is_null($column->total) || is_null($column->places)) {
-            throw new RuntimeException('This database engine requires specifying both precision and scale for a "double" column.');
-        }
-
-        return "number({$column->total}, {$column->places})";
+        return 'double precision';
     }
 
     /**
