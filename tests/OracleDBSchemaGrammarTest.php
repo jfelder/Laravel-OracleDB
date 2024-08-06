@@ -10,7 +10,6 @@ use Jfelder\OracleDB\Schema\Grammars\OracleGrammar;
 use LogicException;
 use Mockery as m;
 use PHPUnit\Framework\TestCase;
-use RuntimeException;
 
 include 'mocks/PDOMocks.php';
 
@@ -23,9 +22,7 @@ class OracleDBSchemaGrammarTest extends TestCase
 
     public function testCreateDatabase()
     {
-        $grammar = new class extends OracleGrammar
-        {
-        };
+        $grammar = new class extends OracleGrammar {};
 
         $this->expectException(LogicException::class);
         $this->expectExceptionMessage('This database driver does not support creating databases.');
@@ -35,9 +32,7 @@ class OracleDBSchemaGrammarTest extends TestCase
 
     public function testDropDatabaseIfExists()
     {
-        $grammar = new class extends OracleGrammar
-        {
-        };
+        $grammar = new class extends OracleGrammar {};
 
         $this->expectException(LogicException::class);
         $this->expectExceptionMessage('This database driver does not support dropping databases.');

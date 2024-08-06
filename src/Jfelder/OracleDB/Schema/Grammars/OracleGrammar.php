@@ -6,7 +6,6 @@ use Config;
 use Illuminate\Database\Connection;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Fluent;
-use RuntimeException;
 
 class OracleGrammar extends \Illuminate\Database\Schema\Grammars\Grammar
 {

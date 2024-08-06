@@ -115,7 +115,7 @@ class OracleDBOCITest extends TestCase
 
     public function testErrorCode()
     {
-        $oci = new TestOCIStub();
+        $oci = new TestOCIStub;
         $this->assertNull($oci->errorCode());
 
         // use reflection to test values of protected properties
@@ -131,7 +131,7 @@ class OracleDBOCITest extends TestCase
 
     public function testErrorInfo()
     {
-        $oci = new TestOCIStub();
+        $oci = new TestOCIStub;
         $this->assertEquals([0 => '', 1 => null, 2 => null], $oci->errorInfo());
 
         // use reflection to test values of protected properties
@@ -148,7 +148,7 @@ class OracleDBOCITest extends TestCase
     public function testExec()
     {
         $sql = 'select * from table';
-        $oci = new TestOCIStub();
+        $oci = new TestOCIStub;
         $stmt = $oci->exec($sql);
         $this->assertEquals(1, $stmt);
 
@@ -179,7 +179,7 @@ class OracleDBOCITest extends TestCase
         global $OCIExecuteStatus;
         $OCIExecuteStatus = false;
         $sql = 'select * from table';
-        $oci = new TestOCIStub();
+        $oci = new TestOCIStub;
         $stmt = $oci->exec($sql);
         $this->assertFalse($stmt);
     }
@@ -221,7 +221,7 @@ class OracleDBOCITest extends TestCase
     public function testPrepareWithNonParameterQuery()
     {
         $sql = 'select * from table';
-        $oci = new TestOCIStub();
+        $oci = new TestOCIStub;
         $stmt = $oci->prepare($sql);
         $this->assertInstanceOf(OCIStatement::class, $stmt);
 
@@ -247,7 +247,7 @@ class OracleDBOCITest extends TestCase
     public function testPrepareWithParameterQuery()
     {
         $sql = 'select * from table where id = ? and date = ?';
-        $oci = new TestOCIStub();
+        $oci = new TestOCIStub;
         $stmt = $oci->prepare($sql);
         $this->assertInstanceOf(OCIStatement::class, $stmt);
 
@@ -275,7 +275,7 @@ class OracleDBOCITest extends TestCase
         global $OCIStatementStatus;
         $OCIStatementStatus = false;
         $sql = 'select * from table where id = ? and date = ?';
-        $oci = new TestOCIStub();
+        $oci = new TestOCIStub;
         $this->expectException(OCIException::class);
         $stmt = $oci->prepare($sql);
     }
@@ -283,7 +283,7 @@ class OracleDBOCITest extends TestCase
     public function testQuery()
     {
         $sql = 'select * from table';
-        $oci = new TestOCIStub();
+        $oci = new TestOCIStub;
         $stmt = $oci->query($sql);
         $this->assertInstanceOf(OCIStatement::class, $stmt);
 
@@ -309,7 +309,7 @@ class OracleDBOCITest extends TestCase
     public function testQueryWithModeParams()
     {
         $sql = 'select * from table';
-        $oci = new TestOCIStub();
+        $oci = new TestOCIStub;
         $stmt = $oci->query($sql, PDO::FETCH_CLASS, 'stdClass', []);
         $this->assertInstanceOf(OCIStatement::class, $stmt);
 
@@ -337,7 +337,7 @@ class OracleDBOCITest extends TestCase
         global $OCIExecuteStatus;
         $OCIExecuteStatus = false;
         $sql = 'select * from table';
-        $oci = new TestOCIStub();
+        $oci = new TestOCIStub;
         $stmt = $oci->query($sql);
         $this->assertFalse($stmt);
     }

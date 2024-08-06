@@ -5,13 +5,9 @@ $ConfigReturnValue = false;
 if (! class_exists('ProcessorTestPDOStub')) {
     class ProcessorTestPDOStub extends PDO
     {
-        public function __construct()
-        {
-        }
+        public function __construct() {}
 
-        public function lastInsertId(?string $name = null): string|false
-        {
-        }
+        public function lastInsertId(?string $name = null): string|false {}
     }
 }
 if (! class_exists('Config')) {
