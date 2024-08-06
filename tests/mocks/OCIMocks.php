@@ -12,9 +12,7 @@ if (! class_exists('TestOCIStub')) {
             $this->conn = 'oci8';
         }
 
-        public function __destruct()
-        {
-        }
+        public function __destruct() {}
     }
 }
 
@@ -29,50 +27,32 @@ if (! class_exists('TestOCIStatementStub')) {
             $this->attributes = $options;
         }
 
-        public function __destruct()
-        {
-        }
+        public function __destruct() {}
     }
 }
 
 if (! class_exists('ProcessorTestOCIStub')) {
     class ProcessorTestOCIStub extends OCI
     {
-        public function __construct()
-        {
-        }
+        public function __construct() {}
 
-        public function __destruct()
-        {
-        }
+        public function __destruct() {}
 
-        public function prepare(string $query, array $options = []): OCIStatement|false
-        {
-        }
+        public function prepare(string $query, array $options = []): OCIStatement|false {}
     }
 }
 
 if (! class_exists('ProcessorTestOCIStatementStub')) {
     class ProcessorTestOCIStatementStub extends OCIStatement
     {
-        public function __construct()
-        {
-        }
+        public function __construct() {}
 
-        public function __destruct()
-        {
-        }
+        public function __destruct() {}
 
-        public function bindValue(string|int $param, mixed $value, int $type = PDO::PARAM_STR): bool
-        {
-        }
+        public function bindValue(string|int $param, mixed $value, int $type = PDO::PARAM_STR): bool {}
 
-        public function bindParam(string|int $param, mixed &$var, int $type = PDO::PARAM_STR, int $maxLength = 0, mixed $driverOptions = null): bool
-        {
-        }
+        public function bindParam(string|int $param, mixed &$var, int $type = PDO::PARAM_STR, int $maxLength = 0, mixed $driverOptions = null): bool {}
 
-        public function execute(?array $params = null): bool
-        {
-        }
+        public function execute(?array $params = null): bool {}
     }
 }

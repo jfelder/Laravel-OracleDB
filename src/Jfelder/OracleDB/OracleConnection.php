@@ -23,8 +23,6 @@ class OracleConnection extends Connection
 
     /**
      * Get the server version for the connection.
-     *
-     * @return string
      */
     public function getServerVersion(): string
     {
@@ -157,7 +155,7 @@ class OracleConnection extends Connection
      *
      * @throws \RuntimeException
      */
-    public function getSchemaState(string $dummyArg1 = null, string $dummyArg2 = null)
+    public function getSchemaState()
     {
         throw new RuntimeException('Schema dumping is not supported when using Oracle.');
     }

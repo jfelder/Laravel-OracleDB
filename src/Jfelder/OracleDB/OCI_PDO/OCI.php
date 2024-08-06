@@ -77,11 +77,11 @@ class OCI extends PDO
     /**
      * Constructor.
      *
-     * @param  string  $dsn DSN string to connect to database
-     * @param  string  $username Username of creditial to login to database
-     * @param  string  $password Password of creditial to login to database
-     * @param  array  $driver_options Options for the connection handle
-     * @param  string  $charset Character set to specify to the database when connecting
+     * @param  string  $dsn  DSN string to connect to database
+     * @param  string  $username  Username of creditial to login to database
+     * @param  string  $password  Password of creditial to login to database
+     * @param  array  $driver_options  Options for the connection handle
+     * @param  string  $charset  Character set to specify to the database when connecting
      *
      * @throws OCIException if connection fails
      */
@@ -178,7 +178,7 @@ class OCI extends PDO
     /**
      * Execute an SQL statement and return the number of affected rows.
      *
-     * @param  string  $statement The SQL statement to prepare and execute.
+     * @param  string  $statement  The SQL statement to prepare and execute.
      * @return int Returns the number of rows that were modified or deleted by the statement
      */
     public function exec(string $statement): int|false
@@ -193,7 +193,7 @@ class OCI extends PDO
     /**
      * Retrieve a database connection attribute.
      *
-     * @param  int  $attribute One of the PDO::ATTR_* constants.
+     * @param  int  $attribute  One of the PDO::ATTR_* constants.
      * @return mixed The value of the requested PDO attribute or null if it does not exist.
      */
     public function getAttribute(int $attribute): mixed
@@ -224,8 +224,8 @@ class OCI extends PDO
     /**
      * Prepares a statement for execution and returns a Jfelder\OracleDB\OCI_PDO\OCIStatement object.
      *
-     * @param  string  $query Valid SQL statement for the target database server.
-     * @param  array  $options Attribute values for the OCIStatement object
+     * @param  string  $query  Valid SQL statement for the target database server.
+     * @param  array  $options  Attribute values for the OCIStatement object
      * @return mixed Returns a OCIStatement on success, false otherwise
      */
     public function prepare(string $query, array $options = []): OCIStatement|false
@@ -252,9 +252,9 @@ class OCI extends PDO
      * Executes an SQL statement, returning a result set as a Jfelder\OracleDB\OCI_PDO\OCIStatement object
      * on success or false on failure.
      *
-     * @param  string  $query Valid SQL statement for the target database server.
-     * @param  int  $fetchMode The fetch mode must be one of the PDO::FETCH_* constants.
-     * @param  mixed  ...$fetchModeArgs Has no effect; was only included to extend parent.
+     * @param  string  $query  Valid SQL statement for the target database server.
+     * @param  int  $fetchMode  The fetch mode must be one of the PDO::FETCH_* constants.
+     * @param  mixed  ...$fetchModeArgs  Has no effect; was only included to extend parent.
      * @return mixed Returns a OCIStatement on success, false otherwise
      */
     public function query(string $query, ?int $fetchMode = null, mixed ...$fetchModeArgs): OCIStatement|false
@@ -273,8 +273,8 @@ class OCI extends PDO
     /**
      * Quotes a string for use in a query.
      *
-     * @param  string  $string The string to be quoted.
-     * @param  int  $type Provides a data type hint for drivers that have alternate quoting styles.
+     * @param  string  $string  The string to be quoted.
+     * @param  int  $type  Provides a data type hint for drivers that have alternate quoting styles.
      * @return string Returns false
      */
     public function quote(string $string, int $type = PDO::PARAM_STR): string|false
@@ -307,8 +307,8 @@ class OCI extends PDO
     /**
      * Set an attribute.
      *
-     * @param  int  $attribute PDO::ATTR_* attribute identifier
-     * @param  mixed  $value Value of PDO::ATTR_* attribute
+     * @param  int  $attribute  PDO::ATTR_* attribute identifier
+     * @param  mixed  $value  Value of PDO::ATTR_* attribute
      * @return true
      */
     public function setAttribute(int $attribute, mixed $value): bool
@@ -360,9 +360,9 @@ class OCI extends PDO
     /**
      * Set the PDO errorInfo array values.
      *
-     * @param  string  $code SQLSTATE identifier
-     * @param  string  $error Driver error code
-     * @param  string  $message Driver error message
+     * @param  string  $code  SQLSTATE identifier
+     * @param  string  $error  Driver error code
+     * @param  string  $message  Driver error message
      * @return array Returns the PDO errorInfo array
      */
     private function setErrorInfo($code = null, $error = null, $message = null)
@@ -387,7 +387,7 @@ class OCI extends PDO
     /**
      * Set the execute mode for the connection.
      *
-     * @param  int  $mode Either \OCI_COMMIT_ON_SUCCESS or \OCI_NO_AUTO_COMMIT
+     * @param  int  $mode  Either \OCI_COMMIT_ON_SUCCESS or \OCI_NO_AUTO_COMMIT
      * @return bool
      *
      * @throws OCIException If any value other than the above are passed in

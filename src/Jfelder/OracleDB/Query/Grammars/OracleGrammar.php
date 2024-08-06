@@ -73,7 +73,6 @@ class OracleGrammar extends BaseGrammar
     /**
      * Compile a "where like" clause.
      *
-     * @param  \Illuminate\Database\Query\Builder  $query
      * @param  array  $where
      * @return string
      */
@@ -305,7 +304,6 @@ class OracleGrammar extends BaseGrammar
     /**
      * Compile a group limit clause.
      *
-     * @param  \Illuminate\Database\Query\Builder  $query
      * @return string
      */
     protected function compileGroupLimit(Builder $query)

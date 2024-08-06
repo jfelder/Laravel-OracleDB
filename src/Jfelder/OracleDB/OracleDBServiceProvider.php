@@ -47,7 +47,7 @@ class OracleDBServiceProvider extends ServiceProvider
         if (is_array($connection_keys)) {
             foreach ($connection_keys as $key) {
                 $this->app['db']->extend($key, function ($config) {
-                    $oConnector = new Connectors\OracleConnector();
+                    $oConnector = new Connectors\OracleConnector;
 
                     $connection = $oConnector->connect($config);
 

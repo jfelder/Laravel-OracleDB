@@ -12,7 +12,7 @@ class OracleProcessor extends Processor
      *
      * @param  string  $sql
      * @param  array  $values
-     * @param  string  $sequence no effect; only for method signature compatibility
+     * @param  string  $sequence  no effect; only for method signature compatibility
      * @return int
      */
     public function processInsertGetId(Builder $query, $sql, $values, $sequence = null)

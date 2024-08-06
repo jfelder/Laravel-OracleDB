@@ -97,7 +97,7 @@ class OracleDBOCIStatementTest extends TestCase
 
     public function testConstructor()
     {
-        $oci = new TestOCIStub();
+        $oci = new TestOCIStub;
         $ocistmt = new OCIStatement('oci8 statement', $oci);
 
         // use reflection to test values of protected properties
@@ -124,13 +124,13 @@ class OracleDBOCIStatementTest extends TestCase
         global $OCIStatementStatus;
         $OCIStatementStatus = false;
         $this->expectException(OCIException::class);
-        $ocistmt = new OCIStatement('oci8 statement', new TestOCIStub());
+        $ocistmt = new OCIStatement('oci8 statement', new TestOCIStub);
     }
 
     public function testDestructor()
     {
         global $OCIStatementStatus;
-        $ocistmt = new OCIStatement('oci8 statement', new TestOCIStub());
+        $ocistmt = new OCIStatement('oci8 statement', new TestOCIStub);
         unset($ocistmt);
         $this->assertFalse($OCIStatementStatus);
     }
@@ -180,7 +180,7 @@ class OracleDBOCIStatementTest extends TestCase
         $OCIBindChangeStatus = true;
         $variable = '';
 
-        $stmt = new TestOCIStatementStub(true, new TestOCIStub(), '', []);
+        $stmt = new TestOCIStatementStub(true, new TestOCIStub, '', []);
         $this->assertTrue($stmt->bindParam('param', $variable));
         $this->assertEquals('oci_bind_by_name', $variable);
     }
@@ -191,7 +191,7 @@ class OracleDBOCIStatementTest extends TestCase
         $nonExistantDataType = 12345;
         $this->expectException(InvalidArgumentException::class);
 
-        $stmt = new TestOCIStatementStub(true, new TestOCIStub(), '', []);
+        $stmt = new TestOCIStatementStub(true, new TestOCIStub, '', []);
         $stmt->bindParam('param', $variable, $nonExistantDataType);
     }
 
@@ -201,7 +201,7 @@ class OracleDBOCIStatementTest extends TestCase
         $OCIBindChangeStatus = true;
         $variable = '';
 
-        $stmt = new TestOCIStatementStub(true, new TestOCIStub(), '', []);
+        $stmt = new TestOCIStatementStub(true, new TestOCIStub, '', []);
         $this->assertTrue($stmt->bindParam('param', $variable, PDO::PARAM_INPUT_OUTPUT));
         $this->assertEquals('oci_bind_by_name', $variable);
     }
