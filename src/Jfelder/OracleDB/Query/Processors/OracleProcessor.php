@@ -19,22 +19,4 @@ class OracleProcessor extends Processor
     {
         return $query->getConnection()->oracleInsertGetId($sql, $values);
     }
-
-    // todo remove this because it was removed in Laravel 11. add a processColumns like the specific processors have.
-    /**
-     * Process the results of a column listing query.
-     *
-     * @param  array  $results
-     * @return array
-     */
-    public function processColumnListing($results)
-    {
-        $mapping = function ($r) {
-            $r = (object) $r;
-
-            return $r->column_name;
-        };
-
-        return array_map($mapping, $results);
-    }
 }

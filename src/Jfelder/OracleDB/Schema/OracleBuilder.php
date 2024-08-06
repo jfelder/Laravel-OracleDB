@@ -2,6 +2,8 @@
 
 namespace Jfelder\OracleDB\Schema;
 
+use RuntimeException;
+
 class OracleBuilder extends \Illuminate\Database\Schema\Builder
 {
     /**
@@ -29,14 +31,6 @@ class OracleBuilder extends \Illuminate\Database\Schema\Builder
      */
     public function getColumnListing($table)
     {
-        $sql = $this->grammar->compileColumnExists($table);
-
-        $database = $this->connection->getDatabaseName();
-
-        $table = $this->connection->getTablePrefix().$table;
-
-        $results = $this->connection->select($sql, [$database, $table]);
-
-        return $this->connection->getPostProcessor()->processColumnListing($results);
+        throw new RuntimeException('This database engine does not support column listing operations. Eloquent models must set $guarded to [] or not define it at all.');
     }
 }

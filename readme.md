@@ -95,6 +95,7 @@ features not already listed.
 
 #### Query Builder
 
+- group limiting via a groupLimit clause `$query->groupLimit($value, $column);` note: this was only added to Laravel so Eloquent can limit the number of eagerly loaded results per parent
 - insertOrIgnore `DB::from('users')->insertOrIgnore(['email' => 'foo']);`
 - insertGetId with empty values `DB::from('users')->insertGetId([]);` (but calling with non-empty values is supported)
 - upserts `DB::from('users')->upsert([['email' => 'foo', 'name' => 'bar'], ['name' => 'bar2', 'email' => 'foo2']], 'email');`
@@ -102,6 +103,11 @@ features not already listed.
 - deleting with a limit `DB::from('users')->where('email', '=', 'foo')->orderBy('id')->take(1)->delete();`
 - json operations `DB::from('users')->where('items->sku', '=', 'foo-bar')->get();`
 - whereFulltext `DB::table('users')->whereFulltext('description', 'Hello World');`
+
+#### Eloquent
+
+- setting $guarded on an Eloquent model as anything other than an empty array. your models must either not define $guarded at all, or set it to an empty array. If not, Eloquent may attempt to run a column listing sql query resulting in an exception.
+- limiting the number of eagerly loaded results per parent, ie get only 3 posts per user `User::with(['posts' => fn ($query) => $query->limit(3)])->paginate();`
 
 #### Schema Builder
 

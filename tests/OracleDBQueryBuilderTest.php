@@ -22,6 +22,7 @@ use Jfelder\OracleDB\Query\OracleBuilder as OracleQueryBuilder;
 use Jfelder\OracleDB\Query\Processors\OracleProcessor;
 use Mockery as m;
 use PHPUnit\Framework\Attributes\DoesNotPerformAssertions;
+use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 use stdClass;
@@ -489,6 +490,53 @@ class OracleDBQueryBuilderTest extends TestCase
         $this->assertEquals([0 => '1'], $builder->getBindings());
     }
 
+    #[TestWith(['whereLike: 3rd arg missing'])]
+    #[TestWith(['whereLike: 3rd arg false'])]
+    #[TestWith(['whereLike: 3rd arg true'])]
+    #[TestWith(['whereNotLike: 3rd arg missing'])]
+    #[TestWith(['whereNotLike: 3rd arg false'])]
+    #[TestWith(['whereNotLike: 3rd arg true'])]
+    public function testWhereLikeClauseOracle($case)
+    {
+        if ($case === 'whereLike: 3rd arg missing') {
+            $this->expectException(RuntimeException::class);
+            $this->expectExceptionMessage('This database engine does not support case insensitive like operations. The sql "UPPER(some_column) like ?" can accomplish insensitivity.');
+            $builder = $this->getOracleBuilder();
+            $builder->select('*')->from('users')->whereLike('id', '1');
+            $builder->toSql();
+        } elseif ($case === 'whereLike: 3rd arg false') {
+            $this->expectException(RuntimeException::class);
+            $this->expectExceptionMessage('This database engine does not support case insensitive like operations. The sql "UPPER(some_column) like ?" can accomplish insensitivity.');
+            $builder = $this->getOracleBuilder();
+            $builder->select('*')->from('users')->whereLike('id', '1', false);
+            $builder->toSql();
+        } elseif ($case === 'whereLike: 3rd arg true') {
+            $builder = $this->getOracleBuilder();
+            $builder->select('*')->from('users')->whereLike('id', '1', true);
+            $this->assertSame('select * from "users" where "id" like ?', $builder->toSql());
+            $this->assertEquals([0 => '1'], $builder->getBindings());
+        } elseif ($case === 'whereNotLike: 3rd arg missing') {
+            $this->expectException(RuntimeException::class);
+            $this->expectExceptionMessage('This database engine does not support case insensitive like operations. The sql "UPPER(some_column) like ?" can accomplish insensitivity.');
+            $builder = $this->getOracleBuilder();
+            $builder->select('*')->from('users')->whereNotLike('id', '1');
+            $builder->toSql();
+        } elseif ($case === 'whereNotLike: 3rd arg false') {
+            $this->expectException(RuntimeException::class);
+            $this->expectExceptionMessage('This database engine does not support case insensitive like operations. The sql "UPPER(some_column) like ?" can accomplish insensitivity.');
+            $builder = $this->getOracleBuilder();
+            $builder->select('*')->from('users')->whereNotLike('id', '1', false);
+            $builder->toSql();
+        } elseif ($case === 'whereNotLike: 3rd arg true') {
+            $builder = $this->getOracleBuilder();
+            $builder->select('*')->from('users')->whereNotLike('id', '1', true);
+            $this->assertSame('select * from "users" where "id" not like ?', $builder->toSql());
+            $this->assertEquals([0 => '1'], $builder->getBindings());
+        } else {
+            throw new \Exception("Unknown case number [$case]");
+        }
+    }
+
     public function testWhereBetweens()
     {
         $builder = $this->getOracleBuilder();
@@ -715,6 +763,73 @@ class OracleDBQueryBuilderTest extends TestCase
         $builder->select('*')->from('users')->whereColumn($conditions);
         $this->assertSame('select * from "users" where ("first_name" = "last_name" and "updated_at" > "created_at")', $builder->toSql());
         $this->assertEquals([], $builder->getBindings());
+    }
+
+    public function testWhereAny()
+    {
+        $builder = $this->getOracleBuilder();
+        $builder->select('*')->from('users')->whereAny(['last_name', 'email'], 'like', '%Otwell%');
+        $this->assertSame('select * from "users" where ("last_name" like ? or "email" like ?)', $builder->toSql());
+        $this->assertEquals(['%Otwell%', '%Otwell%'], $builder->getBindings());
+
+        $builder = $this->getOracleBuilder();
+        $builder->select('*')->from('users')->whereAny(['last_name', 'email'], '%Otwell%');
+        $this->assertSame('select * from "users" where ("last_name" = ? or "email" = ?)', $builder->toSql());
+        $this->assertEquals(['%Otwell%', '%Otwell%'], $builder->getBindings());
+    }
+
+    public function testOrWhereAny()
+    {
+        $builder = $this->getOracleBuilder();
+        $builder->select('*')->from('users')->where('first_name', 'like', '%Taylor%')->orWhereAny(['last_name', 'email'], 'like', '%Otwell%');
+        $this->assertSame('select * from "users" where "first_name" like ? or ("last_name" like ? or "email" like ?)', $builder->toSql());
+        $this->assertEquals(['%Taylor%', '%Otwell%', '%Otwell%'], $builder->getBindings());
+
+        $builder = $this->getOracleBuilder();
+        $builder->select('*')->from('users')->where('first_name', 'like', '%Taylor%')->whereAny(['last_name', 'email'], 'like', '%Otwell%', 'or');
+        $this->assertSame('select * from "users" where "first_name" like ? or ("last_name" like ? or "email" like ?)', $builder->toSql());
+        $this->assertEquals(['%Taylor%', '%Otwell%', '%Otwell%'], $builder->getBindings());
+
+        $builder = $this->getOracleBuilder();
+        $builder->select('*')->from('users')->where('first_name', 'like', '%Taylor%')->orWhereAny(['last_name', 'email'], '%Otwell%');
+        $this->assertSame('select * from "users" where "first_name" like ? or ("last_name" = ? or "email" = ?)', $builder->toSql());
+        $this->assertEquals(['%Taylor%', '%Otwell%', '%Otwell%'], $builder->getBindings());
+    }
+
+    public function testWhereNone()
+    {
+        $builder = $this->getOracleBuilder();
+        $builder->select('*')->from('users')->whereNone(['last_name', 'email'], 'like', '%Otwell%');
+        $this->assertSame('select * from "users" where not ("last_name" like ? or "email" like ?)', $builder->toSql());
+        $this->assertEquals(['%Otwell%', '%Otwell%'], $builder->getBindings());
+
+        $builder = $this->getOracleBuilder();
+        $builder->select('*')->from('users')->whereNone(['last_name', 'email'], 'Otwell');
+        $this->assertSame('select * from "users" where not ("last_name" = ? or "email" = ?)', $builder->toSql());
+        $this->assertEquals(['Otwell', 'Otwell'], $builder->getBindings());
+
+        $builder = $this->getOracleBuilder();
+        $builder->select('*')->from('users')->where('first_name', 'like', '%Taylor%')->whereNone(['last_name', 'email'], 'like', '%Otwell%');
+        $this->assertSame('select * from "users" where "first_name" like ? and not ("last_name" like ? or "email" like ?)', $builder->toSql());
+        $this->assertEquals(['%Taylor%', '%Otwell%', '%Otwell%'], $builder->getBindings());
+    }
+
+    public function testOrWhereNone()
+    {
+        $builder = $this->getOracleBuilder();
+        $builder->select('*')->from('users')->where('first_name', 'like', '%Taylor%')->orWhereNone(['last_name', 'email'], 'like', '%Otwell%');
+        $this->assertSame('select * from "users" where "first_name" like ? or not ("last_name" like ? or "email" like ?)', $builder->toSql());
+        $this->assertEquals(['%Taylor%', '%Otwell%', '%Otwell%'], $builder->getBindings());
+
+        $builder = $this->getOracleBuilder();
+        $builder->select('*')->from('users')->where('first_name', 'like', '%Taylor%')->whereNone(['last_name', 'email'], 'like', '%Otwell%', 'or');
+        $this->assertSame('select * from "users" where "first_name" like ? or not ("last_name" like ? or "email" like ?)', $builder->toSql());
+        $this->assertEquals(['%Taylor%', '%Otwell%', '%Otwell%'], $builder->getBindings());
+
+        $builder = $this->getOracleBuilder();
+        $builder->select('*')->from('users')->where('first_name', 'like', '%Taylor%')->orWhereNone(['last_name', 'email'], '%Otwell%');
+        $this->assertSame('select * from "users" where "first_name" like ? or not ("last_name" = ? or "email" = ?)', $builder->toSql());
+        $this->assertEquals(['%Taylor%', '%Otwell%', '%Otwell%'], $builder->getBindings());
     }
 
     public function testUnions()
@@ -2138,6 +2253,15 @@ class OracleDBQueryBuilderTest extends TestCase
         $builder = $this->getOracleBuilder();
         $builder->getConnection()->shouldReceive('update')->once()->with('update "users" set "email" = foo, "name" = ? where "id" = ?', ['bar', 1])->andReturn(1);
         $result = $builder->from('users')->where('id', '=', 1)->update(['email' => new Raw('foo'), 'name' => 'bar']);
+        $this->assertEquals(1, $result);
+    }
+
+    public function testUpdateMethodWorksWithQueryAsValue()
+    {
+        $builder = $this->getOracleBuilder();
+        $builder->getConnection()->shouldReceive('update')->once()->with('update "users" set "credits" = (select sum(credits) from "transactions" where "transactions"."user_id" = "users"."id" and "type" = ?) where "id" = ?', ['foo', 1])->andReturn(1);
+        $result = $builder->from('users')->where('id', '=', 1)->update(['credits' => $this->getOracleBuilder()->from('transactions')->selectRaw('sum(credits)')->whereColumn('transactions.user_id', 'users.id')->where('type', 'foo')]);
+
         $this->assertEquals(1, $result);
     }
 
