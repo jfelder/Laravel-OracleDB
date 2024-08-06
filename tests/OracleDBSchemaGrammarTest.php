@@ -59,18 +59,6 @@ class OracleDBSchemaGrammarTest extends TestCase
 
         $this->assertCount(1, $statements);
         $this->assertSame('create table users ( id number(10,0) not null, email varchar2(255) not null, constraint users_id_primary primary key ( id ) )', $statements[0]);
-
-        $blueprint = new Blueprint('users');
-        $blueprint->increments('id');
-        $blueprint->string('email');
-
-        $conn = $this->getConnection();
-        $conn->shouldNotReceive('getConfig');
-
-        $statements = $blueprint->toSql($conn, $this->getGrammar());
-
-        $this->assertCount(1, $statements);
-        $this->assertSame('alter table users add ( id number(10,0) not null, email varchar2(255) not null, constraint users_id_primary primary key ( id ) )', $statements[0]);
     }
 
     public function testBasicCreateTableWithPrimary()
@@ -175,23 +163,6 @@ class OracleDBSchemaGrammarTest extends TestCase
         $this->assertEquals('create table prefix_users ( id number(10,0) not null, email varchar2(255) not null, foo_id number(10,0) not null, constraint users_foo_id_foreign foreign key ( foo_id ) references prefix_orders ( id ) on delete cascade, constraint users_id_primary primary key ( id ) )', $statements[0]);
     }
 
-    public function testAutoIncrementStartingValue()
-    {
-        // calling ->startingValue() should have no effect on the generated sql because it hasn't been implemented
-
-        $blueprint = new Blueprint('users');
-        $blueprint->create();
-        $blueprint->increments('id')->startingValue(1000);
-        $blueprint->string('email');
-
-        $conn = $this->getConnection();
-
-        $statements = $blueprint->toSql($conn, $this->getGrammar());
-
-        $this->assertCount(1, $statements);
-        $this->assertSame('create table users ( id number(10,0) not null, email varchar2(255) not null, constraint users_id_primary primary key ( id ) )', $statements[0]);
-    }
-
     public function testBasicAlterTable()
     {
         $blueprint = new Blueprint('users');
@@ -199,25 +170,15 @@ class OracleDBSchemaGrammarTest extends TestCase
         $blueprint->string('email');
 
         $conn = $this->getConnection();
+        $conn->shouldNotReceive('getConfig');
 
         $statements = $blueprint->toSql($conn, $this->getGrammar());
 
-        $this->assertEquals(1, count($statements));
-        $this->assertEquals('alter table users add ( id number(10,0) not null, email varchar2(255) not null, constraint users_id_primary primary key ( id ) )', $statements[0]);
-    }
-
-    public function testBasicAlterTableWithPrimary()
-    {
-        $blueprint = new Blueprint('users');
-        $blueprint->increments('id');
-        $blueprint->string('email');
-
-        $conn = $this->getConnection();
-
-        $statements = $blueprint->toSql($conn, $this->getGrammar());
-
-        $this->assertEquals(1, count($statements));
-        $this->assertEquals('alter table users add ( id number(10,0) not null, email varchar2(255) not null, constraint users_id_primary primary key ( id ) )', $statements[0]);
+        $this->assertCount(2, $statements);
+        $this->assertSame([
+            'alter table users add ( id number(10,0) not null, constraint users_id_primary primary key ( id ) )',
+            'alter table users add ( email varchar2(255) not null )',
+        ], $statements);
     }
 
     public function testBasicAlterTableWithPrefix()
@@ -232,24 +193,13 @@ class OracleDBSchemaGrammarTest extends TestCase
 
         $statements = $blueprint->toSql($conn, $grammar);
 
-        $this->assertEquals(1, count($statements));
-        $this->assertEquals('alter table prefix_users add ( id number(10,0) not null, email varchar2(255) not null, constraint users_id_primary primary key ( id ) )', $statements[0]);
-    }
+        // todo fix OracleGrammar.php code to name the constraint prefix_users_id_primary
 
-    public function testBasicAlterTableWithPrefixAndPrimary()
-    {
-        $blueprint = new Blueprint('users');
-        $blueprint->increments('id');
-        $blueprint->string('email');
-        $grammar = $this->getGrammar();
-        $grammar->setTablePrefix('prefix_');
-
-        $conn = $this->getConnection();
-
-        $statements = $blueprint->toSql($conn, $grammar);
-
-        $this->assertEquals(1, count($statements));
-        $this->assertEquals('alter table prefix_users add ( id number(10,0) not null, email varchar2(255) not null, constraint users_id_primary primary key ( id ) )', $statements[0]);
+        $this->assertCount(2, $statements);
+        $this->assertSame([
+            'alter table prefix_users add ( id number(10,0) not null, constraint users_id_primary primary key ( id ) )',
+            'alter table prefix_users add ( email varchar2(255) not null )',
+        ], $statements);
     }
 
     public function testDropTable()
@@ -514,11 +464,16 @@ class OracleDBSchemaGrammarTest extends TestCase
         $statements = $blueprint->toSql($this->getConnection(), $this->getGrammar());
 
         $this->assertInstanceOf(ForeignIdColumnDefinition::class, $foreignId);
+        $this->assertCount(9, $statements);
         $this->assertSame([
-            'alter table users add ( foo number(19,0) not null, company_id number(19,0) not null, laravel_idea_id number(19,0) not null, team_id number(19,0) not null, team_column_id number(19,0) not null )',
+            'alter table users add ( foo number(19,0) not null )',
+            'alter table users add ( company_id number(19,0) not null )',
             'alter table users add constraint users_company_id_foreign foreign key ( company_id ) references companies ( id )',
+            'alter table users add ( laravel_idea_id number(19,0) not null )',
             'alter table users add constraint users_laravel_idea_id_foreign foreign key ( laravel_idea_id ) references laravel_ideas ( id )',
+            'alter table users add ( team_id number(19,0) not null )',
             'alter table users add constraint users_team_id_foreign foreign key ( team_id ) references teams ( id )',
+            'alter table users add ( team_column_id number(19,0) not null )',
             'alter table users add constraint users_team_column_id_foreign foreign key ( team_column_id ) references teams ( id )',
         ], $statements);
     }
@@ -673,41 +628,21 @@ class OracleDBSchemaGrammarTest extends TestCase
     public function testAddingFloat()
     {
         $blueprint = new Blueprint('users');
-        $blueprint->float('foo', 5, 2);
+        $blueprint->float('foo', 5);
         $statements = $blueprint->toSql($this->getConnection(), $this->getGrammar());
 
         $this->assertEquals(1, count($statements));
-        $this->assertEquals('alter table users add ( foo number(5, 2) not null )', $statements[0]);
+        $this->assertEquals('alter table users add ( foo float(5) not null )', $statements[0]);
     }
 
     public function testAddingDouble()
     {
         $blueprint = new Blueprint('users');
-        $blueprint->double('foo', 5, 2);
+        $blueprint->double('foo');
         $statements = $blueprint->toSql($this->getConnection(), $this->getGrammar());
 
         $this->assertEquals(1, count($statements));
-        $this->assertEquals('alter table users add ( foo number(5, 2) not null )', $statements[0]);
-    }
-
-    public function testAddingDoubleWithoutSecondParameter()
-    {
-        $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('requires specifying both precision and scale');
-
-        $blueprint = new Blueprint('users');
-        $blueprint->double('foo');
-        $statements = $blueprint->toSql($this->getConnection(), $this->getGrammar());
-    }
-
-    public function testAddingDoubleWithoutThirdParameter()
-    {
-        $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('requires specifying both precision and scale');
-
-        $blueprint = new Blueprint('users');
-        $blueprint->double('foo', 15);
-        $statements = $blueprint->toSql($this->getConnection(), $this->getGrammar());
+        $this->assertEquals('alter table users add ( foo double precision not null )', $statements[0]);
     }
 
     public function testAddingDecimal()
@@ -795,8 +730,11 @@ class OracleDBSchemaGrammarTest extends TestCase
         $blueprint->timestamps();
         $statements = $blueprint->toSql($this->getConnection(), $this->getGrammar());
 
-        $this->assertEquals(1, count($statements));
-        $this->assertEquals('alter table users add ( created_at timestamp null, updated_at timestamp null )', $statements[0]);
+        $this->assertEquals(2, count($statements));
+        $this->assertSame([
+            'alter table users add ( created_at timestamp null )',
+            'alter table users add ( updated_at timestamp null )',
+        ], $statements);
     }
 
     public function testAddingBinary()

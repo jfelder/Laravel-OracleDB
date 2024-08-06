@@ -37,18 +37,7 @@ class OracleDBOCIProcessorTest extends TestCase
         $this->assertSame(1234, $result);
     }
 
-    public function testProcessColumnListing()
-    {
-        $processor = new OracleProcessor;
-        $listing = [['column_name' => 'id'], ['column_name' => 'name'], ['column_name' => 'email']];
-        $expected = ['id', 'name', 'email'];
-        $this->assertEquals($expected, $processor->processColumnListing($listing));
-
-        // convert listing to objects to simulate PDO::FETCH_CLASS
-        foreach ($listing as &$row) {
-            $row = (object) $row;
-        }
-
-        $this->assertEquals($expected, $processor->processColumnListing($listing));
-    }
+    // Laravel's DatabaseMySqlProcessorTest, DatabasePostgresProcessorTest, etc have a test named
+    // testProcessColumns, but $processor->processColumns is only used by Schema Builder class, and we
+    // are planning to remove Schema Builder entirely (todo) from this package.
 }

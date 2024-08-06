@@ -4,6 +4,7 @@ namespace Jfelder\OracleDB\Tests;
 
 use Jfelder\OracleDB\Connectors\OracleConnector;
 use Mockery as m;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 class OracleDBConnectorTest extends TestCase
@@ -13,9 +14,7 @@ class OracleDBConnectorTest extends TestCase
         m::close();
     }
 
-    /**
-     * @dataProvider oracleConnectProvider
-     */
+    #[DataProvider('oracleConnectProvider')]
     public function testOracleConnectCallsCreateConnectionWithProperArguments($dsn, $config)
     {
         $connector = $this->getMockBuilder(OracleConnector::class)->onlyMethods(['createConnection', 'getOptions'])->getMock();

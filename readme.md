@@ -1,16 +1,13 @@
 ## Laravel Oracle Database Package
 
-### OracleDB (updated for Laravel 10)
+### OracleDB (updated for Laravel 11)
 
 <a href="https://github.com/jfelder/Laravel-OracleDB/actions"><img src="https://github.com/jfelder/Laravel-OracleDB/workflows/tests/badge.svg" alt="Build Status"></a>
 <a href="https://packagist.org/packages/jfelder/oracledb"><img src="https://img.shields.io/packagist/dt/jfelder/oracledb" alt="Total Downloads"></a>
 <a href="https://packagist.org/packages/jfelder/oracledb"><img src="https://img.shields.io/packagist/v/jfelder/oracledb" alt="Latest Stable Version"></a>
 <a href="https://packagist.org/packages/jfelder/oracledb"><img src="https://img.shields.io/packagist/l/jfelder/oracledb" alt="License"></a>
 
-
 OracleDB is an Oracle Database Driver package for [Laravel Framework](https://laravel.com) - thanks [@taylorotwell](https://github.com/taylorotwell). OracleDB is an extension of [Illuminate/Database](https://github.com/illuminate/database) that uses the [OCI8 Functions](https://www.php.net/manual/en/ref.oci8.php) wrapped into the PDO namespace.
-
-> **Note:** This package is designed to run in PHP 8.1, and has not been tested in PHP 8.0
 
 **Please report any bugs you may find.**
 
@@ -98,6 +95,7 @@ features not already listed.
 
 #### Query Builder
 
+- group limiting via a groupLimit clause `$query->groupLimit($value, $column);` note: this was only added to Laravel so Eloquent can limit the number of eagerly loaded results per parent
 - insertOrIgnore `DB::from('users')->insertOrIgnore(['email' => 'foo']);`
 - insertGetId with empty values `DB::from('users')->insertGetId([]);` (but calling with non-empty values is supported)
 - upserts `DB::from('users')->upsert([['email' => 'foo', 'name' => 'bar'], ['name' => 'bar2', 'email' => 'foo2']], 'email');`
@@ -105,6 +103,11 @@ features not already listed.
 - deleting with a limit `DB::from('users')->where('email', '=', 'foo')->orderBy('id')->take(1)->delete();`
 - json operations `DB::from('users')->where('items->sku', '=', 'foo-bar')->get();`
 - whereFulltext `DB::table('users')->whereFulltext('description', 'Hello World');`
+
+#### Eloquent
+
+- setting $guarded on an Eloquent model as anything other than an empty array. your models must either not define $guarded at all, or set it to an empty array. If not, Eloquent may attempt to run a column listing sql query resulting in an exception.
+- limiting the number of eagerly loaded results per parent, ie get only 3 posts per user `User::with(['posts' => fn ($query) => $query->limit(3)])->paginate();`
 
 #### Schema Builder
 
@@ -129,15 +132,7 @@ features not already listed.
 - create a column to hold IP addresses `$blueprint->ipAddress('foo')` (would be implemented as varchar2 45)
 - create a column to hold MAC addresses `$blueprint->macAddress('foo')` (would be implemented as varchar2 17)
 - create a geometry column `$blueprint->geometry('coordinates')`
-- create a geometric point column `$blueprint->point('coordinates')`
-- create a geometric point column specifying srid `$blueprint->point('coordinates', 4326)`
-- create a linestring column `$blueprint->linestring('coordinates')`
-- create a polygon column `$blueprint->polygon('coordinates')`
-- create a geometry collection column `$blueprint->geometrycollection('coordinates')`
-- create a multipoint column `$blueprint->multipoint('coordinates')`
-- create a multilinestring column `$blueprint->multilinestring('coordinates')`
-- create a multipolygon column `$blueprint->multipolygon('coordinates')`
-- create a double column without specifying second or third parameters `$blueprint->double('foo')` (but `$blueprint->double('foo', 5, 2)` is supported)
+- create a geography column `$blueprint->geography('coordinates')`
 - create a timestamp column with `useCurrent` modifier `$blueprint->timestamp('created_at')->useCurrent()`
 
 ### License

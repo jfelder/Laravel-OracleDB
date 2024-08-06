@@ -71,6 +71,24 @@ class OracleGrammar extends BaseGrammar
     }
 
     /**
+     * Compile a "where like" clause.
+     *
+     * @param  \Illuminate\Database\Query\Builder  $query
+     * @param  array  $where
+     * @return string
+     */
+    protected function whereLike(Builder $query, $where)
+    {
+        if (! $where['caseSensitive']) {
+            throw new RuntimeException('This database engine does not support case insensitive like operations. The sql "UPPER(some_column) like ?" can accomplish insensitivity.');
+        }
+
+        $where['operator'] = $where['not'] ? 'not like' : 'like';
+
+        return $this->whereBasic($query, $where);
+    }
+
+    /**
      * Compile an insert statement into SQL.
      *
      * @return string
@@ -285,6 +303,29 @@ class OracleGrammar extends BaseGrammar
     }
 
     /**
+     * Compile a group limit clause.
+     *
+     * @param  \Illuminate\Database\Query\Builder  $query
+     * @return string
+     */
+    protected function compileGroupLimit(Builder $query)
+    {
+        throw new RuntimeException('This database engine does not support group limit operations.');
+    }
+
+    /**
+     * Compile a row number clause.
+     *
+     * @param  string  $partition
+     * @param  string  $orders
+     * @return string
+     */
+    protected function compileRowNumber($partition, $orders)
+    {
+        throw new RuntimeException('This database engine does not support row number operations.');
+    }
+
+    /**
      * Compile the "offset" portions of the query.
      *
      * @param  int  $offset
@@ -293,6 +334,16 @@ class OracleGrammar extends BaseGrammar
     protected function compileOffset(Builder $query, $offset)
     {
         return '';
+    }
+
+    /**
+     * Compile a query to get the number of open connections for a database.
+     *
+     * @throws RuntimeException
+     */
+    public function compileThreadCount()
+    {
+        throw new RuntimeException('This database engine does not support getting the number of open connections.');
     }
 
     /**
