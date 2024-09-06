@@ -345,6 +345,16 @@ class OracleGrammar extends BaseGrammar
     }
 
     /**
+     * Get the format for database stored dates.
+     *
+     * @return string
+     */
+    public function getDateFormat()
+    {
+        return $this->connection->getConfig('date_format') ?: 'Y-m-d H:i:s';
+    }
+
+    /**
      * Wrap a single string in keyword identifiers.
      *
      * @param  string  $value
