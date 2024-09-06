@@ -2,7 +2,6 @@
 
 namespace Jfelder\OracleDB\Schema\Grammars;
 
-use Config;
 use Illuminate\Database\Connection;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Fluent;
@@ -362,7 +361,7 @@ class OracleGrammar extends \Illuminate\Database\Schema\Grammars\Grammar
      */
     protected function wrapValue($value)
     {
-        if (Config::get('oracledb::database.quoting') === true) {
+        if ($this->connection->getConfig('quoting') === true) {
             return parent::wrapValue($value);
         }
 

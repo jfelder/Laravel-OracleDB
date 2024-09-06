@@ -2,7 +2,6 @@
 
 namespace Jfelder\OracleDB\Query\Grammars;
 
-use Config;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Database\Query\Grammars\Grammar as BaseGrammar;
 use RuntimeException;
@@ -362,7 +361,7 @@ class OracleGrammar extends BaseGrammar
      */
     protected function wrapValue($value)
     {
-        if (Config::get('oracledb::database.quoting') === true) {
+        if ($this->connection->getConfig('quoting') === true) {
             return parent::wrapValue($value);
         }
 
