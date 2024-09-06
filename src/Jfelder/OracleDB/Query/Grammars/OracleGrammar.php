@@ -2,7 +2,6 @@
 
 namespace Jfelder\OracleDB\Query\Grammars;
 
-use Config;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Database\Query\Grammars\Grammar as BaseGrammar;
 use RuntimeException;
@@ -345,6 +344,16 @@ class OracleGrammar extends BaseGrammar
     }
 
     /**
+     * Get the format for database stored dates.
+     *
+     * @return string
+     */
+    public function getDateFormat()
+    {
+        return $this->connection->getConfig('date_format') ?: 'Y-m-d H:i:s';
+    }
+
+    /**
      * Wrap a single string in keyword identifiers.
      *
      * @param  string  $value
@@ -352,7 +361,7 @@ class OracleGrammar extends BaseGrammar
      */
     protected function wrapValue($value)
     {
-        if (Config::get('oracledb::database.quoting') === true) {
+        if ($this->connection->getConfig('quoting') === true) {
             return parent::wrapValue($value);
         }
 

@@ -800,11 +800,13 @@ class OracleDBSchemaGrammarTest extends TestCase
         return m::mock(OracleConnection::class);
     }
 
-    public function getGrammar($quote = false)
+    public function getGrammar($quoting = false)
     {
-        global $ConfigReturnValue;
-        $ConfigReturnValue = $quote;
+        $connection = m::mock(OracleConnection::class);
+        $connection->shouldReceive('getConfig')->with('quoting')->andReturn($quoting);
+        $grammar = new OracleGrammar;
+        $grammar->setConnection($connection);
 
-        return new OracleGrammar;
+        return $grammar;
     }
 }

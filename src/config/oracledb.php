@@ -12,5 +12,6 @@ return [
         'charset' => 'WE8ISO8859P1',
         'prefix' => '',
         'quoting' => false,
+        'date_format' => env('DB_DATE_FORMAT', 'Y-m-d H:i:s'),
     ],
 ];

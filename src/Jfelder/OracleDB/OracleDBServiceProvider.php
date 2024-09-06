@@ -51,7 +51,7 @@ class OracleDBServiceProvider extends ServiceProvider
 
                     $connection = $oConnector->connect($config);
 
-                    return new OracleConnection($connection, $config['database'], $config['prefix']);
+                    return new OracleConnection($connection, $config['database'], $config['prefix'], $config);
                 });
             }
         }

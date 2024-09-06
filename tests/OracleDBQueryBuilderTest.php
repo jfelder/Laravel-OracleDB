@@ -17,6 +17,7 @@ use Illuminate\Pagination\Cursor;
 use Illuminate\Pagination\CursorPaginator;
 use Illuminate\Pagination\LengthAwarePaginator;
 use InvalidArgumentException;
+use Jfelder\OracleDB\OracleConnection;
 use Jfelder\OracleDB\Query\Grammars\OracleGrammar;
 use Jfelder\OracleDB\Query\OracleBuilder as OracleQueryBuilder;
 use Jfelder\OracleDB\Query\Processors\OracleProcessor;
@@ -3604,20 +3605,23 @@ class OracleDBQueryBuilderTest extends TestCase
         return $connection;
     }
 
-    protected function getOracleBuilder($quote = true)
+    protected function getOracleBuilder($quoting = true)
     {
-        global $ConfigReturnValue;
-        $ConfigReturnValue = $quote;
-
+        $connection = m::mock(OracleConnection::class);
+        $connection->shouldReceive('getConfig')->with('quoting')->andReturn($quoting);
         $grammar = new OracleGrammar;
+        $grammar->setConnection($connection);
         $processor = m::mock(OracleProcessor::class);
 
         return new OracleQueryBuilder($this->getConnection(), $grammar, $processor);
     }
 
-    protected function getOracleBuilderWithProcessor()
+    protected function getOracleBuilderWithProcessor($quoting = true)
     {
+        $connection = m::mock(OracleConnection::class);
+        $connection->shouldReceive('getConfig')->with('quoting')->andReturn($quoting);
         $grammar = new OracleGrammar;
+        $grammar->setConnection($connection);
         $processor = new OracleProcessor;
 
         return new OracleQueryBuilder($this->getConnection(), $grammar, $processor);
