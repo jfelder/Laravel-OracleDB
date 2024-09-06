@@ -37,15 +37,10 @@ php artisan vendor:publish --tag=oracledb-config
 To finish the installation, set your environment variables (typically in your .env file) to the corresponding
 env variables used in `config/oracledb.php`: such as `DB_HOST`, `DB_USERNAME`, etc.  
 
-Additionally, it may be necessary for your app to configure the NLS_DATE_FORMAT of the database connection session, 
-before any queries are executed. One way to accomplish this is to run a statement in your `AppServiceProvider`'s `boot` 
-method, for example:
-
-```php
-if (config('database.default') === 'oracle') {
-	DB::statement("ALTER SESSION SET NLS_DATE_FORMAT='YYYY-MM-DD HH24:MI:SS'");
-}
-```
+**Double Check Your Date Format Config**
+The `date_format` config powers all date column casting to/from Carbon and defaults to `Y-m-d H:i:s`, so it is imperative 
+to set the DB_DATE_FORMAT env var if your db stringifies dates a different way, ie `d-M-y H:i:s`. This affects all 
+read/write operations of any Eloquent model with date fields and any Query Builder queries that utilize a Carbon instance.
 
 ### Basic Usage
 The configuration file for this package is located at `config/oracledb.php`.
