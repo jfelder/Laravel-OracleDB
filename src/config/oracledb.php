@@ -9,7 +9,7 @@ return [
         'database' => env('DB_DATABASE', ''),
         'username' => env('DB_USERNAME', ''),
         'password' => env('DB_PASSWORD', ''),
-        'charset' => 'WE8ISO8859P1',
+        'charset' => env('DB_CHARSET', 'WE8ISO8859P1'),
         'prefix' => '',
         'quoting' => false,
         'date_format' => env('DB_DATE_FORMAT', 'Y-m-d H:i:s'),
