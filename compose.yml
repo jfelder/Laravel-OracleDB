@@ -1,0 +1,24 @@
+services:
+  oracle-db:
+    image: gvenzl/oracle-free:23-slim-faststart
+    container_name: oracle-db
+    ports:
+      - "1521:1521"
+    environment:
+      ORACLE_PASSWORD: your_strong_password_here
+    shm_size: '2gb'
+    healthcheck:
+      test: ["CMD", "healthcheck.sh"]
+      interval: 30s
+      timeout: 10s
+      retries: 20
+
+  php:
+    build: .
+    container_name: php-cli
+    working_dir: /app
+    volumes:
+      - .:/app
+    depends_on:
+      oracle-db:
+        condition: service_healthy
