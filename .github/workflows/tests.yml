@@ -1,58 +1,47 @@
-name: tests
+name: Tests
 
 on:
   push:
-    branches:
-      - master
-      - '*.x'
+    branches: [ main ]
   pull_request:
-  schedule:
-    - cron: '0 0 * * *'
-
-permissions:
-  contents: read
+    branches: [ main ]
 
 jobs:
-  tests:
+  test:
     runs-on: ubuntu-latest
-    services:
-      oracle:
-        image: deepdiver/docker-oracle-xe-11g:2.0
-        ports:
-          - 49160:22
-          - 1521:1521
-
     strategy:
-      fail-fast: true
       matrix:
-        php: [8.2, 8.3]
+        php: ['8.2', '8.3', '8.4', '8.5']
         stability: [prefer-lowest, prefer-stable]
+      fail-fast: false
 
     name: PHP ${{ matrix.php }} - ${{ matrix.stability }}
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
-          extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, sqlite, pdo_sqlite
-          ini-values: error_reporting=E_ALL
-          tools: composer:v2, pecl
-          coverage: none
+          extensions: oci8
+          tools: composer, pest
 
-      - name: Setup OCI8 for PHP 8.2
-        run: ./scripts/oci82.sh
-        if: matrix.php == 8.2
+      - name: Cache Composer packages
+        id: composer-cache
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: composer-${{ runner.os }}-${{ matrix.php }}-${{ hashFiles('composer.lock') }}
+          restore-keys: |
+            composer-${{ runner.os }}-${{ matrix.php }}-
 
-      - name: Setup OCI8 for PHP 8.3
-        run: ./scripts/oci83.sh
-        if: matrix.php == 8.3
+      - name: Setup OCI8 (Instant Client + Cache)
+        uses: ./.github/actions/setup-oci8
 
-      - name: Install Composer dependencies
-        run: composer install --prefer-dist --no-interaction --no-progress
+      - name: Install dependencies
+        if: steps.composer-cache.outputs.cache-hit != 'true'
+        run: composer install --prefer-dist --no-progress --no-interaction
 
-      - name: Execute tests
-        run: vendor/bin/phpunit --display-deprecation
+      - name: Run tests
+        run: vendor/bin/pest --order-by=random
