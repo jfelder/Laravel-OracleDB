@@ -1,0 +1,66 @@
+name: Nightly Coverage
+
+on:
+  schedule:
+    - cron: '0 3 * * *'  # Daily at 3 AM UTC
+  workflow_dispatch:
+
+jobs:
+  coverage:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        php: ['8.2', '8.3', '8.4', '8.5']
+        stability: [prefer-lowest, prefer-stable]
+      fail-fast: false
+
+    name: PHP ${{ matrix.php }} - ${{ matrix.stability }} - Coverage
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: pcov, oci8
+          coverage: pcov
+          tools: composer, pest
+
+      - name: Cache Composer packages
+        id: composer-cache
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: composer-${{ runner.os }}-${{ matrix.php }}-${{ hashFiles('composer.lock') }}
+          restore-keys: |
+            composer-${{ runner.os }}-${{ matrix.php }}-
+
+      - name: Setup OCI8 (Instant Client + Cache)
+        uses: ./.github/actions/setup-oci8
+
+      - name: Install dependencies
+        if: steps.composer-cache.outputs.cache-hit != 'true'
+        run: composer install --prefer-dist --no-progress --no-interaction
+
+      - name: Run tests with coverage
+        run: |
+          vendor/bin/pest \
+            --coverage-html coverage-report-php${{ matrix.php }} \
+            --coverage-clover clover-php${{ matrix.php }}.xml
+
+      # - name: Upload coverage to Codecov
+      #   uses: codecov/codecov-action@v4
+      #   with:
+      #     token: ${{ secrets.CODECOV_TOKEN }}
+      #     files: clover-php${{ matrix.php }}.xml
+      #     name: php${{ matrix.php }}
+      #     fail_ci_if_error: false
+
+      - name: Upload coverage artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-php${{ matrix.php }}
+          path: |
+            coverage-report-php${{ matrix.php }}/
+            clover-php${{ matrix.php }}.xml

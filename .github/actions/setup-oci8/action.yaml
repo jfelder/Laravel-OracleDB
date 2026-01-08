@@ -1,0 +1,37 @@
+name: "Setup OCI8"
+description: "Installs Oracle Instant Client and enables OCI8 extension (with caching)"
+
+inputs:
+  version:
+    description: 'Instant Client version (e.g., 23.26.0.0.0)'
+    default: '23.26.0.0.0'
+  dir:
+    description: 'Oracle directory number (e.g., 2326000)'
+    default: '2326000'
+
+runs:
+  using: "composite"
+  steps:
+    - name: Cache Oracle Instant Client
+      id: cache-oci8
+      uses: actions/cache@v4
+      with:
+        path: /opt/oracle
+        key: oci8-instantclient-${{ inputs.version }}-${{ runner.os }}
+
+    - name: Make script executable
+      if: steps.cache-oci8.outputs.cache-hit != 'true'
+      run: chmod +x ${{ github.action_path }}/setup-oci8.sh
+      shell: bash
+
+    - name: Install Oracle Instant Client (if cache miss)
+      if: steps.cache-oci8.outputs.cache-hit != 'true'
+      env:
+        INSTANT_CLIENT_VERSION: ${{ inputs.version }}
+        INSTANT_CLIENT_DIR: ${{ inputs.dir }}
+      run: ${{ github.action_path }}/setup-oci8.sh
+      shell: bash
+
+    - name: Run ldconfig (always)
+      run: sudo ldconfig
+      shell: bash
