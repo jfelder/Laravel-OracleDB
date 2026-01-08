@@ -1,4 +1,11 @@
 services:
+  php:
+    build: .
+    container_name: php-cli
+    working_dir: /app
+    volumes:
+      - .:/app
+
   oracle-db:
     image: gvenzl/oracle-free:23-slim-faststart
     container_name: oracle-db
@@ -12,13 +19,5 @@ services:
       interval: 30s
       timeout: 10s
       retries: 20
-
-  php:
-    build: .
-    container_name: php-cli
-    working_dir: /app
-    volumes:
-      - .:/app
-    depends_on:
-      oracle-db:
-        condition: service_healthy
+    profiles:
+      - with-db      # Only runs when requested

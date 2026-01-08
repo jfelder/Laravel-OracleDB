@@ -1,6 +1,6 @@
 FROM php:8.3-fpm
 
-# Install dependencies
+# Install runtime + build dependencies
 RUN apt-get update && apt-get install -y \
     libaio1t64 \
     wget \
@@ -13,9 +13,10 @@ RUN apt-get update && apt-get install -y \
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Oracle Instant Client 23.26.0.0.0 (latest as of Jan 2026, ARM64 native)
+# Oracle Instant Client 23.26.0.0.0 (ARM64)
 ENV INSTANT_CLIENT_VERSION=23.26.0.0.0
 ENV INSTANT_CLIENT_DIR=2326000
+
 RUN mkdir -p /opt/oracle \
     && cd /opt/oracle \
     && wget -q https://download.oracle.com/otn_software/linux/instantclient/${INSTANT_CLIENT_DIR}/instantclient-basic-linux.arm64-${INSTANT_CLIENT_VERSION}.zip \
@@ -25,16 +26,15 @@ RUN mkdir -p /opt/oracle \
     && rm *.zip \
     && mv instantclient_* instantclient \
     && echo '/opt/oracle/instantclient' > /etc/ld.so.conf.d/oracle-instantclient.conf \
-    && ln -s /usr/lib/aarch64-linux-gnu/libaio.so.1t64 /usr/lib/aarch64-linux-gnu/libaio.so.1 \
+    && ln -sf /usr/lib/aarch64-linux-gnu/libaio.so.1t64 /usr/lib/aarch64-linux-gnu/libaio.so.1 \
     && ldconfig
 
 # Install OCI8 extension
 RUN docker-php-ext-configure oci8 --with-oci8=instantclient,/opt/oracle/instantclient \
     && docker-php-ext-install oci8
 
-# Install PCOV (for code coverage)
-RUN pecl install pcov \
-    && docker-php-ext-enable pcov
+# Install PCOV for coverage
+RUN pecl install pcov && docker-php-ext-enable pcov
 
-# Set working directory
+# Working directory
 WORKDIR /app
