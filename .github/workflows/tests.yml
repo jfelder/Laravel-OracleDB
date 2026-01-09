@@ -36,9 +36,6 @@ jobs:
           restore-keys: |
             composer-${{ runner.os }}-${{ matrix.php }}-
 
-      # - name: Setup OCI8 (Instant Client + Cache)
-      #   uses: ./.github/actions/setup-oci8
-
       - name: Install dependencies
         if: steps.composer-cache.outputs.cache-hit != 'true'
         run: composer install --prefer-dist --no-progress --no-interaction

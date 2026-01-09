@@ -6,8 +6,8 @@
 ![Latest Version](https://img.shields.io/packagist/v/jfelder/oracledb.svg?style=flat-square)
 ![Total Downloads](https://img.shields.io/packagist/dt/jfelder/oracledb.svg?style=flat-square)
 ![License](https://img.shields.io/packagist/l/jfelder/oracledb.svg?style=flat-square)
-![Tests](https://github.com/jfelder/oracledb/actions/workflows/tests.yml/badge.svg)
-![Coverage](https://github.com/jfelder/oracledb/actions/workflows/coverage.yml/badge.svg)
+![Tests](https://github.com/jfelder/Laravel-OracleDB/actions/workflows/tests.yml/badge.svg)
+![Coverage](https://github.com/jfelder/Laravel-OracleDB/actions/workflows/coverage.yml/badge.svg)
 ![Codecov](https://codecov.io/gh/jfelder/oracledb/graph/badge.svg)
 
 
