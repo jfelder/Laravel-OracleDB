@@ -8,8 +8,7 @@
 ![License](https://img.shields.io/packagist/l/jfelder/oracledb.svg?style=flat-square)
 ![Tests](https://github.com/jfelder/Laravel-OracleDB/actions/workflows/tests.yml/badge.svg)
 ![Coverage](https://github.com/jfelder/Laravel-OracleDB/actions/workflows/coverage.yml/badge.svg)
-![Codecov](https://codecov.io/gh/jfelder/oracledb/graph/badge.svg)
-
+![Codecov](https://codecov.io/github/jfelder/Laravel-OracleDB/graph/badge.svg?token=wRWuboe79d)
 
 OracleDB is an Oracle Database Driver package for [Laravel Framework](https://laravel.com) - thanks [@taylorotwell](https://github.com/taylorotwell). OracleDB is an extension of [Illuminate/Database](https://github.com/illuminate/database) that uses the [OCI8 Functions](https://www.php.net/manual/en/ref.oci8.php) wrapped into the PDO namespace.
 
