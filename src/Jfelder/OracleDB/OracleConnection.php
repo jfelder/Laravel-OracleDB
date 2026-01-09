@@ -10,6 +10,7 @@ use Jfelder\OracleDB\Query\Processors\OracleProcessor;
 use Jfelder\OracleDB\Schema\Grammars\OracleGrammar as SchemaGrammar;
 use Jfelder\OracleDB\Schema\OracleBuilder as OracleSchemaBuilder;
 use PDO;
+use RuntimeException;
 
 class OracleConnection extends Connection
 {
@@ -62,7 +63,7 @@ class OracleConnection extends Connection
      */
     protected function getDefaultQueryGrammar()
     {
-        ($grammar = new QueryGrammar)->setConnection($this);
+        $grammar = new QueryGrammar($this);
 
         return $this->withTablePrefix($grammar);
     }
@@ -74,7 +75,7 @@ class OracleConnection extends Connection
      */
     protected function getDefaultSchemaGrammar()
     {
-        ($grammar = new SchemaGrammar)->setConnection($this);
+        $grammar = new SchemaGrammar($this);
 
         return $this->withTablePrefix($grammar);
     }

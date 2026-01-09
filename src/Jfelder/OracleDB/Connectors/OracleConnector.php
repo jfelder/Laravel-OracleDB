@@ -2,10 +2,10 @@
 
 namespace Jfelder\OracleDB\Connectors;
 
-use Illuminate\Database\Connectors\Connector as Connector;
-use Illuminate\Database\Connectors\ConnectorInterface as ConnectorInterface;
+use Illuminate\Database\Connectors\Connector;
+use Illuminate\Database\Connectors\ConnectorInterface;
 use InvalidArgumentException;
-use Jfelder\OracleDB\OCI_PDO\OCI as OCI;
+use Jfelder\OracleDB\OCI_PDO\OCI;
 use PDO;
 
 class OracleConnector extends Connector implements ConnectorInterface

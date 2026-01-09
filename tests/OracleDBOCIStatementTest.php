@@ -90,12 +90,12 @@ class OracleDBOCIStatementTest extends TestCase
         }
     }
 
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         m::close();
     }
 
-    public function testConstructor()
+    public function test_constructor()
     {
         $oci = new TestOCIStub;
         $ocistmt = new OCIStatement('oci8 statement', $oci);
@@ -108,18 +108,18 @@ class OracleDBOCIStatementTest extends TestCase
         $property->setAccessible(true);
         $this->assertEquals('oci8 statement', $property->getValue($ocistmt));
 
-        //conn property
+        // conn property
         $property = $reflection->getProperty('conn');
         $property->setAccessible(true);
         $this->assertEquals($oci, $property->getValue($ocistmt));
 
-        //attributes property
+        // attributes property
         $property = $reflection->getProperty('attributes');
         $property->setAccessible(true);
         $this->assertEquals([], $property->getValue($ocistmt));
     }
 
-    public function testConstructorWithoutValidStatementPassignIn()
+    public function test_constructor_without_valid_statement_passign_in()
     {
         global $OCIStatementStatus;
         $OCIStatementStatus = false;
@@ -127,7 +127,7 @@ class OracleDBOCIStatementTest extends TestCase
         $ocistmt = new OCIStatement('oci8 statement', new TestOCIStub);
     }
 
-    public function testDestructor()
+    public function test_destructor()
     {
         global $OCIStatementStatus;
         $ocistmt = new OCIStatement('oci8 statement', new TestOCIStub);
@@ -135,7 +135,7 @@ class OracleDBOCIStatementTest extends TestCase
         $this->assertFalse($OCIStatementStatus);
     }
 
-    public function testBindColumnWithColumnName()
+    public function test_bind_column_with_column_name()
     {
         $stmt = new TestOCIStatementStub('oci8 statement', $this->oci, 'sql', []);
         $holder = '';
@@ -143,7 +143,7 @@ class OracleDBOCIStatementTest extends TestCase
         $stmt->bindColumn('holder', $holder, PDO::PARAM_STR);
     }
 
-    public function testBindColumnWithColumnNumberLessThanOne()
+    public function test_bind_column_with_column_number_less_than_one()
     {
         $stmt = new TestOCIStatementStub('oci8 statement', $this->oci, 'sql', []);
         $holder = '';
@@ -151,7 +151,7 @@ class OracleDBOCIStatementTest extends TestCase
         $stmt->bindColumn(0, $holder, PDO::PARAM_STR);
     }
 
-    public function testBindColumnWithInvalidDataType()
+    public function test_bind_column_with_invalid_data_type()
     {
         $stmt = new TestOCIStatementStub('oci8 statement', $this->oci, 'sql', []);
         $holder = '';
@@ -160,7 +160,7 @@ class OracleDBOCIStatementTest extends TestCase
         $stmt->bindColumn(1, $holder, $nonExistantDataType);
     }
 
-    public function testBindColumnSuccess()
+    public function test_bind_column_success()
     {
         $stmt = new TestOCIStatementStub('oci8 statement', $this->oci, 'sql', []);
         $holder = '';
@@ -174,7 +174,7 @@ class OracleDBOCIStatementTest extends TestCase
         $this->assertEquals([1 => ['var' => $holder, 'data_type' => PDO::PARAM_STR, 'max_length' => 40, 'driverdata' => null]], $property->getValue($stmt));
     }
 
-    public function testBindParamWithValidDataType()
+    public function test_bind_param_with_valid_data_type()
     {
         global $OCIBindChangeStatus;
         $OCIBindChangeStatus = true;
@@ -185,7 +185,7 @@ class OracleDBOCIStatementTest extends TestCase
         $this->assertEquals('oci_bind_by_name', $variable);
     }
 
-    public function testBindParamWithInvalidDataType()
+    public function test_bind_param_with_invalid_data_type()
     {
         $variable = '';
         $nonExistantDataType = 12345;
@@ -195,7 +195,7 @@ class OracleDBOCIStatementTest extends TestCase
         $stmt->bindParam('param', $variable, $nonExistantDataType);
     }
 
-    public function testBindParamWithReturnDataType()
+    public function test_bind_param_with_return_data_type()
     {
         global $OCIBindChangeStatus;
         $OCIBindChangeStatus = true;
@@ -206,36 +206,36 @@ class OracleDBOCIStatementTest extends TestCase
         $this->assertEquals('oci_bind_by_name', $variable);
     }
 
-    public function testBindValueWithValidDataType()
+    public function test_bind_value_with_valid_data_type()
     {
         $this->assertTrue($this->stmt->bindValue('param', 'hello'));
     }
 
-    public function testBindValueWithNullDataType()
+    public function test_bind_value_with_null_data_type()
     {
         global $OCIBindByNameTypeReceived;
         $this->assertTrue($this->stmt->bindValue('param', null, PDO::PARAM_NULL));
         $this->assertSame(\SQLT_CHR, $OCIBindByNameTypeReceived);
     }
 
-    public function testBindValueWithInvalidDataType()
+    public function test_bind_value_with_invalid_data_type()
     {
         $this->expectException(InvalidArgumentException::class);
         $this->stmt->bindValue(0, 'hello', 8);
     }
 
     // todo update this test once this method has been implemented
-    public function testCloseCursor()
+    public function test_close_cursor()
     {
         $this->assertTrue($this->stmt->closeCursor());
     }
 
-    public function testColumnCount()
+    public function test_column_count()
     {
         $this->assertEquals(1, $this->stmt->columnCount());
     }
 
-    public function testDebugDumpParamsWhenNothingHasBeenSet()
+    public function test_debug_dump_params_when_nothing_has_been_set()
     {
         $expectedOutput = print_r(['sql' => '', 'params' => []], true);
 
@@ -244,7 +244,7 @@ class OracleDBOCIStatementTest extends TestCase
         $this->assertTrue($this->stmt->debugDumpParams());
     }
 
-    public function testDebugDumpParamsWhenThingsHaveBeenSet()
+    public function test_debug_dump_params_when_things_have_been_set()
     {
         global $OCIBindChangeStatus;
         $OCIBindChangeStatus = false;
@@ -283,7 +283,7 @@ class OracleDBOCIStatementTest extends TestCase
         $this->assertTrue($stmt->debugDumpParams());
     }
 
-    public function testErrorCode()
+    public function test_error_code()
     {
         $ocistmt = new TestOCIStatementStub(true, '', '', []);
         $this->assertNull($ocistmt->errorCode());
@@ -299,7 +299,7 @@ class OracleDBOCIStatementTest extends TestCase
         $this->assertEquals('11111', $ocistmt->errorCode());
     }
 
-    public function testErrorInfo()
+    public function test_error_info()
     {
         $ocistmt = new TestOCIStatementStub(true, '', '', []);
         $this->assertEquals([0 => '', 1 => null, 2 => null], $ocistmt->errorInfo());
@@ -315,17 +315,17 @@ class OracleDBOCIStatementTest extends TestCase
         $this->assertEquals([0 => '11111', 1 => '2222', 2 => 'Testing the errors'], $ocistmt->errorInfo());
     }
 
-    public function testExecutePassesWithParameters()
+    public function test_execute_passes_with_parameters()
     {
         $this->assertTrue($this->stmt->execute([0 => 1]));
     }
 
-    public function testExecutePassesWithoutParameters()
+    public function test_execute_passes_without_parameters()
     {
         $this->assertTrue($this->stmt->execute());
     }
 
-    public function testExecuteFailesWithParameters()
+    public function test_execute_failes_with_parameters()
     {
         global $OCIExecuteStatus;
         $OCIExecuteStatus = false;
@@ -333,7 +333,7 @@ class OracleDBOCIStatementTest extends TestCase
         $this->assertEquals('07000', $this->stmt->errorCode());
     }
 
-    public function testExecuteFailesWithoutParameters()
+    public function test_execute_failes_without_parameters()
     {
         global $OCIExecuteStatus;
         $OCIExecuteStatus = false;
@@ -341,7 +341,7 @@ class OracleDBOCIStatementTest extends TestCase
         $this->assertEquals('07000', $this->stmt->errorCode());
     }
 
-    public function testFetchWithBindColumn()
+    public function test_fetch_with_bind_column()
     {
         $this->oci->setAttribute(PDO::ATTR_CASE, PDO::CASE_LOWER);
         $stmt = new TestOCIStatementStub('oci8 statement', $this->oci, 'sql', []);
@@ -362,7 +362,7 @@ class OracleDBOCIStatementTest extends TestCase
         $this->assertEquals($obj->fname, $holder);
     }
 
-    public function testFetchSuccessReturnArray()
+    public function test_fetch_success_return_array()
     {
         // return lower case
         $this->oci->setAttribute(PDO::ATTR_CASE, PDO::CASE_LOWER);
@@ -382,7 +382,7 @@ class OracleDBOCIStatementTest extends TestCase
         $this->assertEquals($this->resultNumArray, $this->stmt->fetch(PDO::FETCH_NUM));
     }
 
-    public function testFetchSuccessReturnObject()
+    public function test_fetch_success_return_object()
     {
         // return lower cased keyed object
         $this->oci->setAttribute(PDO::ATTR_CASE, PDO::CASE_LOWER);
@@ -397,7 +397,7 @@ class OracleDBOCIStatementTest extends TestCase
         $this->assertEquals($this->resultUpperObject, $this->stmt->fetch(PDO::FETCH_CLASS));
     }
 
-    public function testFetchFail()
+    public function test_fetch_fail()
     {
         global $OCIFetchStatus;
         $OCIFetchStatus = false;
@@ -405,7 +405,7 @@ class OracleDBOCIStatementTest extends TestCase
         $this->assertEquals('07000', $this->stmt->errorCode());
     }
 
-    public function testFetchAllWithNoArg()
+    public function test_fetch_all_with_no_arg()
     {
         // return lower cased keyed object
         $this->oci->setAttribute(PDO::ATTR_CASE, PDO::CASE_LOWER);
@@ -420,7 +420,7 @@ class OracleDBOCIStatementTest extends TestCase
         $this->assertEquals($this->resultAllUpperObject, $this->stmt->fetchAll());
     }
 
-    public function testFetchAllReturnArray()
+    public function test_fetch_all_return_array()
     {
         // return lower case
         $this->oci->setAttribute(PDO::ATTR_CASE, PDO::CASE_LOWER);
@@ -435,7 +435,7 @@ class OracleDBOCIStatementTest extends TestCase
         $this->assertEquals($this->resultAllUpperArray, $this->stmt->fetchAll(PDO::FETCH_ASSOC));
     }
 
-    public function testFetchAllReturnObject()
+    public function test_fetch_all_return_object()
     {
         // return lower cased keyed object
         $this->oci->setAttribute(PDO::ATTR_CASE, PDO::CASE_LOWER);
@@ -450,14 +450,14 @@ class OracleDBOCIStatementTest extends TestCase
         $this->assertEquals($this->resultAllUpperObject, $this->stmt->fetchAll(PDO::FETCH_CLASS));
     }
 
-    public function testFetchAllWhenEmptyResultSet()
+    public function test_fetch_all_when_empty_result_set()
     {
         global $OCIFetchAllReturnEmpty;
         $OCIFetchAllReturnEmpty = true;
         $this->assertSame([], $this->stmt->fetchAll());
     }
 
-    public function testFetchAllFailWithInvalidFetchStyle()
+    public function test_fetch_all_fail_with_invalid_fetch_style()
     {
         $invalidMode = PDO::FETCH_BOTH;
         $this->expectException(InvalidArgumentException::class);
@@ -465,17 +465,17 @@ class OracleDBOCIStatementTest extends TestCase
         $this->stmt->fetchAll($invalidMode);
     }
 
-    public function testFetchColumnWithNoArg()
+    public function test_fetch_column_with_no_arg()
     {
         $this->assertEquals($this->resultNumArray[0], $this->stmt->fetchColumn());
     }
 
-    public function testFetchColumnWithColumnNumber()
+    public function test_fetch_column_with_column_number()
     {
         $this->assertEquals($this->resultNumArray[1], $this->stmt->fetchColumn(1));
     }
 
-    public function testFetchObject()
+    public function test_fetch_object()
     {
         // return lower cased keyed object
         $this->oci->setAttribute(PDO::ATTR_CASE, PDO::CASE_LOWER);
@@ -490,17 +490,17 @@ class OracleDBOCIStatementTest extends TestCase
         $this->assertEquals($this->resultUpperObject, $this->stmt->fetchObject());
     }
 
-    public function testGetAttributeForValidAttribute()
+    public function test_get_attribute_for_valid_attribute()
     {
         $this->assertEquals('attributeValue', $this->stmt->getAttribute(4321));
     }
 
-    public function testGetAttributeForInvalidAttribute()
+    public function test_get_attribute_for_invalid_attribute()
     {
         $this->assertEquals(null, $this->stmt->getAttribute(12345));
     }
 
-    public function testGetColumnMeta()
+    public function test_get_column_meta()
     {
         $expected = ['native_type' => 1, 'driver:decl_type' => 1,
             'name' => 1, 'len' => 1, 'precision' => 1, ];
@@ -509,17 +509,17 @@ class OracleDBOCIStatementTest extends TestCase
         $this->assertEquals($expected, $result);
     }
 
-    public function testNextRowset()
+    public function test_next_rowset()
     {
         $this->assertTrue($this->stmt->nextRowset());
     }
 
-    public function testRowCount()
+    public function test_row_count()
     {
         $this->assertEquals(1, $this->stmt->rowCount());
     }
 
-    public function testSetAttribute()
+    public function test_set_attribute()
     {
         $attr = PDO::ATTR_DEFAULT_FETCH_MODE;
         $value = PDO::FETCH_CLASS;
@@ -528,12 +528,12 @@ class OracleDBOCIStatementTest extends TestCase
         $this->assertEquals($value, $this->stmt->getAttribute($attr));
     }
 
-    public function testSetFetchMode()
+    public function test_set_fetch_mode()
     {
         $this->assertTrue($this->stmt->setFetchMode(PDO::FETCH_CLASS));
     }
 
-    public function testGetOCIResource()
+    public function test_get_oci_resource()
     {
         $this->assertEquals('oci8 statement', $this->stmt->getOCIResource());
     }

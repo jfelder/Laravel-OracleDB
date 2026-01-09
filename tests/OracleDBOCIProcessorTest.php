@@ -19,12 +19,12 @@ class OracleDBOCIProcessorTest extends TestCase
         }
     }
 
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         m::close();
     }
 
-    public function testInsertGetIdProcessing()
+    public function test_insert_get_id_processing()
     {
         $connection = m::mock(OracleConnection::class);
         $connection->shouldReceive('oracleInsertGetId')->once()->with('sql', [1, 'foo', true, null])->andReturn(1234);

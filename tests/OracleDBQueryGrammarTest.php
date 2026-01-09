@@ -15,12 +15,11 @@ class OracleDBQueryGrammarTest extends TestCase
         m::close();
     }
 
-    public function testToRawSql()
+    public function test_to_raw_sql()
     {
         $connection = m::mock(OracleConnection::class);
         $connection->shouldReceive('escape')->with('foo', false)->andReturn("'foo'");
-        $grammar = new OracleGrammar;
-        $grammar->setConnection($connection);
+        $grammar = new OracleGrammar($connection);
 
         $query = $grammar->substituteBindingsIntoRawSql(
             'select * from "users" where \'Hello\\\'World?\' IS NOT NULL AND "email" = ?',
@@ -32,12 +31,11 @@ class OracleDBQueryGrammarTest extends TestCase
 
     #[TestWith([null, 'Y-m-d H:i:s'])]
     #[TestWith(['d-M-y H:i:s', 'd-M-y H:i:s'])]
-    public function testGetDateFormat($valFetchedFromConfig, $expectedResult)
+    public function test_get_date_format($valFetchedFromConfig, $expectedResult)
     {
         $connection = m::mock(OracleConnection::class);
         $connection->shouldReceive('getConfig')->with('date_format')->andReturn($valFetchedFromConfig);
-        $grammar = new OracleGrammar;
-        $grammar->setConnection($connection);
+        $grammar = new OracleGrammar($connection);
 
         $this->assertSame($expectedResult, $grammar->getDateFormat());
     }

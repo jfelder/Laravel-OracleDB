@@ -96,7 +96,7 @@ class OCIStatement extends PDOStatement
             oci_free_statement($this->stmt);
         }
 
-        //Also test for descriptors
+        // Also test for descriptors
     }
 
     /**

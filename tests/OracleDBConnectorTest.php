@@ -9,13 +9,13 @@ use PHPUnit\Framework\TestCase;
 
 class OracleDBConnectorTest extends TestCase
 {
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         m::close();
     }
 
     #[DataProvider('oracleConnectProvider')]
-    public function testOracleConnectCallsCreateConnectionWithProperArguments($dsn, $config)
+    public function test_oracle_connect_calls_create_connection_with_proper_arguments($dsn, $config)
     {
         $connector = $this->getMockBuilder(OracleConnector::class)->onlyMethods(['createConnection', 'getOptions'])->getMock();
         $connection = m::mock(\stdClass::class);
@@ -48,7 +48,7 @@ class OracleDBConnectorTest extends TestCase
         ];
     }
 
-    public function testOracleConnectWithInvalidDriver()
+    public function test_oracle_connect_with_invalid_driver()
     {
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('Unsupported driver [garbage].');

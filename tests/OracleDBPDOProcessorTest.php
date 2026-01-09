@@ -13,12 +13,12 @@ include 'mocks/PDOMocks.php';
 
 class OracleDBPDOProcessorTest extends TestCase
 {
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         m::close();
     }
 
-    public function testInsertGetIdProcessing()
+    public function test_insert_get_id_processing()
     {
         $pdo = $this->getMockBuilder(ProcessorTestPDOStub::class)->getMock();
         $pdo->expects($this->once())->method('lastInsertId')->with($this->equalTo('id'))->willReturn('1');

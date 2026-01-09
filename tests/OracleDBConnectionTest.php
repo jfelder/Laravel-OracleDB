@@ -23,7 +23,7 @@ class OracleDBConnectionTest extends TestCase
         m::close();
     }
 
-    public function testOracleInsertGetIdProperlyCallsPDO()
+    public function test_oracle_insert_get_id_properly_calls_pdo()
     {
         $pdo = $this->getMockBuilder(OracleDBConnectionTestMockPDO::class)->onlyMethods(['prepare'])->getMock();
         $statement = $this->getMockBuilder(OracleDBConnectionTestMockOCIStatement::class)->onlyMethods(['execute', 'bindValue', 'bindParam'])->getMock();

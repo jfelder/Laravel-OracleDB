@@ -1,0 +1,36 @@
+name: Lint with Laravel Pint
+
+on:
+  push:
+    branches: [ main, '*.x' ]
+  pull_request:
+    branches: [ main, '*.x' ]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Needed for git diff if using --diff
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'  # Or use matrix if you want multi-version linting
+          tools: composer
+
+      - name: Cache Composer packages
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: composer-lint-${{ runner.os }}-${{ hashFiles('composer.lock') }}
+          restore-keys: composer-lint-${{ runner.os }}-
+
+      - name: Install dependencies
+        run: composer install --prefer-dist --no-progress --no-interaction
+
+      - name: Run Laravel Pint (enforce style)
+        run: ./vendor/bin/pint --test --verbose --dirty

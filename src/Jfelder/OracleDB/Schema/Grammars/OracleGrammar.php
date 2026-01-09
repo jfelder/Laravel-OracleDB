@@ -2,9 +2,9 @@
 
 namespace Jfelder\OracleDB\Schema\Grammars;
 
-use Illuminate\Database\Connection;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Fluent;
+use LogicException;
 
 class OracleGrammar extends \Illuminate\Database\Schema\Grammars\Grammar
 {
@@ -30,13 +30,41 @@ class OracleGrammar extends \Illuminate\Database\Schema\Grammars\Grammar
     protected $serials = ['bigInteger', 'integer', 'mediumInteger', 'smallInteger', 'tinyInteger'];
 
     /**
-     * Compile the query to determine the list of tables.
+     * Compile a create database command.
      *
+     * @param  string  $name
      * @return string
      */
-    public function compileTableExists()
+    public function compileCreateDatabase($name)
     {
-        return 'select * from user_tables where table_name = upper(?)';
+        throw new LogicException('This database driver does not support creating databases.');
+    }
+
+    /**
+     * Compile a drop database if exists command.
+     *
+     * @param  string  $name
+     * @return string
+     */
+    public function compileDropDatabaseIfExists($name)
+    {
+        throw new LogicException('This database driver does not support dropping databases.');
+    }
+
+    /**
+     * Compile the query to determine if the given table exists.
+     *
+     * @param  string|null  $schema
+     * @param  string  $table
+     * @return string|null
+     */
+    public function compileTableExists($schema, $table)
+    {
+        return sprintf(
+            'select count(*) from all_tables where upper(owner) = upper(%s) and upper(table_name) = upper(%s)',
+            $this->quoteString($schema),
+            $this->quoteString($table)
+        );
     }
 
     /**
@@ -107,8 +135,6 @@ class OracleGrammar extends \Illuminate\Database\Schema\Grammars\Grammar
     /**
      * Compile a create table command.
      *
-     * @param  Illuminate\Database\Schema\Blueprint  $blueprint
-     * @param  Illuminate\Support\Fluent  $command
      * @return string
      */
     public function compileCreate(Blueprint $blueprint, Fluent $command)
@@ -132,8 +158,6 @@ class OracleGrammar extends \Illuminate\Database\Schema\Grammars\Grammar
     /**
      * Compile a column addition table command.
      *
-     * @param  Illuminate\Database\Schema\Blueprint  $blueprint
-     * @param  Illuminate\Support\Fluent  $command
      * @return string
      */
     public function compileAdd(Blueprint $blueprint, Fluent $command)
@@ -154,8 +178,6 @@ class OracleGrammar extends \Illuminate\Database\Schema\Grammars\Grammar
     /**
      * Compile a primary key command.
      *
-     * @param  Illuminate\Database\Schema\Blueprint  $blueprint
-     * @param  Illuminate\Support\Fluent  $command
      * @return string
      */
     public function compilePrimary(Blueprint $blueprint, Fluent $command)
@@ -342,15 +364,15 @@ class OracleGrammar extends \Illuminate\Database\Schema\Grammars\Grammar
     /**
      * Compile a rename column command.
      *
-     * @return array
+     * @return list<string>|string
      */
-    public function compileRenameColumn(Blueprint $blueprint, Fluent $command, Connection $connection)
+    public function compileRenameColumn(Blueprint $blueprint, Fluent $command)
     {
-        $table = $this->wrapTable($blueprint);
-
-        $rs = ['alter table '.$table.' rename column '.$command->from.' to '.$command->to];
-
-        return $rs;
+        return sprintf('alter table %s rename column %s to %s',
+            $this->wrapTable($blueprint),
+            $this->wrap($command->from),
+            $this->wrap($command->to)
+        );
     }
 
     /**

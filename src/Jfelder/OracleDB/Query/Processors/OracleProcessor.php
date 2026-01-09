@@ -3,7 +3,7 @@
 namespace Jfelder\OracleDB\Query\Processors;
 
 use Illuminate\Database\Query\Builder;
-use Illuminate\Database\Query\Processors\Processor as Processor;
+use Illuminate\Database\Query\Processors\Processor;
 
 class OracleProcessor extends Processor
 {
