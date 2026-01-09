@@ -2,9 +2,9 @@ name: Lint with Laravel Pint
 
 on:
   push:
-    branches: [ main, '*.x' ]
+    branches: [ master, '*.x' ]
   pull_request:
-    branches: [ main, '*.x' ]
+    branches: [ master, '*.x' ]
 
 jobs:
   lint:

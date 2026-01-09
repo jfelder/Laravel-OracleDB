@@ -45,7 +45,7 @@ jobs:
 
       - name: Run tests with coverage
         run: |
-          vendor/bin/pest \
+          vendor/bin/phpunit \
             --coverage-html coverage-report-php${{ matrix.php }} \
             --coverage-clover clover-php${{ matrix.php }}.xml
 
