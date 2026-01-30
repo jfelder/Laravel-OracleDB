@@ -344,6 +344,17 @@ class OracleGrammar extends BaseGrammar
     }
 
     /**
+     * Compile the random statement into SQL.
+     *
+     * @param  string|int  $seed
+     * @return string
+     */
+    public function compileRandom($seed)
+    {
+        return 'DBMS_RANDOM.VALUE';
+    }
+
+    /**
      * Get the format for database stored dates.
      *
      * @return string
