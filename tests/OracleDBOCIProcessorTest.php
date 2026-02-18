@@ -12,13 +12,6 @@ include 'mocks/OCIMocks.php';
 
 class OracleDBOCIProcessorTest extends TestCase
 {
-    protected function setUp(): void
-    {
-        if (! extension_loaded('oci8')) {
-            $this->markTestSkipped('The oci8 extension is not available.');
-        }
-    }
-
     protected function tearDown(): void
     {
         m::close();

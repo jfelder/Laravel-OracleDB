@@ -9,6 +9,25 @@ use RuntimeException;
 class OracleGrammar extends BaseGrammar
 {
     /**
+     * The components that make up a select clause.
+     *
+     * @var string[]
+     */
+    protected $selectComponents = [
+        'aggregate',
+        'columns',
+        'from',
+        'joins',
+        'wheres',
+        'groups',
+        'havings',
+        'orders',
+        'offset',
+        'limit',
+        'lock',
+    ];
+
+    /**
      * Compile a date based where clause.
      *
      * @param  string  $type
@@ -37,6 +56,11 @@ class OracleGrammar extends BaseGrammar
      */
     public function compileSelect(Builder $query)
     {
+        // An order by clause is required for Oracle offset to function...
+        if ($query->offset && empty($query->orders)) {
+            $query->orders[] = ['sql' => '(SELECT 0)'];
+        }
+
         if (($query->unions || $query->havings) && $query->aggregate) {
             return $this->compileUnionAggregate($query);
         }
@@ -53,15 +77,12 @@ class OracleGrammar extends BaseGrammar
         // To compile the query, we'll spin through each component of the query and
         // see if that component exists. If it does we'll just call the compiler
         // function for the component which is responsible for making the SQL.
-        $components = $this->compileComponents($query);
-        $sql = trim($this->concatenate($components));
+        $sql = trim($this->concatenate(
+            $this->compileComponents($query))
+        );
 
         if ($query->unions) {
             $sql = $this->wrapUnion($sql).' '.$this->compileUnions($query);
-        }
-
-        if (isset($query->limit) || isset($query->offset)) {
-            $sql = $this->compileAnsiOffset($query, $components);
         }
 
         $query->columns = $original;
@@ -164,12 +185,12 @@ class OracleGrammar extends BaseGrammar
             $sql .= ' '.$this->compileOrders($query, $query->unionOrders);
         }
 
-        if (isset($query->unionLimit)) {
-            $query->limit = $query->unionLimit;
+        if (isset($query->unionOffset)) {
+            $sql .= ' '.$this->compileOffset($query, $query->unionOffset);
         }
 
-        if (isset($query->unionOffset)) {
-            $query->offset = $query->unionOffset;
+        if (isset($query->unionLimit)) {
+            $sql .= ' '.$this->compileLimit($query, $query->unionLimit);
         }
 
         return ltrim($sql);
@@ -208,7 +229,7 @@ class OracleGrammar extends BaseGrammar
     {
         $select = $this->compileSelect($query);
 
-        return "select t2.\"rn\" as {$this->wrap('exists')} from ( select rownum AS \"rn\", t1.* from ({$select}) t1 ) t2 where t2.\"rn\" between 1 and 1";
+        return "select case when exists({$select}) then 1 else 0 end as {$this->wrap('exists')} from dual";
     }
 
     /**
@@ -223,70 +244,7 @@ class OracleGrammar extends BaseGrammar
             return $value;
         }
 
-        return $value ? 'for update' : 'lock in share mode';
-    }
-
-    /**
-     * Create a full ANSI offset clause for the query.
-     *
-     * @param  array  $components
-     * @return string
-     */
-    protected function compileAnsiOffset(Builder $query, $components)
-    {
-        $constraint = $this->compileRowConstraint($query);
-
-        $sql = $this->concatenate($components);
-
-        if ($query->unions) {
-            $sql = $this->wrapUnion($sql).' '.$this->compileUnions($query);
-        }
-
-        // We are now ready to build the final SQL query so we'll create a common table
-        // expression from the query and get the records with row numbers within our
-        // given limit and offset value that we just put on as a query constraint.
-        $temp = $this->compileTableExpression($sql, $constraint, $query);
-
-        return $temp;
-    }
-
-    /**
-     * Compile the limit / offset row constraint for a query.
-     *
-     * @param  \Illuminate\Database\Query\Builder  $query
-     * @return string
-     */
-    protected function compileRowConstraint($query)
-    {
-        if (isset($query->limit) && $query->limit < 1) {
-            return '< 1';
-        }
-
-        $start = $query->offset + 1;
-
-        if ($query->limit > 0) {
-            $finish = $query->offset + $query->limit;
-
-            return "between {$start} and {$finish}";
-        }
-
-        return ">= {$start}";
-    }
-
-    /**
-     * Compile a common table expression for a query.
-     *
-     * @param  string  $sql
-     * @param  string  $constraint
-     * @return string
-     */
-    protected function compileTableExpression($sql, $constraint, $query)
-    {
-        if ($query->limit > 0) {
-            return "select t2.* from ( select rownum AS \"rn\", t1.* from ({$sql}) t1 ) t2 where t2.\"rn\" {$constraint}";
-        } else {
-            return "select * from ({$sql}) where rownum {$constraint}";
-        }
+        return $value ? 'for update' : '';
     }
 
     /**
@@ -297,29 +255,13 @@ class OracleGrammar extends BaseGrammar
      */
     protected function compileLimit(Builder $query, $limit)
     {
+        $limit = (int) $limit;
+
+        if ($limit) {
+            return "fetch next {$limit} rows only";
+        }
+
         return '';
-    }
-
-    /**
-     * Compile a group limit clause.
-     *
-     * @return string
-     */
-    protected function compileGroupLimit(Builder $query)
-    {
-        throw new RuntimeException('This database engine does not support group limit operations.');
-    }
-
-    /**
-     * Compile a row number clause.
-     *
-     * @param  string  $partition
-     * @param  string  $orders
-     * @return string
-     */
-    protected function compileRowNumber($partition, $orders)
-    {
-        throw new RuntimeException('This database engine does not support row number operations.');
     }
 
     /**
@@ -330,17 +272,13 @@ class OracleGrammar extends BaseGrammar
      */
     protected function compileOffset(Builder $query, $offset)
     {
-        return '';
-    }
+        $offset = (int) $offset;
 
-    /**
-     * Compile a query to get the number of open connections for a database.
-     *
-     * @throws RuntimeException
-     */
-    public function compileThreadCount()
-    {
-        throw new RuntimeException('This database engine does not support getting the number of open connections.');
+        if ($offset) {
+            return "offset {$offset} rows";
+        }
+
+        return '';
     }
 
     /**
@@ -352,16 +290,6 @@ class OracleGrammar extends BaseGrammar
     public function compileRandom($seed)
     {
         return 'DBMS_RANDOM.VALUE';
-    }
-
-    /**
-     * Get the format for database stored dates.
-     *
-     * @return string
-     */
-    public function getDateFormat()
-    {
-        return $this->connection->getConfig('date_format') ?: 'Y-m-d H:i:s';
     }
 
     /**

@@ -8,3 +8,4 @@ atlassian-ide-plugin.xml
 Vagrantfile
 .phpunit.result.cache
 /.phpunit.cache
+/coverage-report

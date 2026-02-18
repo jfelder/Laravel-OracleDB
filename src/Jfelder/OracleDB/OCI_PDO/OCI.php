@@ -198,6 +198,10 @@ class OCI extends PDO
      */
     public function getAttribute(int $attribute): mixed
     {
+        if ($attribute == PDO::ATTR_SERVER_VERSION) {
+            return oci_server_version($this->conn);
+        }
+
         return $this->attributes[$attribute] ?? null;
     }
 

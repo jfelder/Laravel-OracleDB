@@ -2,7 +2,9 @@
 
 namespace Jfelder\OracleDB;
 
+use Illuminate\Database\Connection;
 use Illuminate\Support\ServiceProvider;
+use Jfelder\OracleDB\Connectors\OracleConnector;
 
 /**
  * Class OracleDBServiceProvider.
@@ -26,34 +28,34 @@ class OracleDBServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        // merge default config
-        $this->mergeConfigFrom(__DIR__.'/../../config/oracledb.php', 'database.connections');
-
-        // load default configs
-        $config = [
-            'oracle' => config('database.connections.oracle'),
-        ];
-
-        // override any default configs with user config and load those configs
         if (file_exists(config_path('oracledb.php'))) {
             $this->mergeConfigFrom(config_path('oracledb.php'), 'database.connections');
-
-            $config = $this->app['config']->get('oracledb');
+        } else {
+            $this->mergeConfigFrom(__DIR__.'/../../config/oracledb.php', 'database.connections');
         }
 
-        $connection_keys = array_keys($config);
-
-        // loop thru oracle configs to extend DB
-        if (is_array($connection_keys)) {
-            foreach ($connection_keys as $key) {
-                $this->app['db']->extend($key, function ($config) {
-                    $oConnector = new Connectors\OracleConnector;
-
-                    $connection = $oConnector->connect($config);
-
-                    return new OracleConnection($connection, $config['database'], $config['prefix'], $config);
-                });
+        Connection::resolverFor('oracle', function ($connection, $database, $prefix, $config) {
+            if (! empty($config['dynamic'])) {
+                call_user_func_array($config['dynamic'], [&$config]);
             }
-        }
+
+            $connector = new OracleConnector;
+            $connection = $connector->connect($config);
+            $db = new OracleConnection($connection, $database, $prefix, $config);
+
+            // set oracle session variables
+            $sessionParameters = [
+                'NLS_TIME_FORMAT' => 'HH24:MI:SS',
+                'NLS_DATE_FORMAT' => 'YYYY-MM-DD HH24:MI:SS',
+                'NLS_TIMESTAMP_FORMAT' => 'YYYY-MM-DD HH24:MI:SS',
+                'NLS_TIMESTAMP_TZ_FORMAT' => 'YYYY-MM-DD HH24:MI:SS TZH:TZM',
+                'NLS_NUMERIC_CHARACTERS' => '.,',
+                ...($config['sessionParameters'] ?? []),
+            ];
+
+            $db->setSessionParameters($sessionParameters);
+
+            return $db;
+        });
     }
 }

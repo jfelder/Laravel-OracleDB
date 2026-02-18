@@ -187,10 +187,16 @@ namespace Jfelder\OracleDB\OCI_PDO {
             return 1;
         }
     }
+    if (! function_exists("Jfelder\OracleDB\OCI_PDO\oci_server_version")) {
+        function oci_server_version()
+        {
+            return 'SERVER VERSION HERE';
+        }
+    }
     if (! function_exists("Jfelder\OracleDB\OCI_PDO\oci_client_version")) {
         function oci_client_version()
         {
-            return 'Test Return';
+            return 'CLIENT VERSION HERE';
         }
     }
     if (! function_exists("Jfelder\OracleDB\OCI_PDO\oci_free_descriptor")) {

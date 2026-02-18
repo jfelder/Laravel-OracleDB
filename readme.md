@@ -1,6 +1,6 @@
 ## Laravel Oracle Database Package
 
-### OracleDB (updated for Laravel 11)
+### OracleDB (updated for Laravel 12)
 
 ![PHP Version](https://img.shields.io/packagist/php-v/jfelder/oracledb.svg?style=flat-square)
 ![Latest Version](https://img.shields.io/packagist/v/jfelder/oracledb.svg?style=flat-square)
@@ -18,6 +18,10 @@ OracleDB is an Oracle Database Driver package for [Laravel Framework](https://la
 - [Basic Usage](#basic-usage)
 - [Unimplemented Features](#unimplemented-features)
 - [License](#license)
+
+
+> **IMPORTANT** This version removes the [PDO_OCI](https://www.php.net/manual/en/ref.pdo-oci.php) driver option and only uses the [OCI8 Functions](https://www.php.net/manual/en/ref.oci8.php) under the hood.
+
 
 ### Installation
 
@@ -40,10 +44,20 @@ php artisan vendor:publish --tag=oracledb-config
 To finish the installation, set your environment variables (typically in your .env file) to the corresponding
 env variables used in `config/oracledb.php`: such as `DB_HOST`, `DB_USERNAME`, etc.  
 
-**Double Check Your Date Format Config**
-The `date_format` config powers all date column casting to/from Carbon and defaults to `Y-m-d H:i:s`, so it is imperative 
-to set the DB_DATE_FORMAT env var if your db stringifies dates a different way, ie `d-M-y H:i:s`. This affects all 
-read/write operations of any Eloquent model with date fields and any Query Builder queries that utilize a Carbon instance.
+**Date Format Config**
+The `date_format` config has been removed in favor of using the NLS_* session parameters. The session parameters default values are in the `OracleDBServiceProvider.php`. You can change these session parameters from you `.env` 
+file using the parameter name. This affects all read/write operations of any Eloquent model with date fields and any Query Builder queries that utilize a Carbon instance and bring the handling if dates in line with the framework.
+
+#### Default NLS session parameters
+
+| Parameter | Default value |
+|---|---|
+| NLS_TIME_FORMAT | 'HH24:MI:SS' |
+| NLS_DATE_FORMAT | 'YYYY-MM-DD HH24:MI:SS' |
+| NLS_TIMESTAMP_FORMAT | 'YYYY-MM-DD HH24:MI:SS' |
+| NLS_TIMESTAMP_TZ_FORMAT | 'YYYY-MM-DD HH24:MI:SS TZH:TZM' |
+| NLS_NUMERIC_CHARACTERS | '.,' |
+
 
 ### Basic Usage
 The configuration file for this package is located at `config/oracledb.php`.
@@ -53,10 +67,8 @@ connection into the "Default Database Connection Name" section in `config/databa
 
 Once you have configured the OracleDB database connection(s), you may run queries using the `DB` facade as normal.
 
-> **Note:** The default driver, `'oci8'`, makes OracleDB use the
-[OCI8 Functions](https://www.php.net/manual/en/ref.oci8.php) under the hood. If you want to use
-[PDO_OCI](https://www.php.net/manual/en/ref.pdo-oci.php) instead, change the `driver` value to `'pdo'` in the
-`config/oracledb.php` file.
+> **Note:** This driver makes OracleDB use the
+[OCI8 Functions](https://www.php.net/manual/en/ref.oci8.php) under the hood. 
 
 ```php
 $results = DB::select('select * from users where id = ?', [1]);
@@ -109,7 +121,6 @@ features not already listed.
 
 #### Schema Builder
 
-- drop a table if it exists `Schema::dropIfExists('some_table');`
 - drop all tables, views, or types `Schema::dropAllTables()`, `Schema::dropAllViews()`, and `Schema::dropAllTypes()`
 - set collation on a table `$blueprint->collation('BINARY_CI')`
 - set collation on a column `$blueprint->string('some_column')->collation('BINARY_CI')`

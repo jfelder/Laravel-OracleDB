@@ -706,7 +706,7 @@ class OracleDBQueryBuilderTest extends TestCase
         $subqueryBuilder->select('id')->from('posts')->where('status', 'published')->orderByDesc('created_at')->limit(1);
         $builder = $this->getBuilder();
         $builder->select('*')->from('users')->whereBetween($subqueryBuilder, collect([1, 2]));
-        $this->assertSame('select * from "users" where (select t2.* from ( select rownum AS "rn", t1.* from (select "id" from "posts" where "status" = ? order by "created_at" desc) t1 ) t2 where t2."rn" between 1 and 1) between ? and ?', $builder->toSql());
+        $this->assertSame('select * from "users" where (select "id" from "posts" where "status" = ? order by "created_at" desc fetch next 1 rows only) between ? and ?', $builder->toSql());
         $this->assertEquals([0 => 'published', 1 => 1, 2 => 2], $builder->getBindings());
     }
 
@@ -1302,7 +1302,7 @@ class OracleDBQueryBuilderTest extends TestCase
         $this->assertEquals([0 => 1, 1 => 2], $builder->getBindings());
 
         $builder = $this->getBuilder();
-        $expectedSql = 'select t2.* from ( select rownum AS "rn", t1.* from ((select "a" from "t3" where "a" = ? and "b" = ?) union (select "a" from "t4" where "a" = ? and "b" = ?) order by "a" asc) t1 ) t2 where t2."rn" between 1 and 10';
+        $expectedSql = '(select "a" from "t3" where "a" = ? and "b" = ?) union (select "a" from "t4" where "a" = ? and "b" = ?) order by "a" asc fetch next 10 rows only';
         $union = $this->getBuilder()->select('a')->from('t4')->where('a', 11)->where('b', 2);
         $builder->select('a')->from('t3')->where('a', 10)->where('b', 1)->union($union)->orderBy('a')->limit(10);
         $this->assertEquals($expectedSql, $builder->toSql());
@@ -1354,7 +1354,7 @@ class OracleDBQueryBuilderTest extends TestCase
         $builder->select('*')->from('users');
         $builder->union($this->getBuilder()->select('*')->from('dogs'));
         $builder->skip(5)->take(10);
-        $this->assertSame('select t2.* from ( select rownum AS "rn", t1.* from ((select * from "users") union (select * from "dogs")) t1 ) t2 where t2."rn" between 6 and 15', $builder->toSql());
+        $this->assertSame('(select * from "users") union (select * from "dogs") offset 5 rows fetch next 10 rows only', $builder->toSql());
     }
 
     public function test_union_with_join()
@@ -1402,14 +1402,14 @@ class OracleDBQueryBuilderTest extends TestCase
         $builder->select('*')->from('users')->whereIn('id', function ($q) {
             $q->select('id')->from('users')->where('age', '>', 25)->take(3);
         });
-        $this->assertSame('select * from "users" where "id" in (select t2.* from ( select rownum AS "rn", t1.* from (select "id" from "users" where "age" > ?) t1 ) t2 where t2."rn" between 1 and 3)', $builder->toSql());
+        $this->assertSame('select * from "users" where "id" in (select "id" from "users" where "age" > ? fetch next 3 rows only)', $builder->toSql());
         $this->assertEquals([25], $builder->getBindings());
 
         $builder = $this->getBuilder();
         $builder->select('*')->from('users')->whereNotIn('id', function ($q) {
             $q->select('id')->from('users')->where('age', '>', 25)->take(3);
         });
-        $this->assertSame('select * from "users" where "id" not in (select t2.* from ( select rownum AS "rn", t1.* from (select "id" from "users" where "age" > ?) t1 ) t2 where t2."rn" between 1 and 3)', $builder->toSql());
+        $this->assertSame('select * from "users" where "id" not in (select "id" from "users" where "age" > ? fetch next 3 rows only)', $builder->toSql());
         $this->assertEquals([25], $builder->getBindings());
     }
 
@@ -1550,7 +1550,7 @@ class OracleDBQueryBuilderTest extends TestCase
 
         $builder = $this->getBuilder();
         $builder->select('*')->from('users')->latest()->limit(1);
-        $this->assertSame('select t2.* from ( select rownum AS "rn", t1.* from (select * from "users" order by "created_at" desc) t1 ) t2 where t2."rn" between 1 and 1', $builder->toSql());
+        $this->assertSame('select * from "users" order by "created_at" desc fetch next 1 rows only', $builder->toSql());
 
         $builder = $this->getBuilder();
         $builder->select('*')->from('users')->latest('updated_at');
@@ -1565,7 +1565,7 @@ class OracleDBQueryBuilderTest extends TestCase
 
         $builder = $this->getBuilder();
         $builder->select('*')->from('users')->oldest()->limit(1);
-        $this->assertSame('select t2.* from ( select rownum AS "rn", t1.* from (select * from "users" order by "created_at" asc) t1 ) t2 where t2."rn" between 1 and 1', $builder->toSql());
+        $this->assertSame('select * from "users" order by "created_at" asc fetch next 1 rows only', $builder->toSql());
 
         $builder = $this->getBuilder();
         $builder->select('*')->from('users')->oldest('updated_at');
@@ -1610,7 +1610,7 @@ class OracleDBQueryBuilderTest extends TestCase
 
     public function test_order_by_sub_queries()
     {
-        $expected = 'select * from "users" order by (select t2.* from ( select rownum AS "rn", t1.* from (select "created_at" from "logins" where "user_id" = "users"."id") t1 ) t2 where t2."rn" between 1 and 1)';
+        $expected = 'select * from "users" order by (select "created_at" from "logins" where "user_id" = "users"."id" fetch next 1 rows only)';
         $subQuery = function ($query) {
             return $query->select('created_at')->from('logins')->whereColumn('user_id', 'users.id')->limit(1);
         };
@@ -1837,11 +1837,11 @@ class OracleDBQueryBuilderTest extends TestCase
     {
         $builder = $this->getBuilder();
         $builder->select('*')->from('users')->offset(10);
-        $this->assertSame('select * from (select * from "users") where rownum >= 11', $builder->toSql());
+        $this->assertSame('select * from "users" order by (SELECT 0) offset 10 rows', $builder->toSql());
 
         $builder = $this->getBuilder();
         $builder->select('*')->from('users')->offset(5)->limit(10);
-        $this->assertSame('select t2.* from ( select rownum AS "rn", t1.* from (select * from "users") t1 ) t2 where t2."rn" between 6 and 15', $builder->toSql());
+        $this->assertSame('select * from "users" order by (SELECT 0) offset 5 rows fetch next 10 rows only', $builder->toSql());
 
         $builder = $this->getBuilder();
         $builder->select('*')->from('users')->limit(null);
@@ -1849,84 +1849,84 @@ class OracleDBQueryBuilderTest extends TestCase
 
         $builder = $this->getBuilder();
         $builder->select('*')->from('users')->limit(0);
-        $this->assertSame('select * from (select * from "users") where rownum < 1', $builder->toSql());
+        $this->assertSame('select * from "users"', $builder->toSql());
 
         $builder = $this->getBuilder();
         $builder->select('*')->from('users')->skip(5)->take(10);
-        $this->assertSame('select t2.* from ( select rownum AS "rn", t1.* from (select * from "users") t1 ) t2 where t2."rn" between 6 and 15', $builder->toSql());
+        $this->assertSame('select * from "users" order by (SELECT 0) offset 5 rows fetch next 10 rows only', $builder->toSql());
 
         $builder = $this->getBuilder();
         $builder->select('*')->from('users')->skip(0)->take(0);
-        $this->assertSame('select * from (select * from "users") where rownum < 1', $builder->toSql());
+        $this->assertSame('select * from "users"', $builder->toSql());
 
         $builder = $this->getBuilder();
         $builder->select('*')->from('users')->skip(0);
-        $this->assertSame('select * from (select * from "users") where rownum >= 1', $builder->toSql());
+        $this->assertSame('select * from "users"', $builder->toSql());
 
         $builder = $this->getBuilder();
         $builder->select('*')->from('users')->skip(-5)->take(10);
-        $this->assertSame('select t2.* from ( select rownum AS "rn", t1.* from (select * from "users") t1 ) t2 where t2."rn" between 1 and 10', $builder->toSql());
+        $this->assertSame('select * from "users" fetch next 10 rows only', $builder->toSql());
 
         $builder = $this->getBuilder();
         $builder->select('*')->from('users')->skip(-5)->take(-10);
-        $this->assertSame('select * from (select * from "users") where rownum >= 1', $builder->toSql());
+        $this->assertSame('select * from "users"', $builder->toSql());
 
         $builder = $this->getBuilder();
         $builder->select('*')->from('users')->skip(null)->take(null);
-        $this->assertSame('select * from (select * from "users") where rownum >= 1', $builder->toSql());
+        $this->assertSame('select * from "users"', $builder->toSql());
 
         $builder = $this->getBuilder();
         $builder->select('*')->from('users')->skip(5)->take(null);
-        $this->assertSame('select * from (select * from "users") where rownum >= 6', $builder->toSql());
+        $this->assertSame('select * from "users" order by (SELECT 0) offset 5 rows', $builder->toSql());
     }
 
     public function test_for_page()
     {
         $builder = $this->getBuilder();
         $builder->select('*')->from('users')->forPage(2, 15);
-        $this->assertSame('select t2.* from ( select rownum AS "rn", t1.* from (select * from "users") t1 ) t2 where t2."rn" between 16 and 30', $builder->toSql());
+        $this->assertSame('select * from "users" order by (SELECT 0) offset 15 rows fetch next 15 rows only', $builder->toSql());
 
         $builder = $this->getBuilder();
         $builder->select('*')->from('users')->forPage(0, 15);
-        $this->assertSame('select t2.* from ( select rownum AS "rn", t1.* from (select * from "users") t1 ) t2 where t2."rn" between 1 and 15', $builder->toSql());
+        $this->assertSame('select * from "users" fetch next 15 rows only', $builder->toSql());
 
         $builder = $this->getBuilder();
         $builder->select('*')->from('users')->forPage(-2, 15);
-        $this->assertSame('select t2.* from ( select rownum AS "rn", t1.* from (select * from "users") t1 ) t2 where t2."rn" between 1 and 15', $builder->toSql());
+        $this->assertSame('select * from "users" fetch next 15 rows only', $builder->toSql());
 
         $builder = $this->getBuilder();
         $builder->select('*')->from('users')->forPage(2, 0);
-        $this->assertSame('select * from (select * from "users") where rownum < 1', $builder->toSql());
+        $this->assertSame('select * from "users"', $builder->toSql());
 
         $builder = $this->getBuilder();
         $builder->select('*')->from('users')->forPage(0, 0);
-        $this->assertSame('select * from (select * from "users") where rownum < 1', $builder->toSql());
+        $this->assertSame('select * from "users"', $builder->toSql());
 
         $builder = $this->getBuilder();
         $builder->select('*')->from('users')->forPage(-2, 0);
-        $this->assertSame('select * from (select * from "users") where rownum < 1', $builder->toSql());
+        $this->assertSame('select * from "users"', $builder->toSql());
     }
 
     public function test_for_page_before_id()
     {
         $builder = $this->getBuilder();
         $builder->select('*')->from('users')->forPageBeforeId(15, null);
-        $this->assertSame('select t2.* from ( select rownum AS "rn", t1.* from (select * from "users" where "id" is not null order by "id" desc) t1 ) t2 where t2."rn" between 1 and 15', $builder->toSql());
+        $this->assertSame('select * from "users" where "id" is not null order by "id" desc fetch next 15 rows only', $builder->toSql());
 
         $builder = $this->getBuilder();
         $builder->select('*')->from('users')->forPageBeforeId(15, 0);
-        $this->assertSame('select t2.* from ( select rownum AS "rn", t1.* from (select * from "users" where "id" < ? order by "id" desc) t1 ) t2 where t2."rn" between 1 and 15', $builder->toSql());
+        $this->assertSame('select * from "users" where "id" < ? order by "id" desc fetch next 15 rows only', $builder->toSql());
     }
 
     public function test_for_page_after_id()
     {
         $builder = $this->getBuilder();
         $builder->select('*')->from('users')->forPageAfterId(15, null);
-        $this->assertSame('select t2.* from ( select rownum AS "rn", t1.* from (select * from "users" where "id" is not null order by "id" asc) t1 ) t2 where t2."rn" between 1 and 15', $builder->toSql());
+        $this->assertSame('select * from "users" where "id" is not null order by "id" asc fetch next 15 rows only', $builder->toSql());
 
         $builder = $this->getBuilder();
         $builder->select('*')->from('users')->forPageAfterId(15, 0);
-        $this->assertSame('select t2.* from ( select rownum AS "rn", t1.* from (select * from "users" where "id" > ? order by "id" asc) t1 ) t2 where t2."rn" between 1 and 15', $builder->toSql());
+        $this->assertSame('select * from "users" where "id" > ? order by "id" asc fetch next 15 rows only', $builder->toSql());
     }
 
     public function test_get_count_for_pagination_with_bindings()
@@ -2172,7 +2172,7 @@ class OracleDBQueryBuilderTest extends TestCase
     {
         $builder = $this->getBuilder();
         $builder->selectRaw('(sale / "overall".sales) * 100 AS percent_of_total')->from('sales')->crossJoinSub($this->getBuilder()->selectRaw('SUM(sale) AS sales')->from('sales'), 'overall');
-        $this->assertSame('select (sale / "overall".sales) * 100 AS percent_of_total from "sales" cross join (select SUM(sale) AS sales from "sales") as "overall"', $builder->toSql());
+        $this->assertSame('select (sale / "overall".sales) * 100 AS percent_of_total from "sales" cross join (select SUM(sale) AS sales from "sales") "overall"', $builder->toSql());
     }
 
     public function test_complex_join()
@@ -2485,18 +2485,19 @@ class OracleDBQueryBuilderTest extends TestCase
     public function test_find_returns_first_result_by_id()
     {
         $builder = $this->getBuilder();
-        $builder->getConnection()->shouldReceive('select')->once()->with('select t2.* from ( select rownum AS "rn", t1.* from (select * from "users" where "id" = ?) t1 ) t2 where t2."rn" between 1 and 1', [1], true)->andReturn([['foo' => 'bar']]);
+        $builder->getConnection()->shouldReceive('select')->once()->with('select * from "users" where "id" = ? fetch next 1 rows only', [1], true)->andReturn([['foo' => 'bar']]);
         $builder->getProcessor()->shouldReceive('processSelect')->once()->with($builder, [['foo' => 'bar']])->andReturnUsing(function ($query, $results) {
             return $results;
         });
         $results = $builder->from('users')->find(1);
         $this->assertEquals(['foo' => 'bar'], $results);
+
     }
 
     public function test_first_method_returns_first_result()
     {
         $builder = $this->getBuilder();
-        $builder->getConnection()->shouldReceive('select')->once()->with('select t2.* from ( select rownum AS "rn", t1.* from (select * from "users" where "id" = ?) t1 ) t2 where t2."rn" between 1 and 1', [1], true)->andReturn([['foo' => 'bar']]);
+        $builder->getConnection()->shouldReceive('select')->once()->with('select * from "users" where "id" = ? fetch next 1 rows only', [1], true)->andReturn([['foo' => 'bar']]);
         $builder->getProcessor()->shouldReceive('processSelect')->once()->with($builder, [['foo' => 'bar']])->andReturnUsing(function ($query, $results) {
             return $results;
         });
@@ -2547,7 +2548,7 @@ class OracleDBQueryBuilderTest extends TestCase
     public function test_value_method_returns_single_column()
     {
         $builder = $this->getBuilder();
-        $builder->getConnection()->shouldReceive('select')->once()->with('select t2.* from ( select rownum AS "rn", t1.* from (select "foo" from "users" where "id" = ?) t1 ) t2 where t2."rn" between 1 and 1', [1], true)->andReturn([['foo' => 'bar']]);
+        $builder->getConnection()->shouldReceive('select')->once()->with('select "foo" from "users" where "id" = ? fetch next 1 rows only', [1], true)->andReturn([['foo' => 'bar']]);
         $builder->getProcessor()->shouldReceive('processSelect')->once()->with($builder, [['foo' => 'bar']])->andReturn([['foo' => 'bar']]);
         $results = $builder->from('users')->where('id', '=', 1)->value('foo');
         $this->assertSame('bar', $results);
@@ -2564,12 +2565,12 @@ class OracleDBQueryBuilderTest extends TestCase
         $this->assertEquals(1, $results);
 
         $builder = $this->getBuilder();
-        $builder->getConnection()->shouldReceive('select')->once()->with('select t2."rn" as "exists" from ( select rownum AS "rn", t1.* from (select * from "users") t1 ) t2 where t2."rn" between 1 and 1', [], true)->andReturn([['exists' => 1]]);
+        $builder->getConnection()->shouldReceive('select')->once()->with('select case when exists(select * from "users") then 1 else 0 end as "exists" from dual', [], true)->andReturn([['exists' => 1]]);
         $results = $builder->from('users')->exists();
         $this->assertTrue($results);
 
         $builder = $this->getBuilder();
-        $builder->getConnection()->shouldReceive('select')->once()->with('select t2."rn" as "exists" from ( select rownum AS "rn", t1.* from (select * from "users") t1 ) t2 where t2."rn" between 1 and 1', [], true)->andReturn([['exists' => 0]]);
+        $builder->getConnection()->shouldReceive('select')->once()->with('select case when exists(select * from "users") then 1 else 0 end as "exists" from dual', [], true)->andReturn([['exists' => 0]]);
         $results = $builder->from('users')->doesntExist();
         $this->assertTrue($results);
 
@@ -2778,6 +2779,11 @@ class OracleDBQueryBuilderTest extends TestCase
         $builder = $this->getBuilder();
         $builder->getProcessor()->shouldReceive('processInsertGetId')->once()->with($builder, 'insert into "users" ("email") values (?) returning "id" into ?', ['foo'], 'id')->andReturn(1);
         $result = $builder->from('users')->insertGetId(['email' => 'foo'], 'id');
+        $this->assertEquals(1, $result);
+
+        $builder = $this->getBuilder();
+        $builder->getProcessor()->shouldReceive('processInsertGetId')->once()->with($builder, 'insert into "users" ("email") values (?) returning "id" into ?', ['foo'], null)->andReturn(1);
+        $result = $builder->from('users')->insertGetId(['email' => 'foo']);
         $this->assertEquals(1, $result);
     }
 
@@ -3057,7 +3063,7 @@ class OracleDBQueryBuilderTest extends TestCase
     public function test_preserved_are_applied_by_exists()
     {
         $builder = $this->getBuilder();
-        $builder->getConnection()->shouldReceive('select')->once()->with('select t2."rn" as "exists" from ( select rownum AS "rn", t1.* from (select * from "users") t1 ) t2 where t2."rn" between 1 and 1', [], true);
+        $builder->getConnection()->shouldReceive('select')->once()->with('select case when exists(select * from "users") then 1 else 0 end as "exists" from dual', [], true);
         $builder->beforeQuery(function ($builder) {
             $builder->from('users');
         });
@@ -3279,7 +3285,12 @@ class OracleDBQueryBuilderTest extends TestCase
 
         $builder = $this->getBuilder();
         $builder->select('*')->from('foo')->where('bar', '=', 'baz')->lock(false);
-        $this->assertSame('select * from "foo" where "bar" = ? lock in share mode', $builder->toSql());
+        $this->assertSame('select * from "foo" where "bar" = ?', $builder->toSql());
+        $this->assertEquals(['baz'], $builder->getBindings());
+
+        $builder = $this->getBuilder();
+        $builder->select('*')->from('foo')->where('bar', '=', 'baz')->lock('for update nowait');
+        $this->assertSame('select * from "foo" where "bar" = ? for update nowait', $builder->toSql());
         $this->assertEquals(['baz'], $builder->getBindings());
     }
 
@@ -4151,19 +4162,19 @@ class OracleDBQueryBuilderTest extends TestCase
     {
         $builder = $this->getBuilder(quoting: false);
         $builder->select('*')->from('users')->offset(10);
-        $this->assertSame('select * from (select * from users) where rownum >= 11', $builder->toSql());
+        $this->assertSame('select * from users order by (SELECT 0) offset 10 rows', $builder->toSql());
 
         $builder = $this->getBuilder(quoting: false);
         $builder->select('*')->from('users')->offset(5)->limit(10);
-        $this->assertSame('select t2.* from ( select rownum AS "rn", t1.* from (select * from users) t1 ) t2 where t2."rn" between 6 and 15', $builder->toSql());
+        $this->assertSame('select * from users order by (SELECT 0) offset 5 rows fetch next 10 rows only', $builder->toSql());
 
         $builder = $this->getBuilder(quoting: false);
         $builder->select('*')->from('users')->skip(5)->take(10);
-        $this->assertSame('select t2.* from ( select rownum AS "rn", t1.* from (select * from users) t1 ) t2 where t2."rn" between 6 and 15', $builder->toSql());
+        $this->assertSame('select * from users order by (SELECT 0) offset 5 rows fetch next 10 rows only', $builder->toSql());
 
         $builder = $this->getBuilder(quoting: false);
         $builder->select('*')->from('users')->forPage(2, 15);
-        $this->assertSame('select t2.* from ( select rownum AS "rn", t1.* from (select * from users) t1 ) t2 where t2."rn" between 16 and 30', $builder->toSql());
+        $this->assertSame('select * from users order by (SELECT 0) offset 15 rows fetch next 15 rows only', $builder->toSql());
     }
 
     public function test_clone()
@@ -4220,7 +4231,7 @@ class OracleDBQueryBuilderTest extends TestCase
         $grammar = new OracleGrammar($connection);
         $processor = m::mock(Processor::class);
 
-        return new Builder($connection, $grammar, $processor);
+        return new OracleQueryBuilder($connection, $grammar, $processor);
     }
 
     protected function getOracleBuilderWithProcessor(

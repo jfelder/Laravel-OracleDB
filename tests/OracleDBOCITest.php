@@ -19,19 +19,13 @@ class OracleDBOCITest extends TestCase
 
     protected function setUp(): void
     {
-        if (! extension_loaded('oci8')) {
-            $this->markTestSkipped(
-                'The oci8 extension is not available.'
-            );
-        } else {
-            global $OCITransactionStatus, $OCIStatementStatus, $OCIExecuteStatus;
+        global $OCITransactionStatus, $OCIStatementStatus, $OCIExecuteStatus;
 
-            $OCITransactionStatus = true;
-            $OCIStatementStatus = true;
-            $OCIExecuteStatus = true;
+        $OCITransactionStatus = true;
+        $OCIStatementStatus = true;
+        $OCIExecuteStatus = true;
 
-            $this->oci = m::mock(new TestOCIStub('', null, null, [PDO::ATTR_CASE => PDO::CASE_LOWER]));
-        }
+        $this->oci = m::mock(new TestOCIStub('', null, null, [PDO::ATTR_CASE => PDO::CASE_LOWER]));
     }
 
     protected function tearDown(): void
@@ -118,15 +112,16 @@ class OracleDBOCITest extends TestCase
         $oci = new TestOCIStub;
         $this->assertNull($oci->errorCode());
 
-        // use reflection to test values of protected properties
         $reflection = new \ReflectionClass($oci);
 
-        // setErrorInfo
         $method = $reflection->getMethod('setErrorInfo');
-        $method->setAccessible(true);
         $method->invoke($oci, '11111', '2222', 'Testing the errors');
 
         $this->assertEquals('11111', $oci->errorCode());
+
+        $method->invoke($oci, null, '2222', 'Testing the errors');
+
+        $this->assertEquals('JF000', $oci->errorCode());
     }
 
     public function test_error_info()
@@ -134,15 +129,17 @@ class OracleDBOCITest extends TestCase
         $oci = new TestOCIStub;
         $this->assertEquals([0 => '', 1 => null, 2 => null], $oci->errorInfo());
 
-        // use reflection to test values of protected properties
         $reflection = new \ReflectionClass($oci);
 
-        // setErrorInfo
         $method = $reflection->getMethod('setErrorInfo');
-        $method->setAccessible(true);
         $method->invoke($oci, '11111', '2222', 'Testing the errors');
 
         $this->assertEquals([0 => '11111', 1 => '2222', 2 => 'Testing the errors'], $oci->errorInfo());
+
+        $method = $reflection->getMethod('setErrorInfo');
+        $method->invoke($oci, null, '2222', 'Testing the errors');
+
+        $this->assertEquals([0 => 'JF000', 1 => '2222', 2 => 'Testing the errors'], $oci->errorInfo());
     }
 
     public function test_exec()
@@ -152,25 +149,18 @@ class OracleDBOCITest extends TestCase
         $stmt = $oci->exec($sql);
         $this->assertEquals(1, $stmt);
 
-        // use reflection to test values of protected properties of OCI object
         $reflection = new \ReflectionClass($oci);
 
-        // stmt property
         $property = $reflection->getProperty('stmt');
-        $property->setAccessible(true);
         $oci_stmt = $property->getValue($oci);
         $this->assertInstanceOf(OCIStatement::class, $oci_stmt);
 
-        // use reflection to test values of protected properties of OCIStatement object
         $reflection = new \ReflectionClass($oci_stmt);
-        // conn property
+
         $property = $reflection->getProperty('conn');
-        $property->setAccessible(true);
         $this->assertEquals($oci, $property->getValue($oci_stmt));
 
-        // attributes property
         $property = $reflection->getProperty('attributes');
-        $property->setAccessible(true);
         $this->assertEquals([], $property->getValue($oci_stmt));
     }
 
@@ -193,6 +183,11 @@ class OracleDBOCITest extends TestCase
     {
         $nonExistantAttr = 12345;
         $this->assertEquals(null, $this->oci->getAttribute($nonExistantAttr));
+    }
+
+    public function test_get_attribute_for_server_version()
+    {
+        $this->assertEquals('SERVER VERSION HERE', $this->oci->getAttribute(PDO::ATTR_SERVER_VERSION));
     }
 
     public function test_in_transaction_while_not_in_transaction()
@@ -230,17 +225,14 @@ class OracleDBOCITest extends TestCase
 
         // stmt property
         $property = $reflection->getProperty('stmt');
-        $property->setAccessible(true);
         $this->assertEquals('oci8 statement', $property->getValue($stmt));
 
         // conn property
         $property = $reflection->getProperty('conn');
-        $property->setAccessible(true);
         $this->assertEquals($oci, $property->getValue($stmt));
 
         // attributes property
         $property = $reflection->getProperty('attributes');
-        $property->setAccessible(true);
         $this->assertEquals([], $property->getValue($stmt));
     }
 
@@ -256,17 +248,14 @@ class OracleDBOCITest extends TestCase
 
         // stmt property
         $property = $reflection->getProperty('stmt');
-        $property->setAccessible(true);
         $this->assertEquals('oci8 statement', $property->getValue($stmt));
 
         // conn property
         $property = $reflection->getProperty('conn');
-        $property->setAccessible(true);
         $this->assertEquals($oci, $property->getValue($stmt));
 
         // attributes property
         $property = $reflection->getProperty('attributes');
-        $property->setAccessible(true);
         $this->assertEquals([], $property->getValue($stmt));
     }
 
@@ -292,17 +281,14 @@ class OracleDBOCITest extends TestCase
 
         // stmt property
         $property = $reflection->getProperty('stmt');
-        $property->setAccessible(true);
         $this->assertEquals('oci8 statement', $property->getValue($stmt));
 
         // conn property
         $property = $reflection->getProperty('conn');
-        $property->setAccessible(true);
         $this->assertEquals($oci, $property->getValue($stmt));
 
         // attributes property
         $property = $reflection->getProperty('attributes');
-        $property->setAccessible(true);
         $this->assertEquals([], $property->getValue($stmt));
     }
 
@@ -318,17 +304,14 @@ class OracleDBOCITest extends TestCase
 
         // stmt property
         $property = $reflection->getProperty('stmt');
-        $property->setAccessible(true);
         $this->assertEquals('oci8 statement', $property->getValue($stmt));
 
         // conn property
         $property = $reflection->getProperty('conn');
-        $property->setAccessible(true);
         $this->assertEquals($oci, $property->getValue($stmt));
 
         // attributes property
         $property = $reflection->getProperty('attributes');
-        $property->setAccessible(true);
         $this->assertEquals([], $property->getValue($stmt));
     }
 

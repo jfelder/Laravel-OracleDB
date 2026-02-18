@@ -3,11 +3,12 @@
 namespace Jfelder\OracleDB;
 
 use Exception;
+use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Database\Connection;
-use Jfelder\OracleDB\Query\Grammars\OracleGrammar as QueryGrammar;
+use Jfelder\OracleDB\Query\Grammars\OracleGrammar as OracleQueryGrammar;
 use Jfelder\OracleDB\Query\OracleBuilder as OracleQueryBuilder;
 use Jfelder\OracleDB\Query\Processors\OracleProcessor;
-use Jfelder\OracleDB\Schema\Grammars\OracleGrammar as SchemaGrammar;
+use Jfelder\OracleDB\Schema\Grammars\OracleGrammar as OracleSchemaGrammar;
 use Jfelder\OracleDB\Schema\OracleBuilder as OracleSchemaBuilder;
 use PDO;
 use RuntimeException;
@@ -23,15 +24,7 @@ class OracleConnection extends Connection
     }
 
     /**
-     * Get the server version for the connection.
-     */
-    public function getServerVersion(): string
-    {
-        return 'Run SELECT * FROM V$VERSION; to get the Oracle server version.';
-    }
-
-    /**
-     * Get a schema builder instance for the connection.
+     * {@inheritdoc}
      *
      * @return \Jfelder\OracleDB\Schema\OracleBuilder
      */
@@ -45,7 +38,7 @@ class OracleConnection extends Connection
     }
 
     /**
-     * Get a new query builder instance.
+     * {@inheritdoc}
      *
      * @return \Jfelder\OracleDB\Query\OracleBuilder
      */
@@ -57,31 +50,27 @@ class OracleConnection extends Connection
     }
 
     /**
-     * Get the default query grammar instance.
+     * {@inheritdoc}
      *
      * @return \Jfelder\OracleDB\Query\Grammars\OracleGrammar
      */
     protected function getDefaultQueryGrammar()
     {
-        $grammar = new QueryGrammar($this);
-
-        return $this->withTablePrefix($grammar);
+        return new OracleQueryGrammar($this);
     }
 
     /**
-     * Get the default schema grammar instance.
+     * {@inheritdoc}
      *
      * @return \Jfelder\OracleDB\Schema\Grammars\OracleGrammar|null
      */
     protected function getDefaultSchemaGrammar()
     {
-        $grammar = new SchemaGrammar($this);
-
-        return $this->withTablePrefix($grammar);
+        return new OracleSchemaGrammar($this);
     }
 
     /**
-     * Get the default post processor instance.
+     * {@inheritdoc}
      *
      * @return \Jfelder\OracleDB\Query\Processors\OracleProcessor
      */
@@ -91,11 +80,7 @@ class OracleConnection extends Connection
     }
 
     /**
-     * Bind values to their parameters in the given statement.
-     *
-     * @param  \PDOStatement  $statement
-     * @param  array  $bindings
-     * @return void
+     * {@inheritdoc}
      */
     public function bindValues($statement, $bindings)
     {
@@ -116,12 +101,8 @@ class OracleConnection extends Connection
 
     /**
      * Run an "insert get ID" statement against an oracle database.
-     *
-     * @param  string  $query
-     * @param  array  $bindings
-     * @return int
      */
-    public function oracleInsertGetId($query, $bindings = [])
+    public function oracleInsertGetId(string $query, array $bindings = []): int
     {
         return $this->run($query, $bindings, function ($query, $bindings) {
             $last_insert_id = 0;
@@ -142,9 +123,7 @@ class OracleConnection extends Connection
     }
 
     /**
-     * Determine if the given database exception was caused by a unique constraint violation.
-     *
-     * @return bool
+     * {@inheritdoc}
      */
     protected function isUniqueConstraintError(Exception $exception)
     {
@@ -156,8 +135,28 @@ class OracleConnection extends Connection
      *
      * @throws \RuntimeException
      */
-    public function getSchemaState()
+    public function getSchemaState(?Filesystem $files = null, ?callable $processFactory = null)
     {
         throw new RuntimeException('Schema dumping is not supported when using Oracle.');
+    }
+
+    /**
+     * Update oracle session parameters.
+     */
+    public function setSessionParameters(array $sessionParameters): void
+    {
+        $params = [];
+        foreach ($sessionParameters as $option => $value) {
+            if (strtoupper($option) == 'CURRENT_SCHEMA') {
+                $params[] = "$option = $value";
+            } else {
+                $params[] = "$option = '$value'";
+            }
+        }
+
+        if ($params) {
+            $sql = 'ALTER SESSION SET '.implode(' ', $params);
+            $this->statement($sql);
+        }
     }
 }

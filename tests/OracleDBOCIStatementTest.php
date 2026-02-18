@@ -51,43 +51,37 @@ class OracleDBOCIStatementTest extends TestCase
 
     protected function setUp(): void
     {
-        if (! extension_loaded('oci8')) {
-            $this->markTestSkipped(
-                'The oci8 extension is not available.'
-            );
-        } else {
-            global $OCIStatementStatus, $OCIExecuteStatus, $OCIFetchStatus, $OCIFetchAllReturnEmpty, $OCIBindChangeStatus;
+        global $OCIStatementStatus, $OCIExecuteStatus, $OCIFetchStatus, $OCIFetchAllReturnEmpty, $OCIBindChangeStatus;
 
-            $OCIStatementStatus = true;
-            $OCIExecuteStatus = true;
-            $OCIFetchStatus = true;
-            $OCIFetchAllReturnEmpty = false;
-            $OCIBindChangeStatus = false;
+        $OCIStatementStatus = true;
+        $OCIExecuteStatus = true;
+        $OCIFetchStatus = true;
+        $OCIFetchAllReturnEmpty = false;
+        $OCIBindChangeStatus = false;
 
-            $this->oci = m::mock(new TestOCIStub('', null, null, [PDO::ATTR_CASE => PDO::CASE_LOWER]));
-            $this->stmt = m::mock(new TestOCIStatementStub('oci8 statement', $this->oci, '', [4321 => 'attributeValue']));
+        $this->oci = m::mock(new TestOCIStub('', null, null, [PDO::ATTR_CASE => PDO::CASE_LOWER]));
+        $this->stmt = m::mock(new TestOCIStatementStub('oci8 statement', $this->oci, '', [4321 => 'attributeValue']));
 
-            // fake result sets for all the fetch calls
-            $this->resultUpperArray = ['FNAME' => 'Test', 'LNAME' => 'Testerson', 'EMAIL' => 'tester@testing.com'];
-            $this->resultUpperObject = (object) $this->resultUpperArray;
-            $this->resultLowerArray = array_change_key_case($this->resultUpperArray, \CASE_LOWER);
-            $this->resultLowerObject = (object) $this->resultLowerArray;
+        // fake result sets for all the fetch calls
+        $this->resultUpperArray = ['FNAME' => 'Test', 'LNAME' => 'Testerson', 'EMAIL' => 'tester@testing.com'];
+        $this->resultUpperObject = (object) $this->resultUpperArray;
+        $this->resultLowerArray = array_change_key_case($this->resultUpperArray, \CASE_LOWER);
+        $this->resultLowerObject = (object) $this->resultLowerArray;
 
-            $this->resultNumArray = [0 => 'Test', 1 => 'Testerson', 2 => 'tester@testing.com'];
+        $this->resultNumArray = [0 => 'Test', 1 => 'Testerson', 2 => 'tester@testing.com'];
 
-            $this->resultBothUpperArray = [0 => 'Test', 1 => 'Testerson', 2 => 'tester@testing.com', 'FNAME' => 'Test', 'LNAME' => 'Testerson', 'EMAIL' => 'tester@testing.com'];
-            $this->resultBothLowerArray = array_change_key_case($this->resultBothUpperArray, \CASE_LOWER);
+        $this->resultBothUpperArray = [0 => 'Test', 1 => 'Testerson', 2 => 'tester@testing.com', 'FNAME' => 'Test', 'LNAME' => 'Testerson', 'EMAIL' => 'tester@testing.com'];
+        $this->resultBothLowerArray = array_change_key_case($this->resultBothUpperArray, \CASE_LOWER);
 
-            $this->resultAllUpperArray = [$this->resultUpperArray];
-            $this->resultAllUpperObject = [$this->resultUpperObject];
-            $this->resultAllLowerArray = [$this->resultLowerArray];
-            $this->resultAllLowerObject = [$this->resultLowerObject];
+        $this->resultAllUpperArray = [$this->resultUpperArray];
+        $this->resultAllUpperObject = [$this->resultUpperObject];
+        $this->resultAllLowerArray = [$this->resultLowerArray];
+        $this->resultAllLowerObject = [$this->resultLowerObject];
 
-            $this->resultAllNumArray = [$this->resultNumArray];
+        $this->resultAllNumArray = [$this->resultNumArray];
 
-            $this->resultAllBothUpperArray = [$this->resultBothUpperArray];
-            $this->resultAllBothLowerArray = [$this->resultBothLowerArray];
-        }
+        $this->resultAllBothUpperArray = [$this->resultBothUpperArray];
+        $this->resultAllBothLowerArray = [$this->resultBothLowerArray];
     }
 
     protected function tearDown(): void
@@ -206,6 +200,17 @@ class OracleDBOCIStatementTest extends TestCase
         $this->assertEquals('oci_bind_by_name', $variable);
     }
 
+    public function test_bind_param_with_return_data_type_as_int()
+    {
+        global $OCIBindChangeStatus;
+        $OCIBindChangeStatus = true;
+        $variable = '';
+
+        $stmt = new TestOCIStatementStub(true, new TestOCIStub, '', []);
+        $this->assertTrue($stmt->bindParam('param', $variable, PDO::PARAM_INT | PDO::PARAM_INPUT_OUTPUT));
+        $this->assertEquals('oci_bind_by_name', $variable);
+    }
+
     public function test_bind_value_with_valid_data_type()
     {
         $this->assertTrue($this->stmt->bindValue('param', 'hello'));
@@ -288,15 +293,16 @@ class OracleDBOCIStatementTest extends TestCase
         $ocistmt = new TestOCIStatementStub(true, '', '', []);
         $this->assertNull($ocistmt->errorCode());
 
-        // use reflection to test values of protected properties
         $reflection = new ReflectionClass($ocistmt);
 
-        // setErrorInfo
         $method = $reflection->getMethod('setErrorInfo');
-        $method->setAccessible(true);
         $method->invoke($ocistmt, '11111', '2222', 'Testing the errors');
 
         $this->assertEquals('11111', $ocistmt->errorCode());
+
+        $method->invoke($ocistmt, null, '2222', 'Testing the errors');
+
+        $this->assertEquals('JF000', $ocistmt->errorCode());
     }
 
     public function test_error_info()
@@ -304,15 +310,16 @@ class OracleDBOCIStatementTest extends TestCase
         $ocistmt = new TestOCIStatementStub(true, '', '', []);
         $this->assertEquals([0 => '', 1 => null, 2 => null], $ocistmt->errorInfo());
 
-        // use reflection to test values of protected properties
         $reflection = new ReflectionClass($ocistmt);
 
-        // setErrorInfo
         $method = $reflection->getMethod('setErrorInfo');
-        $method->setAccessible(true);
         $method->invoke($ocistmt, '11111', '2222', 'Testing the errors');
 
         $this->assertEquals([0 => '11111', 1 => '2222', 2 => 'Testing the errors'], $ocistmt->errorInfo());
+
+        $method->invoke($ocistmt, null, '2222', 'Testing the errors');
+
+        $this->assertEquals([0 => 'JF000', 1 => '2222', 2 => 'Testing the errors'], $ocistmt->errorInfo());
     }
 
     public function test_execute_passes_with_parameters()

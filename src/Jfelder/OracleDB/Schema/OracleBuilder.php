@@ -2,25 +2,61 @@
 
 namespace Jfelder\OracleDB\Schema;
 
+use Closure;
+use Illuminate\Container\Container;
+use Illuminate\Database\Schema\Builder;
+use InvalidArgumentException;
 use RuntimeException;
 
-class OracleBuilder extends \Illuminate\Database\Schema\Builder
+class OracleBuilder extends Builder
 {
     /**
-     * Determine if the given table exists.
+     * {@inheritdoc}
      *
-     * @param  string  $table
-     * @return bool
+     * @return Jfelder\OracleDB\Schema\OracleBuilder
      */
-    public function hasTable($table)
+    protected function createBlueprint($table, ?Closure $callback = null): OracleBlueprint
     {
-        $sql = $this->grammar->compileTableExists();
+        $connection = $this->connection;
 
-        $database = $this->connection->getDatabaseName();
+        if (isset($this->resolver)) {
+            return call_user_func($this->resolver, $connection, $table, $callback);
+        }
 
-        $table = $this->connection->getTablePrefix().$table;
+        return Container::getInstance()->make(OracleBlueprint::class, compact('connection', 'table', 'callback'));
+    }
 
-        return count($this->connection->select($sql, [$database, $table])) > 0;
+    /**
+     * {@inheritdoc}
+     */
+    public function getCurrentSchemaListing()
+    {
+        return [$this->connection->getConfig('username')];
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function parseSchemaAndTable($reference, $withDefaultSchema = null): array
+    {
+        $segments = explode('.', $reference);
+
+        if (count($segments) > 2) {
+            throw new InvalidArgumentException(
+                "Using three-part references is not supported, you may use `Schema::connection('{$segments[0]}')` instead."
+            );
+        }
+
+        $table = $segments[1] ?? $segments[0];
+
+        $schema = match (true) {
+            isset($segments[1]) => $segments[0],
+            is_string($withDefaultSchema) => $withDefaultSchema,
+            $withDefaultSchema => $this->getCurrentSchemaName(),
+            default => $this->connection->getConfig('username'),
+        };
+
+        return [$schema, $table];
     }
 
     /**
