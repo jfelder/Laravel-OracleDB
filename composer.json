@@ -16,6 +16,7 @@
     ],
     "require": {
         "php": "^8.2",
+        "illuminate/collections": "^12.21",
         "illuminate/database": "^12.21",
         "illuminate/pagination": "^12.21",
         "illuminate/support": "^12.21"
