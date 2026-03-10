@@ -45,8 +45,7 @@ To finish the installation, set your environment variables (typically in your .e
 env variables used in `config/oracledb.php`: such as `DB_HOST`, `DB_USERNAME`, etc.  
 
 **Date Format Config**
-The `date_format` config has been removed in favor of using the NLS_* session parameters. The session parameters default values are in the `OracleDBServiceProvider.php`. You can change these session parameters from you `.env` 
-file using the parameter name. This affects all read/write operations of any Eloquent model with date fields and any Query Builder queries that utilize a Carbon instance and bring the handling if dates in line with the framework.
+The `date_format` config has been removed in favor of using the NLS_* session parameters. The default values are defined by the package and can be overridden in `config/oracledb.php` via the `session_parameters` config array or through the corresponding environment variables such as `NLS_DATE_FORMAT`. This affects all read/write operations of any Eloquent model with date fields and any Query Builder queries that utilize a Carbon instance and brings the handling of dates in line with the framework.
 
 #### Default NLS session parameters
 
@@ -95,17 +94,16 @@ $id = DB::connection('oracle')->table('users')->insertGetId(
 > **Note:** When using the insertGetId method, you can specify the auto-incrementing column name as the second
 parameter in insertGetId function. It will default to "id" if not specified.
 
-See [Laravel Database Basic Docs](https://laravel.com/docs/9.x/database) for more information.
+See the [Laravel database documentation](https://laravel.com/docs/12.x/database) for more information.
 
 ### Unimplemented Features
 
-Some of the features available in the first-party Laravel database drivers are not implemented in this package. Pull 
-requests are welcome for implementing any of these features, or for expanding this list if you find any unimplemented 
-features not already listed.
+Some of the features available in the first-party Laravel database drivers are not implemented in this package. The list below separates features that are currently unsupported from features whose fluent modifiers are currently accepted but have no effect on the generated SQL. Pull requests are welcome for implementing any of these features, or for expanding this list if you find any gaps not already listed.
 
-#### Query Builder
+#### Unsupported: Query Builder
 
 - group limiting via a groupLimit clause `$query->groupLimit($value, $column);` note: this was only added to Laravel so Eloquent can limit the number of eagerly loaded results per parent
+- case-insensitive `LIKE` operations such as `DB::table('users')->whereLike('email', '%foo%', caseSensitive: false)->get();` use `UPPER(column) LIKE ?` style expressions instead
 - insertOrIgnore `DB::from('users')->insertOrIgnore(['email' => 'foo']);`
 - insertGetId with empty values `DB::from('users')->insertGetId([]);` (but calling with non-empty values is supported)
 - upserts `DB::from('users')->upsert([['email' => 'foo', 'name' => 'bar'], ['name' => 'bar2', 'email' => 'foo2']], 'email');`
@@ -114,35 +112,49 @@ features not already listed.
 - json operations `DB::from('users')->where('items->sku', '=', 'foo-bar')->get();`
 - whereFulltext `DB::table('users')->whereFulltext('description', 'Hello World');`
 
-#### Eloquent
+#### Unsupported: Eloquent
 
-- setting $guarded on an Eloquent model as anything other than an empty array. your models must either not define $guarded at all, or set it to an empty array. If not, Eloquent may attempt to run a column listing sql query resulting in an exception.
+- setting `$guarded` on an Eloquent model as anything other than an empty array, for example `protected $guarded = ['id'];`. Models must either not define `$guarded` at all, or set it to an empty array. If not, Eloquent may attempt to run a column listing SQL query resulting in an exception.
 - limiting the number of eagerly loaded results per parent, ie get only 3 posts per user `User::with(['posts' => fn ($query) => $query->limit(3)])->paginate();`
 
-#### Schema Builder
+#### Unsupported: Schema Builder
 
-- drop all tables, views, or types `Schema::dropAllTables()`, `Schema::dropAllViews()`, and `Schema::dropAllTypes()`
+- schema dumping such as `php artisan schema:dump` or `php artisan schema:dump --prune`
+- creating databases `Schema::createDatabase('example')`
+- dropping databases `Schema::dropDatabaseIfExists('example')`
+- column listing operations such as `Schema::getColumnListing('users')`
 - set collation on a table `$blueprint->collation('BINARY_CI')`
 - set collation on a column `$blueprint->string('some_column')->collation('BINARY_CI')`
-- set comments on a table `$blueprint->comment("This table is great.")`
-- set comments on a column `$blueprint->string('foo')->comment("Some helpful info about the foo column")`
-- set the starting value of an auto-incrementing column `$blueprint->increments('id')->startingValue(1000)`
 - create a private temporary table `$blueprint->temporary()`
 - rename an index `$blueprint->renameIndex('foo', 'bar')`
 - specify an algorithm when creating an index via the third argument `$blueprint->index(['foo', 'bar'], 'baz', 'hash')`
 - create a spatial index `$blueprint->spatialIndex('coordinates')`
 - create a spatial index fluently `$blueprint->point('coordinates')->spatialIndex()`
 - create a generated column, like the mysql driver has `virtualAs` and `storedAs` and postgres has `generatedAs`; ie, assuming an integer type column named price exists on the table, `$blueprint->integer('discounted_virtual')->virtualAs('price - 5')`
-- create a json column `$blueprint->json('foo')` or jsonb column `$blueprint->jsonb('foo')` (oracle recommends storing json in VARCHAR2, CLOB, or BLOB columns)
-- create a datetime with timezone column without precision `$blueprint->dateTimeTz('created_at')`, or with precision `$blueprint->timestampTz('created_at', 1)`
-- create Laravel-style timestamp columns having a timezone component `$blueprint->timestampsTz()`
-- create a uuid column `$blueprint->uuid('foo')` (oracle recommends a column of data type 16 byte raw for storing uuids)
-- create a foreign uuid column `$blueprint->foreignUuid('foo')`
-- create a column to hold IP addresses `$blueprint->ipAddress('foo')` (would be implemented as varchar2 45)
-- create a column to hold MAC addresses `$blueprint->macAddress('foo')` (would be implemented as varchar2 17)
 - create a geometry column `$blueprint->geometry('coordinates')`
 - create a geography column `$blueprint->geography('coordinates')`
-- create a timestamp column with `useCurrent` modifier `$blueprint->timestamp('created_at')->useCurrent()`
+
+#### Accepted But Currently No-Op
+
+- starting values on identity columns via `$blueprint->increments('id')->startingValue(1000)`
+
+#### Supported With Limitations
+
+- `json()` and `jsonb()` schema columns are stored as `CLOB`, for example `$blueprint->json('payload')` or `$blueprint->jsonb('payload')`. Query Builder JSON operators remain unsupported.
+
+### Testing
+
+If OCI8 is not installed locally, you can still run the portable portion of the test suite:
+
+```sh
+vendor/bin/phpunit --exclude-group oci8
+```
+
+If OCI8 is available, run the full suite:
+
+```sh
+vendor/bin/phpunit
+```
 
 ### License
 
