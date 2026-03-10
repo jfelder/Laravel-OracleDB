@@ -218,7 +218,31 @@ class OracleDBSchemaGrammarTest extends TestCase
         $statements = $OracleBlueprint->toSql();
 
         $this->assertEquals(1, count($statements));
-        $this->assertEquals("begin execute immediate 'drop table users'; exception when others then if sqlcode != -942 then raise; end if; end;", $statements[0]);
+        $this->assertEquals("begin execute immediate 'drop table users purge'; exception when others then if sqlcode != -942 then raise; end if; end;", $statements[0]);
+    }
+
+    public function test_drop_all_views()
+    {
+        $grammar = $this->getGrammar();
+
+        $this->assertSame('begin
+            for v in (select view_name from user_views) loop
+            execute immediate (\'drop view "\' || v.view_name || \'"\');
+            end loop;
+
+            end;', $grammar->compileDropAllViews());
+    }
+
+    public function test_drop_all_types()
+    {
+        $grammar = $this->getGrammar();
+
+        $this->assertSame('begin
+            for t in (select type_name from user_types) loop
+            execute immediate (\'drop type "\' || t.type_name || \'" force\');
+            end loop;
+
+            end;', $grammar->compileDropAllTypes());
     }
 
     public function test_drop_column()
@@ -465,6 +489,33 @@ class OracleDBSchemaGrammarTest extends TestCase
         ], $statements);
     }
 
+    public function test_adding_uuid()
+    {
+        $OracleBlueprint = new OracleBlueprint($this->getConnection(), 'users');
+        $OracleBlueprint->uuid('foo');
+        $statements = $OracleBlueprint->toSql();
+
+        $this->assertCount(1, $statements);
+        $this->assertSame('alter table users add ( foo raw(16) not null )', $statements[0]);
+    }
+
+    public function test_adding_foreign_uuid()
+    {
+        $OracleBlueprint = new OracleBlueprint($this->getConnection(), 'users');
+        $foreignUuid = $OracleBlueprint->foreignUuid('foo');
+        $OracleBlueprint->foreignUuid('company_uuid')->constrained('companies');
+
+        $statements = $OracleBlueprint->toSql();
+
+        $this->assertInstanceOf(ForeignIdColumnDefinition::class, $foreignUuid);
+        $this->assertCount(3, $statements);
+        $this->assertSame([
+            'alter table users add ( foo raw(16) not null )',
+            'alter table users add ( company_uuid raw(16) not null )',
+            'alter table users add constraint users_company_uuid_foreign foreign key ( company_uuid ) references companies ( id )',
+        ], $statements);
+    }
+
     public function test_adding_big_incrementing_id()
     {
         $OracleBlueprint = new OracleBlueprint($this->getConnection(), 'users');
@@ -686,6 +737,46 @@ class OracleDBSchemaGrammarTest extends TestCase
         $this->assertEquals('alter table users add ( foo date not null )', $statements[0]);
     }
 
+    public function test_adding_ip_address()
+    {
+        $OracleBlueprint = new OracleBlueprint($this->getConnection(), 'users');
+        $OracleBlueprint->ipAddress('foo');
+        $statements = $OracleBlueprint->toSql();
+
+        $this->assertCount(1, $statements);
+        $this->assertSame('alter table users add ( foo varchar2(45) not null )', $statements[0]);
+    }
+
+    public function test_adding_mac_address()
+    {
+        $OracleBlueprint = new OracleBlueprint($this->getConnection(), 'users');
+        $OracleBlueprint->macAddress('foo');
+        $statements = $OracleBlueprint->toSql();
+
+        $this->assertCount(1, $statements);
+        $this->assertSame('alter table users add ( foo varchar2(17) not null )', $statements[0]);
+    }
+
+    public function test_adding_json()
+    {
+        $OracleBlueprint = new OracleBlueprint($this->getConnection(), 'users');
+        $OracleBlueprint->json('foo');
+        $statements = $OracleBlueprint->toSql();
+
+        $this->assertCount(1, $statements);
+        $this->assertSame('alter table users add ( foo clob not null )', $statements[0]);
+    }
+
+    public function test_adding_jsonb()
+    {
+        $OracleBlueprint = new OracleBlueprint($this->getConnection(), 'users');
+        $OracleBlueprint->jsonb('foo');
+        $statements = $OracleBlueprint->toSql();
+
+        $this->assertCount(1, $statements);
+        $this->assertSame('alter table users add ( foo clob not null )', $statements[0]);
+    }
+
     public function test_adding_date_time()
     {
         $OracleBlueprint = new OracleBlueprint($this->getConnection(), 'users');
@@ -725,6 +816,49 @@ class OracleDBSchemaGrammarTest extends TestCase
         $this->assertSame('alter table users add ( created_at timestamp default CURRENT_TIMESTAMP not null )', $statements[0]);
     }
 
+    public function test_adding_timestamp_with_use_current()
+    {
+        $OracleBlueprint = new OracleBlueprint($this->getConnection(), 'users');
+        $OracleBlueprint->timestamp('created_at')->useCurrent();
+        $statements = $OracleBlueprint->toSql();
+
+        $this->assertCount(1, $statements);
+        $this->assertSame('alter table users add ( created_at timestamp default CURRENT_TIMESTAMP not null )', $statements[0]);
+    }
+
+    public function test_adding_date_time_tz()
+    {
+        $OracleBlueprint = new OracleBlueprint($this->getConnection(), 'users');
+        $OracleBlueprint->dateTimeTz('foo');
+        $statements = $OracleBlueprint->toSql();
+
+        $this->assertCount(1, $statements);
+        $this->assertSame('alter table users add ( foo timestamp with time zone not null )', $statements[0]);
+    }
+
+    public function test_adding_timestamp_tz_with_precision()
+    {
+        $OracleBlueprint = new OracleBlueprint($this->getConnection(), 'users');
+        $OracleBlueprint->timestampTz('foo', 1);
+        $statements = $OracleBlueprint->toSql();
+
+        $this->assertCount(1, $statements);
+        $this->assertSame('alter table users add ( foo timestamp(1) with time zone not null )', $statements[0]);
+    }
+
+    public function test_adding_timestamps_tz()
+    {
+        $OracleBlueprint = new OracleBlueprint($this->getConnection(), 'users');
+        $OracleBlueprint->timestampsTz();
+        $statements = $OracleBlueprint->toSql();
+
+        $this->assertCount(2, $statements);
+        $this->assertSame([
+            'alter table users add ( created_at timestamp with time zone null )',
+            'alter table users add ( updated_at timestamp with time zone null )',
+        ], $statements);
+    }
+
     public function test_adding_time_stamps()
     {
         $OracleBlueprint = new OracleBlueprint($this->getConnection(), 'users');
@@ -750,14 +884,30 @@ class OracleDBSchemaGrammarTest extends TestCase
 
     public function test_adding_comment()
     {
-        // calling ->comment() on a column should have no effect on the generated sql because it hasn't been implemented
-
         $OracleBlueprint = new OracleBlueprint($this->getConnection(), 'users');
         $OracleBlueprint->string('foo')->comment("Escape ' when using words like it's");
         $statements = $OracleBlueprint->toSql();
 
-        $this->assertCount(1, $statements);
-        $this->assertSame('alter table users add ( foo varchar2(255) not null )', $statements[0]);
+        $this->assertCount(2, $statements);
+        $this->assertSame([
+            'alter table users add ( foo varchar2(255) not null )',
+            'comment on column users.foo is \'Escape \'\' when using words like it\'\'s\'',
+        ], $statements);
+    }
+
+    public function test_table_comment()
+    {
+        $OracleBlueprint = new OracleBlueprint($this->getConnection(), 'users');
+        $OracleBlueprint->create();
+        $OracleBlueprint->string('foo');
+        $OracleBlueprint->comment("Users table's comment");
+        $statements = $OracleBlueprint->toSql();
+
+        $this->assertCount(2, $statements);
+        $this->assertSame([
+            'create table users ( foo varchar2(255) not null)',
+            'comment on table users is \'Users table\'\'s comment\'',
+        ], $statements);
     }
 
     public function test_basic_select_using_quotes()

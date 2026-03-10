@@ -11,6 +11,36 @@ use RuntimeException;
 class OracleBuilder extends Builder
 {
     /**
+     * Drop all tables from the database.
+     */
+    public function dropAllTables()
+    {
+        $this->connection->statement(
+            $this->grammar->compileDropAllTables()
+        );
+    }
+
+    /**
+     * Drop all views from the database.
+     */
+    public function dropAllViews()
+    {
+        $this->connection->statement(
+            $this->grammar->compileDropAllViews()
+        );
+    }
+
+    /**
+     * Drop all types from the database.
+     */
+    public function dropAllTypes()
+    {
+        $this->connection->statement(
+            $this->grammar->compileDropAllTypes()
+        );
+    }
+
+    /**
      * {@inheritdoc}
      *
      * @return Jfelder\OracleDB\Schema\OracleBuilder

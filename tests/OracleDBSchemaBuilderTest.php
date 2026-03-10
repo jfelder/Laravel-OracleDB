@@ -123,4 +123,43 @@ class OracleDBSchemaBuilderTest extends TestCase
 
         $this->assertEquals(['column'], $builder->getColumnListing('table'));
     }
+
+    public function test_drop_all_tables()
+    {
+        $connection = m::mock(OracleConnection::class);
+        $grammar = m::mock(OracleGrammar::class);
+        $connection->shouldReceive('getSchemaGrammar')->andReturn($grammar);
+        $grammar->shouldReceive('compileDropAllTables')->once()->withNoArgs()->andReturn('drop all tables sql');
+        $connection->shouldReceive('statement')->once()->with('drop all tables sql');
+
+        $builder = new OracleBuilder($connection);
+
+        $builder->dropAllTables();
+    }
+
+    public function test_drop_all_views()
+    {
+        $connection = m::mock(OracleConnection::class);
+        $grammar = m::mock(OracleGrammar::class);
+        $connection->shouldReceive('getSchemaGrammar')->andReturn($grammar);
+        $grammar->shouldReceive('compileDropAllViews')->once()->withNoArgs()->andReturn('drop all views sql');
+        $connection->shouldReceive('statement')->once()->with('drop all views sql');
+
+        $builder = new OracleBuilder($connection);
+
+        $builder->dropAllViews();
+    }
+
+    public function test_drop_all_types()
+    {
+        $connection = m::mock(OracleConnection::class);
+        $grammar = m::mock(OracleGrammar::class);
+        $connection->shouldReceive('getSchemaGrammar')->andReturn($grammar);
+        $grammar->shouldReceive('compileDropAllTypes')->once()->withNoArgs()->andReturn('drop all types sql');
+        $connection->shouldReceive('statement')->once()->with('drop all types sql');
+
+        $builder = new OracleBuilder($connection);
+
+        $builder->dropAllTypes();
+    }
 }

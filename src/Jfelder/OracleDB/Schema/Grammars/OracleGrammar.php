@@ -4,6 +4,7 @@ namespace Jfelder\OracleDB\Schema\Grammars;
 
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Schema\Grammars\Grammar;
+use Illuminate\Database\Query\Expression;
 use Illuminate\Support\Fluent;
 use LogicException;
 
@@ -22,6 +23,13 @@ class OracleGrammar extends Grammar
      * @var array
      */
     protected $modifiers = ['Nullable', 'Default', 'Identity', 'Increment'];
+
+    /**
+     * The commands to be executed outside of create or alter commands.
+     *
+     * @var string[]
+     */
+    protected $fluentCommands = ['Comment'];
 
     /**
      * The possible column serials.
@@ -139,6 +147,35 @@ class OracleGrammar extends Grammar
         $sql .= (string) $this->addPrimaryKeys($blueprint);
 
         return $sql .= ')';
+    }
+
+    /**
+     * Compile a comment command.
+     */
+    public function compileComment(Blueprint $blueprint, Fluent $command)
+    {
+        if (is_null($comment = $command->column->comment)) {
+            return null;
+        }
+
+        return sprintf(
+            'comment on column %s.%s is %s',
+            $this->wrapTable($blueprint),
+            $this->wrap($command->column->name),
+            "'".str_replace("'", "''", $comment)."'"
+        );
+    }
+
+    /**
+     * Compile a table comment command.
+     */
+    public function compileTableComment(Blueprint $blueprint, Fluent $command)
+    {
+        return sprintf(
+            'comment on table %s is %s',
+            $this->wrapTable($blueprint),
+            "'".str_replace("'", "''", $command->comment)."'"
+        );
     }
 
     /**
@@ -268,13 +305,56 @@ class OracleGrammar extends Grammar
     }
 
     /**
+     * @inheritdoc
+     */
+    public function compileDropAllTables($schema = ''): string
+    {
+        return 'begin
+            for c in (select table_name from user_tables where secondary = \'N\') loop
+            execute immediate (\'drop table "\' || c.table_name || \'" cascade constraints purge\');
+            end loop;
+
+            for s in (select sequence_name from user_sequences) loop
+            execute immediate (\'drop sequence \' || s.sequence_name);
+            end loop;
+
+            end;';
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function compileDropAllViews($schema = ''): string
+    {
+        return 'begin
+            for v in (select view_name from user_views) loop
+            execute immediate (\'drop view "\' || v.view_name || \'"\');
+            end loop;
+
+            end;';
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function compileDropAllTypes($schema = ''): string
+    {
+        return 'begin
+            for t in (select type_name from user_types) loop
+            execute immediate (\'drop type "\' || t.type_name || \'" force\');
+            end loop;
+
+            end;';
+    }
+
+    /**
      * {@inheritdoc}
      */
     public function compileDropIfExists(Blueprint $blueprint, Fluent $command)
     {
         $table = $this->wrapTable($blueprint);
 
-        return "begin execute immediate 'drop table {$this->wrapTable($blueprint)}'; exception when others then if sqlcode != -942 then raise; end if; end;";
+        return "begin execute immediate 'drop table {$this->wrapTable($blueprint)} purge'; exception when others then if sqlcode != -942 then raise; end if; end;";
     }
 
     /**
@@ -546,6 +626,61 @@ class OracleGrammar extends Grammar
     }
 
     /**
+     * Create the column definition for an IP address type.
+     *
+     * @param  Illuminate\Support\Fluent  $column
+     * @return string
+     */
+    protected function typeIpAddress(Fluent $column)
+    {
+        return 'varchar2(45)';
+    }
+
+    /**
+     * Create the column definition for a MAC address type.
+     *
+     * @param  Illuminate\Support\Fluent  $column
+     * @return string
+     */
+    protected function typeMacAddress(Fluent $column)
+    {
+        return 'varchar2(17)';
+    }
+
+    /**
+     * Create the column definition for a UUID type.
+     *
+     * @param  Illuminate\Support\Fluent  $column
+     * @return string
+     */
+    protected function typeUuid(Fluent $column)
+    {
+        return 'raw(16)';
+    }
+
+    /**
+     * Create the column definition for a JSON type.
+     *
+     * @param  Illuminate\Support\Fluent  $column
+     * @return string
+     */
+    protected function typeJson(Fluent $column)
+    {
+        return 'clob';
+    }
+
+    /**
+     * Create the column definition for a JSONB type.
+     *
+     * @param  Illuminate\Support\Fluent  $column
+     * @return string
+     */
+    protected function typeJsonb(Fluent $column)
+    {
+        return 'clob';
+    }
+
+    /**
      * Create the column definition for a date-time type.
      *
      * @param  Illuminate\Support\Fluent  $column
@@ -554,6 +689,17 @@ class OracleGrammar extends Grammar
     protected function typeDateTime(Fluent $column)
     {
         return 'date';
+    }
+
+    /**
+     * Create the column definition for a date-time (with time zone) type.
+     *
+     * @param  Illuminate\Support\Fluent  $column
+     * @return string
+     */
+    protected function typeDateTimeTz(Fluent $column)
+    {
+        return $this->typeTimestampTz($column);
     }
 
     /**
@@ -575,7 +721,26 @@ class OracleGrammar extends Grammar
      */
     protected function typeTimestamp(Fluent $column)
     {
+        if ($column->useCurrent) {
+            $column->default(new Expression('CURRENT_TIMESTAMP'));
+        }
+
         return 'timestamp';
+    }
+
+    /**
+     * Create the column definition for a timestamp (with time zone) type.
+     *
+     * @param  Illuminate\Support\Fluent  $column
+     * @return string
+     */
+    protected function typeTimestampTz(Fluent $column)
+    {
+        if ($column->useCurrent) {
+            $column->default(new Expression('CURRENT_TIMESTAMP'));
+        }
+
+        return 'timestamp'.(is_null($column->precision) || $column->precision === 0 ? '' : "($column->precision)").' with time zone';
     }
 
     /**
