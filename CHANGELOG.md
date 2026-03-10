@@ -1,5 +1,20 @@
 # Changelog
 
+## [12.1.0](https://github.com/jfelder/Laravel-OracleDB/compare/v12.0.0...v12.1.0) (2026-03-10)
+
+
+### Features
+
+* **schema:** expand Oracle schema support ([20c4e99](https://github.com/jfelder/Laravel-OracleDB/commit/20c4e99672a0a82189dc183ee8b3329405190f2c))
+
+
+### Bug Fixes
+
+* **config:** honor session_parameters overrides ([a573208](https://github.com/jfelder/Laravel-OracleDB/commit/a5732088a431a24f9e5f9764e1ed1cb0cbea5f77))
+* **deps:** raise minimum illuminate version to 12.21 ([461074d](https://github.com/jfelder/Laravel-OracleDB/commit/461074db0e15b813eebb5400a05afd2d1254b077))
+* **deps:** require illuminate collections 12.21 ([e926fbd](https://github.com/jfelder/Laravel-OracleDB/commit/e926fbd1f6b4746505a9042f85bcecf30d47a50f))
+* **query:** support subqueries in whereBetween ([96a1e56](https://github.com/jfelder/Laravel-OracleDB/commit/96a1e56cabfa77bf6c53fb203a1773ba0b25151c))
+
 ## [12.0.0](https://github.com/jfelder/Laravel-OracleDB/compare/11.0.2...v12.0.0) (2026-02-18)
 
 
