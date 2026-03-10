@@ -7,6 +7,7 @@ use Jfelder\OracleDB\OCI_PDO\OCIException;
 use Jfelder\OracleDB\OCI_PDO\OCIStatement;
 use Mockery as m;
 use PDO;
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
 use TestOCIStatementStub;
@@ -15,8 +16,11 @@ use TestOCIStub;
 include 'mocks/OCIMocks.php';
 include 'mocks/OCIFunctions.php';
 
+#[Group('oci8')]
 class OracleDBOCIStatementTest extends TestCase
 {
+    use RequiresOci8;
+
     public $oci;
 
     public $stmt;
@@ -51,6 +55,8 @@ class OracleDBOCIStatementTest extends TestCase
 
     protected function setUp(): void
     {
+        $this->requireOci8();
+
         global $OCIStatementStatus, $OCIExecuteStatus, $OCIFetchStatus, $OCIFetchAllReturnEmpty, $OCIBindChangeStatus;
 
         $OCIStatementStatus = true;

@@ -7,18 +7,24 @@ use Jfelder\OracleDB\OCI_PDO\OCIException;
 use Jfelder\OracleDB\OCI_PDO\OCIStatement;
 use Mockery as m;
 use PDO;
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
 use TestOCIStub;
 
 include 'mocks/OCIMocks.php';
 include 'mocks/OCIFunctions.php';
 
+#[Group('oci8')]
 class OracleDBOCITest extends TestCase
 {
+    use RequiresOci8;
+
     private $oci;
 
     protected function setUp(): void
     {
+        $this->requireOci8();
+
         global $OCITransactionStatus, $OCIStatementStatus, $OCIExecuteStatus;
 
         $OCITransactionStatus = true;

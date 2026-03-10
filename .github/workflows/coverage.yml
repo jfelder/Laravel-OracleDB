@@ -5,15 +5,14 @@ on:
     - cron: '0 3 1 * *' 
   workflow_dispatch:
 
+concurrency:
+  group: coverage-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   coverage:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        php: ['8.2', '8.3', '8.4', '8.5']
-      fail-fast: false
-
-    name: PHP ${{ matrix.php }} - Coverage
+    name: PHP 8.3 - Coverage
 
     steps:
       - uses: actions/checkout@v4
@@ -21,42 +20,42 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: ${{ matrix.php }}
+          php-version: '8.3'
           extensions: pcov, oci8
           coverage: pcov
-          tools: composer, pest
+          tools: composer
 
       - name: Cache Composer packages
-        id: composer-cache
         uses: actions/cache@v4
         with:
-          path: vendor
-          key: composer-${{ runner.os }}-${{ matrix.php }}-${{ hashFiles('composer.lock') }}
+          path: |
+            ~/.composer/cache/files
+            ~/.cache/composer/files
+          key: composer-coverage-${{ runner.os }}-8.3-${{ hashFiles('composer.lock') }}
           restore-keys: |
-            composer-${{ runner.os }}-${{ matrix.php }}-
+            composer-coverage-${{ runner.os }}-8.3-
 
       - name: Install dependencies
-        if: steps.composer-cache.outputs.cache-hit != 'true'
         run: composer install --prefer-dist --no-progress --no-interaction
 
       - name: Run tests with coverage
         run: |
           vendor/bin/phpunit \
-            --coverage-html coverage-report-php${{ matrix.php }} \
-            --coverage-clover clover-php${{ matrix.php }}.xml
+            --coverage-html coverage-report-php8.3 \
+            --coverage-clover clover-php8.3.xml
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          files: clover-php${{ matrix.php }}.xml
-          name: php${{ matrix.php }}
+          files: clover-php8.3.xml
+          name: php8.3
           fail_ci_if_error: false
 
       - name: Upload coverage artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: coverage-php${{ matrix.php }}
+          name: coverage-php8.3
           path: |
-            coverage-report-php${{ matrix.php }}/
-            clover-php${{ matrix.php }}.xml
+            coverage-report-php8.3/
+            clover-php8.3.xml

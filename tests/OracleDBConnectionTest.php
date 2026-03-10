@@ -9,12 +9,21 @@ use Jfelder\OracleDB\Query\OracleBuilder as QueryOracleBuilder;
 use Jfelder\OracleDB\Schema\OracleBuilder as SchemaOracleBuilder;
 use Mockery as m;
 use PDO;
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 
+#[Group('oci8')]
 class OracleDBConnectionTest extends TestCase
 {
+    use RequiresOci8;
+
+    protected function setUp(): void
+    {
+        $this->requireOci8();
+    }
+
     protected function tearDown(): void
     {
         m::close();

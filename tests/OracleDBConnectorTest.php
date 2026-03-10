@@ -6,16 +6,22 @@ use Jfelder\OracleDB\Connectors\OracleConnector;
 use Jfelder\OracleDB\OCI_PDO\OCI;
 use Mockery as m;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 
 include 'mocks/OCIFunctions.php';
 
+#[Group('oci8')]
 class OracleDBConnectorTest extends TestCase
 {
+    use RequiresOci8;
+
     protected function setUp(): void
     {
         parent::setUp();
+
+        $this->requireOci8();
 
         global $OCITransactionStatus;
 

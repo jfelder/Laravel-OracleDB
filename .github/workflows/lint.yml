@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [ master, '*.x' ]
 
+concurrency:
+  group: lint-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   lint:
     runs-on: ubuntu-latest
@@ -25,7 +29,9 @@ jobs:
       - name: Cache Composer packages
         uses: actions/cache@v4
         with:
-          path: vendor
+          path: |
+            ~/.composer/cache/files
+            ~/.cache/composer/files
           key: composer-lint-${{ runner.os }}-${{ hashFiles('composer.lock') }}
           restore-keys: composer-lint-${{ runner.os }}-
 

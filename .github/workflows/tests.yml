@@ -6,7 +6,40 @@ on:
   pull_request:
     branches: [ master, '*.x' ]
 
+concurrency:
+  group: tests-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
+  portable:
+    runs-on: ubuntu-latest
+    name: Portable Tests - PHP 8.3
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          tools: composer
+
+      - name: Cache Composer packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.composer/cache/files
+            ~/.cache/composer/files
+          key: composer-portable-${{ runner.os }}-8.3-${{ hashFiles('composer.lock') }}
+          restore-keys: |
+            composer-portable-${{ runner.os }}-8.3-
+
+      - name: Install dependencies
+        run: composer install --prefer-dist --no-progress --no-interaction
+
+      - name: Run portable test suite
+        run: vendor/bin/phpunit --exclude-group oci8
+
   test:
     runs-on: ubuntu-latest
     strategy:
@@ -28,17 +61,22 @@ jobs:
           tools: composer
 
       - name: Cache Composer packages
-        id: composer-cache
         uses: actions/cache@v4
         with:
-          path: vendor
-          key: composer-${{ runner.os }}-${{ matrix.php }}-${{ hashFiles('composer.lock') }}
+          path: |
+            ~/.composer/cache/files
+            ~/.cache/composer/files
+          key: composer-${{ runner.os }}-${{ matrix.php }}-${{ matrix.stability }}-${{ hashFiles('composer.lock') }}
           restore-keys: |
-            composer-${{ runner.os }}-${{ matrix.php }}-
+            composer-${{ runner.os }}-${{ matrix.php }}-${{ matrix.stability }}-
 
-      - name: Install dependencies
-        if: steps.composer-cache.outputs.cache-hit != 'true'
+      - name: Install dependencies (prefer stable)
+        if: matrix.stability == 'prefer-stable'
         run: composer install --prefer-dist --no-progress --no-interaction
+
+      - name: Install dependencies (prefer lowest)
+        if: matrix.stability == 'prefer-lowest'
+        run: composer update --prefer-lowest --prefer-stable --prefer-dist --no-progress --no-interaction
 
       - name: Run tests
         run: vendor/bin/phpunit
