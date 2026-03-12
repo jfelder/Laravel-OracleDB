@@ -9,6 +9,11 @@ use Illuminate\Database\Query\Expression;
 class OracleBuilder extends Builder
 {
     /**
+     * The result alias used by Oracle exists queries.
+     */
+    protected const EXISTS_ALIAS = 'oracle_exists';
+
+    /**
      * Add a subquery cross join to the query.
      *
      * @param  \Closure|\Illuminate\Database\Query\Builder|string  $query
@@ -51,5 +56,30 @@ class OracleBuilder extends Builder
         }
 
         return parent::whereBetween($column, $values, $boolean, $not);
+    }
+
+    /**
+     * Determine if any rows exist for the current query.
+     *
+     * Oracle cannot safely alias this result to "exists", so read the
+     * Oracle-specific alias first and fall back to the Laravel default.
+     *
+     * @return bool
+     */
+    public function exists()
+    {
+        $this->applyBeforeQueryCallbacks();
+
+        $results = $this->connection->select(
+            $this->grammar->compileExists($this), $this->getBindings(), ! $this->useWritePdo
+        );
+
+        if (isset($results[0])) {
+            $results = (array) $results[0];
+
+            return (bool) ($results[static::EXISTS_ALIAS] ?? $results['exists'] ?? false);
+        }
+
+        return false;
     }
 }

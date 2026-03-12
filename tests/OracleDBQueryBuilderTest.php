@@ -2565,12 +2565,12 @@ class OracleDBQueryBuilderTest extends TestCase
         $this->assertEquals(1, $results);
 
         $builder = $this->getBuilder();
-        $builder->getConnection()->shouldReceive('select')->once()->with('select case when exists(select * from "users") then 1 else 0 end as "exists" from dual', [], true)->andReturn([['exists' => 1]]);
+        $builder->getConnection()->shouldReceive('select')->once()->with('select case when exists(select * from "users") then 1 else 0 end as "oracle_exists" from dual', [], true)->andReturn([['oracle_exists' => 1]]);
         $results = $builder->from('users')->exists();
         $this->assertTrue($results);
 
         $builder = $this->getBuilder();
-        $builder->getConnection()->shouldReceive('select')->once()->with('select case when exists(select * from "users") then 1 else 0 end as "exists" from dual', [], true)->andReturn([['exists' => 0]]);
+        $builder->getConnection()->shouldReceive('select')->once()->with('select case when exists(select * from "users") then 1 else 0 end as "oracle_exists" from dual', [], true)->andReturn([['oracle_exists' => 0]]);
         $results = $builder->from('users')->doesntExist();
         $this->assertTrue($results);
 
@@ -2618,13 +2618,13 @@ class OracleDBQueryBuilderTest extends TestCase
     public function test_exists_or()
     {
         $builder = $this->getBuilder();
-        $builder->getConnection()->shouldReceive('select')->andReturn([['exists' => 1]]);
+        $builder->getConnection()->shouldReceive('select')->andReturn([['oracle_exists' => 1]]);
         $results = $builder->from('users')->doesntExistOr(function () {
             return 123;
         });
         $this->assertSame(123, $results);
         $builder = $this->getBuilder();
-        $builder->getConnection()->shouldReceive('select')->andReturn([['exists' => 0]]);
+        $builder->getConnection()->shouldReceive('select')->andReturn([['oracle_exists' => 0]]);
         $results = $builder->from('users')->doesntExistOr(function () {
             throw new RuntimeException;
         });
@@ -2634,13 +2634,13 @@ class OracleDBQueryBuilderTest extends TestCase
     public function test_doesnt_exists_or()
     {
         $builder = $this->getBuilder();
-        $builder->getConnection()->shouldReceive('select')->andReturn([['exists' => 0]]);
+        $builder->getConnection()->shouldReceive('select')->andReturn([['oracle_exists' => 0]]);
         $results = $builder->from('users')->existsOr(function () {
             return 123;
         });
         $this->assertSame(123, $results);
         $builder = $this->getBuilder();
-        $builder->getConnection()->shouldReceive('select')->andReturn([['exists' => 1]]);
+        $builder->getConnection()->shouldReceive('select')->andReturn([['oracle_exists' => 1]]);
         $results = $builder->from('users')->existsOr(function () {
             throw new RuntimeException;
         });
@@ -3063,7 +3063,7 @@ class OracleDBQueryBuilderTest extends TestCase
     public function test_preserved_are_applied_by_exists()
     {
         $builder = $this->getBuilder();
-        $builder->getConnection()->shouldReceive('select')->once()->with('select case when exists(select * from "users") then 1 else 0 end as "exists" from dual', [], true);
+        $builder->getConnection()->shouldReceive('select')->once()->with('select case when exists(select * from "users") then 1 else 0 end as "oracle_exists" from dual', [], true);
         $builder->beforeQuery(function ($builder) {
             $builder->from('users');
         });

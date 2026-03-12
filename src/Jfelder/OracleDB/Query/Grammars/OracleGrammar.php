@@ -229,7 +229,7 @@ class OracleGrammar extends BaseGrammar
     {
         $select = $this->compileSelect($query);
 
-        return "select case when exists({$select}) then 1 else 0 end as {$this->wrap('exists')} from dual";
+        return "select case when exists({$select}) then 1 else 0 end as {$this->wrap('oracle_exists')} from dual";
     }
 
     /**
