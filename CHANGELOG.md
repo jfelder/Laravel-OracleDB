@@ -1,5 +1,12 @@
 # Changelog
 
+## [12.1.1](https://github.com/jfelder/Laravel-OracleDB/compare/v12.1.0...v12.1.1) (2026-03-12)
+
+
+### Bug Fixes
+
+* **query:** avoid reserved exists alias in Oracle ([0ece9fa](https://github.com/jfelder/Laravel-OracleDB/commit/0ece9fa6dd0e3e73d36f14c7b0dfdb498925e49e))
+
 ## [12.1.0](https://github.com/jfelder/Laravel-OracleDB/compare/v12.0.0...v12.1.0) (2026-03-10)
 
 
