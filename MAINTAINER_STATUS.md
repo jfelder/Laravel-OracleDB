@@ -198,10 +198,15 @@ Further work here would make refactoring and bug fixes even easier to validate o
 Review [`README.md`](/Users/JFELDER/projects/Laravel-OracleDB/README.md) against current code and tests, especially for:
 
 - `insertOrIgnore`
+- `insertOrIgnoreReturning`
+- `insertOrIgnoreUsing`
 - `upsert`
 - JSON operations
+- JSON overlap and key-existence helpers
 - `whereFulltext`
 - `renameIndex()`
+- `vector()` and `vectorIndex()`
+- `Schema::ensureVectorExtensionExists()`
 - spatial and generated column features
 
 The package now has a mix of fully supported, unsupported, and supported-with-limitations features. That classification should stay explicit.

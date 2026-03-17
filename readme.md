@@ -105,11 +105,15 @@ Some of the features available in the first-party Laravel database drivers are n
 - group limiting via a groupLimit clause `$query->groupLimit($value, $column);` note: this was only added to Laravel so Eloquent can limit the number of eagerly loaded results per parent
 - case-insensitive `LIKE` operations such as `DB::table('users')->whereLike('email', '%foo%', caseSensitive: false)->get();` use `UPPER(column) LIKE ?` style expressions instead
 - insertOrIgnore `DB::from('users')->insertOrIgnore(['email' => 'foo']);`
+- insertOrIgnoreReturning `DB::from('users')->insertOrIgnoreReturning([['email' => 'foo']], ['id']);`
+- insertOrIgnoreUsing `DB::from('users')->insertOrIgnoreUsing(['email'], DB::table('staging_users')->select('email'));`
 - insertGetId with empty values `DB::from('users')->insertGetId([]);` (but calling with non-empty values is supported)
 - upserts `DB::from('users')->upsert([['email' => 'foo', 'name' => 'bar'], ['name' => 'bar2', 'email' => 'foo2']], 'email');`
 - deleting with a join `DB::from('users')->join('contacts', 'users.id', '=', 'contacts.id')->where('users.email', '=', 'foo')->delete();`
 - deleting with a limit `DB::from('users')->where('email', '=', 'foo')->orderBy('id')->take(1)->delete();`
 - json operations `DB::from('users')->where('items->sku', '=', 'foo-bar')->get();`
+- JSON overlap operations such as `DB::from('users')->whereJsonOverlaps('options->languages', ['en', 'fr'])->get();`
+- JSON key existence operations such as `DB::from('users')->whereJsonContainsKey('options->languages')->get();`
 - whereFulltext `DB::table('users')->whereFulltext('description', 'Hello World');`
 
 #### Unsupported: Eloquent
@@ -133,6 +137,9 @@ Some of the features available in the first-party Laravel database drivers are n
 - create a generated column, like the mysql driver has `virtualAs` and `storedAs` and postgres has `generatedAs`; ie, assuming an integer type column named price exists on the table, `$blueprint->integer('discounted_virtual')->virtualAs('price - 5')`
 - create a geometry column `$blueprint->geometry('coordinates')`
 - create a geography column `$blueprint->geography('coordinates')`
+- create a vector column `$blueprint->vector('embedding', dimensions: 1536)`
+- create a vector index `$blueprint->vectorIndex('embedding')`
+- ensure the vector extension exists `Schema::ensureVectorExtensionExists()`
 
 #### Accepted But Currently No-Op
 
