@@ -4,7 +4,7 @@
     "keywords": [
         "oracle",
         "laravel",
-        "laravel 12",
+        "laravel 13",
         "oci8"
     ],
     "license": "MIT",
@@ -15,11 +15,11 @@
         }
     ],
     "require": {
-        "php": "^8.2",
-        "illuminate/collections": "^12.21",
-        "illuminate/database": "^12.21",
-        "illuminate/pagination": "^12.21",
-        "illuminate/support": "^12.21"
+        "php": "^8.3",
+        "illuminate/collections": "^13.0",
+        "illuminate/database": "^13.0",
+        "illuminate/pagination": "^13.0",
+        "illuminate/support": "^13.0"
     },
     "require-dev": {
         "laravel/pint": "^1.18",

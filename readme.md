@@ -1,6 +1,6 @@
 ## Laravel Oracle Database Package
 
-### OracleDB (updated for Laravel 12)
+### OracleDB (updated for Laravel 13)
 
 ![PHP Version](https://img.shields.io/packagist/php-v/jfelder/oracledb.svg?style=flat-square)
 ![Latest Version](https://img.shields.io/packagist/v/jfelder/oracledb.svg?style=flat-square)
@@ -94,7 +94,7 @@ $id = DB::connection('oracle')->table('users')->insertGetId(
 > **Note:** When using the insertGetId method, you can specify the auto-incrementing column name as the second
 parameter in insertGetId function. It will default to "id" if not specified.
 
-See the [Laravel database documentation](https://laravel.com/docs/12.x/database) for more information.
+See the [Laravel database documentation](https://laravel.com/docs/13.x/database) for more information.
 
 ### Unimplemented Features
 

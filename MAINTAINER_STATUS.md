@@ -1,6 +1,6 @@
 # Maintainer Status
 
-Last updated: 2026-03-10
+Last updated: 2026-03-17
 
 ## Purpose
 
@@ -8,7 +8,7 @@ This document is a maintainer-oriented snapshot of the repository as it exists t
 
 ## Project Summary
 
-Laravel-OracleDB is a Laravel 12 Oracle database driver package published as `jfelder/oracledb`. The package depends on PHP 8.2+ and Illuminate database/support/pagination 12.x, as defined in [`composer.json`](/Users/JFELDER/projects/Laravel-OracleDB/composer.json).
+Laravel-OracleDB is a Laravel 13 Oracle database driver package published as `jfelder/oracledb`. The package depends on PHP 8.3+ and Illuminate database/support/pagination 13.x on `master`, as defined in [`composer.json`](/Users/JFELDER/projects/Laravel-OracleDB/composer.json). The `12.x` branch is the maintenance line for Laravel 12.
 
 The package integrates with Laravel through [`src/Jfelder/OracleDB/OracleDBServiceProvider.php`](/Users/JFELDER/projects/Laravel-OracleDB/src/Jfelder/OracleDB/OracleDBServiceProvider.php), which:
 
@@ -17,7 +17,7 @@ The package integrates with Laravel through [`src/Jfelder/OracleDB/OracleDBServi
 - registers an `oracle` connection resolver
 - applies Oracle session parameters after connection creation
 
-This version is documented in the changelog as the Laravel 12 upgrade release [`12.0.0`](https://github.com/jfelder/Laravel-OracleDB/compare/11.0.2...v12.0.0), dated 2026-02-18.
+The last completed framework-major upgrade release was the Laravel 12 release [`12.0.0`](https://github.com/jfelder/Laravel-OracleDB/compare/11.0.2...v12.0.0), dated 2026-02-18. `master` is now reserved for the Laravel 13 upgrade line.
 
 ## Current Architecture
 
@@ -109,19 +109,19 @@ JSON query operators remain unsupported even though schema-level JSON storage is
 
 The repository has a substantial PHPUnit suite under [`tests/`](/Users/JFELDER/projects/Laravel-OracleDB/tests). The most complete coverage is around SQL generation and builder behavior, but the suite meaningfully depends on an OCI-capable runtime.
 
-Observed results on 2026-03-10:
+Observed results on 2026-03-17:
 
 ### OCI-enabled Sail environment
 
 - command run: `sail vendor/bin/phpunit`
 - result: 470 tests, 1114 assertions, all passing
-- runtime: PHP 8.3.30, PHPUnit 12.5.8, PCOV 1.0.12
+- runtime: PHP 8.3.30, PHPUnit 12.5.14, PCOV 1.0.12
 
 Coverage summary reported by PHPUnit in Sail:
 
 - classes: 66.67% (8/12)
-- methods: 96.30% (130/135)
-- lines: 89.71% (497/554)
+- methods: 96.03% (145/151)
+- lines: 90.43% (548/606)
 
 Interpretation:
 
@@ -133,7 +133,7 @@ Interpretation:
 
 - command run: `./vendor/bin/phpunit --exclude-group oci8`
 - result: 360 tests, 933 assertions, all passing
-- runtime: PHP 8.3.29, PHPUnit 12.5.8, Xdebug 3.3.1
+- runtime: PHP 8.3.29, PHPUnit 12.5.14, Xdebug 3.3.1
 
 Interpretation:
 
@@ -208,7 +208,7 @@ The package now has a mix of fully supported, unsupported, and supported-with-li
 
 ### Priority 3: Clarify supported runtime matrix
 
-The package metadata says PHP 8.2+ and Laravel 12. Maintainers would benefit from an explicit support matrix covering:
+The package metadata now says PHP 8.3+ and Laravel 13 on `master`. Maintainers would still benefit from an explicit support matrix covering:
 
 - PHP versions tested in CI
 - whether OCI8 must be present for all tests or only a subset
@@ -222,6 +222,50 @@ The package metadata says PHP 8.2+ and Laravel 12. Maintainers would benefit fro
 3. Keep the README support matrix current as schema/query features land.
 4. Decide which of the remaining schema features are worth implementing next, especially `renameIndex()`, `geometry()`, and `geography()`.
 5. Consider expanding focused coverage around any newly supported “storage-only” features so the caveats remain explicit.
+
+## Laravel 13 Branch-Cut Checklist
+
+If the package continues to target exactly one Laravel major version per branch, the expected Laravel 13 upgrade workflow is:
+
+1. Fast-forward the `12.x` maintenance branch to the current `master` tip so Laravel 12 support starts from the latest green baseline.
+2. Push `12.x` and treat it as the only branch for Laravel 12 fixes and releases.
+3. Keep `master` as the Laravel 13 development line only.
+4. Update package metadata on `master` to Laravel 13, including:
+   - `composer.json` Illuminate constraints
+   - package keywords
+   - README version references
+   - maintainer notes and changelog
+5. Refresh the lockfile on `master` against the Laravel 13 dependency graph.
+6. Update CI on `master` so the default install path validates Laravel 13 rather than the Laravel 12 lockfile assumptions.
+7. Run the portable PHPUnit suite on `master`.
+8. Run the full OCI-enabled suite on `master`; this is the real acceptance gate for the major upgrade.
+9. Review the highest-risk framework integration files first:
+   - `src/Jfelder/OracleDB/OracleConnection.php`
+   - `src/Jfelder/OracleDB/Query/OracleBuilder.php`
+   - `src/Jfelder/OracleDB/Query/Grammars/OracleGrammar.php`
+   - `src/Jfelder/OracleDB/Schema/OracleBuilder.php`
+   - `src/Jfelder/OracleDB/Schema/Grammars/OracleGrammar.php`
+   - `src/Jfelder/OracleDB/OCI_PDO/*`
+10. Release the Laravel 13 upgrade from `master` as the next major version and backport only Laravel 12-specific fixes to `12.x`.
+
+### Day-Of Commands
+
+When ready to execute the branch cut and begin the upgrade, use:
+
+```sh
+git checkout master
+git pull --ff-only
+git branch -f 12.x master
+git push origin 12.x
+```
+
+Then update `master` for Laravel 13 and validate with:
+
+```sh
+composer update
+vendor/bin/phpunit --exclude-group oci8
+vendor/bin/phpunit
+```
 
 ## Files Maintainers Should Know First
 
@@ -241,7 +285,7 @@ If someone is new to maintaining this package, these are the highest-value files
 
 ## Bottom Line
 
-The package appears to be in strong shape for Laravel 12-era SQL generation and Oracle integration when evaluated in its intended Sail environment. The main maintainer concerns right now are narrower than they first appeared:
+The package appears to be in strong shape for the Laravel 13 line when evaluated in its intended Sail environment. The main maintainer concerns right now are narrower than they first appeared:
 
 - support-surface documentation must keep pace with the expanding schema feature set
 - the OCI layer and tests remain environment-sensitive outside Sail

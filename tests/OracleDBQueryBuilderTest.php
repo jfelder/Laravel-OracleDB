@@ -79,12 +79,12 @@ class OracleDBQueryBuilderTest extends TestCase
     {
         $builder = $this->getOracleBuilderWithProcessor();
         $builder->getConnection()->shouldReceive('select')->once()
-            ->with('select * from "users"', [], false);
+            ->with('select * from "users"', [], false, []);
         $builder->useWritePdo()->select('*')->from('users')->get();
 
         $builder = $this->getOracleBuilderWithProcessor();
         $builder->getConnection()->shouldReceive('select')->once()
-            ->with('select * from "users"', [], true);
+            ->with('select * from "users"', [], true, []);
         $builder->select('*')->from('users')->get();
     }
 
@@ -1374,7 +1374,7 @@ class OracleDBQueryBuilderTest extends TestCase
     {
         $expected = 'select count(*) as aggregate from ((select * from "posts") union (select * from "videos")) as "temp_table"';
         $builder = $this->getBuilder();
-        $builder->getConnection()->shouldReceive('select')->once()->with($expected, [], true);
+        $builder->getConnection()->shouldReceive('select')->once()->with($expected, [], true, []);
         $builder->getProcessor()->shouldReceive('processSelect')->once();
         $builder->from('posts')->union($this->getBuilder()->from('videos'))->count();
     }
@@ -1385,7 +1385,7 @@ class OracleDBQueryBuilderTest extends TestCase
         $expected = 'select count(*) as aggregate from (select (select "count(*)" from "videos" where "posts"."id" = "videos"."post_id") as "videos_count" from "posts" having "videos_count" > ?) as "temp_table"';
         $builder = $this->getBuilder();
         $builder->getConnection()->shouldReceive('getDatabaseName');
-        $builder->getConnection()->shouldReceive('select')->once()->with($expected, [0 => 1], true)->andReturn([['aggregate' => 1]]);
+        $builder->getConnection()->shouldReceive('select')->once()->with($expected, [0 => 1], true, [])->andReturn([['aggregate' => 1]]);
         $builder->getProcessor()->shouldReceive('processSelect')->once()->andReturnUsing(function ($builder, $results) {
             return $results;
         });
@@ -1798,7 +1798,7 @@ class OracleDBQueryBuilderTest extends TestCase
     {
         $builder = $this->getBuilder();
         $query = 'select "category", count(*) as "total" from "item" where "department" = ? group by "category" having "total" > ?';
-        $builder->getConnection()->shouldReceive('select')->once()->with($query, ['popular', 3], true)->andReturn([['category' => 'rock', 'total' => 5]]);
+        $builder->getConnection()->shouldReceive('select')->once()->with($query, ['popular', 3], true, [])->andReturn([['category' => 'rock', 'total' => 5]]);
         $builder->getProcessor()->shouldReceive('processSelect')->andReturnUsing(function ($builder, $results) {
             return $results;
         });
@@ -1809,7 +1809,7 @@ class OracleDBQueryBuilderTest extends TestCase
         // Using \Raw value
         $builder = $this->getBuilder();
         $query = 'select "category", count(*) as "total" from "item" where "department" = ? group by "category" having "total" > 3';
-        $builder->getConnection()->shouldReceive('select')->once()->with($query, ['popular'], true)->andReturn([['category' => 'rock', 'total' => 5]]);
+        $builder->getConnection()->shouldReceive('select')->once()->with($query, ['popular'], true, [])->andReturn([['category' => 'rock', 'total' => 5]]);
         $builder->getProcessor()->shouldReceive('processSelect')->andReturnUsing(function ($builder, $results) {
             return $results;
         });
@@ -1936,7 +1936,7 @@ class OracleDBQueryBuilderTest extends TestCase
             $q->select('body')->from('posts')->where('id', 4);
         }, 'post');
 
-        $builder->getConnection()->shouldReceive('select')->once()->with('select count(*) as aggregate from "users"', [], true)->andReturn([['aggregate' => 1]]);
+        $builder->getConnection()->shouldReceive('select')->once()->with('select count(*) as aggregate from "users"', [], true, [])->andReturn([['aggregate' => 1]]);
         $builder->getProcessor()->shouldReceive('processSelect')->once()->andReturnUsing(function ($builder, $results) {
             return $results;
         });
@@ -1952,7 +1952,7 @@ class OracleDBQueryBuilderTest extends TestCase
         $columns = ['body as post_body', 'teaser', 'posts.created as published'];
         $builder->from('posts')->select($columns);
 
-        $builder->getConnection()->shouldReceive('select')->once()->with('select count("body", "teaser", "posts"."created") as aggregate from "posts"', [], true)->andReturn([['aggregate' => 1]]);
+        $builder->getConnection()->shouldReceive('select')->once()->with('select count("body", "teaser", "posts"."created") as aggregate from "posts"', [], true, [])->andReturn([['aggregate' => 1]]);
         $builder->getProcessor()->shouldReceive('processSelect')->once()->andReturnUsing(function ($builder, $results) {
             return $results;
         });
@@ -1966,7 +1966,7 @@ class OracleDBQueryBuilderTest extends TestCase
         $builder = $this->getBuilder();
         $builder->from('posts')->select('id')->union($this->getBuilder()->from('videos')->select('id'));
 
-        $builder->getConnection()->shouldReceive('select')->once()->with('select count(*) as aggregate from ((select "id" from "posts") union (select "id" from "videos")) as "temp_table"', [], true)->andReturn([['aggregate' => 1]]);
+        $builder->getConnection()->shouldReceive('select')->once()->with('select count(*) as aggregate from ((select "id" from "posts") union (select "id" from "videos")) as "temp_table"', [], true, [])->andReturn([['aggregate' => 1]]);
         $builder->getProcessor()->shouldReceive('processSelect')->once()->andReturnUsing(function ($builder, $results) {
             return $results;
         });
@@ -1980,7 +1980,7 @@ class OracleDBQueryBuilderTest extends TestCase
         $builder = $this->getBuilder();
         $builder->from('posts')->select('id')->union($this->getBuilder()->from('videos')->select('id'))->latest();
 
-        $builder->getConnection()->shouldReceive('select')->once()->with('select count(*) as aggregate from ((select "id" from "posts") union (select "id" from "videos")) as "temp_table"', [], true)->andReturn([['aggregate' => 1]]);
+        $builder->getConnection()->shouldReceive('select')->once()->with('select count(*) as aggregate from ((select "id" from "posts") union (select "id" from "videos")) as "temp_table"', [], true, [])->andReturn([['aggregate' => 1]]);
         $builder->getProcessor()->shouldReceive('processSelect')->once()->andReturnUsing(function ($builder, $results) {
             return $results;
         });
@@ -1994,7 +1994,7 @@ class OracleDBQueryBuilderTest extends TestCase
         $builder = $this->getBuilder();
         $builder->from('posts')->select('id')->union($this->getBuilder()->from('videos')->select('id'))->limit(15)->offset(1);
 
-        $builder->getConnection()->shouldReceive('select')->once()->with('select count(*) as aggregate from ((select "id" from "posts") union (select "id" from "videos")) as "temp_table"', [], true)->andReturn([['aggregate' => 1]]);
+        $builder->getConnection()->shouldReceive('select')->once()->with('select count(*) as aggregate from ((select "id" from "posts") union (select "id" from "videos")) as "temp_table"', [], true, [])->andReturn([['aggregate' => 1]]);
         $builder->getProcessor()->shouldReceive('processSelect')->once()->andReturnUsing(function ($builder, $results) {
             return $results;
         });
@@ -2485,7 +2485,7 @@ class OracleDBQueryBuilderTest extends TestCase
     public function test_find_returns_first_result_by_id()
     {
         $builder = $this->getBuilder();
-        $builder->getConnection()->shouldReceive('select')->once()->with('select * from "users" where "id" = ? fetch next 1 rows only', [1], true)->andReturn([['foo' => 'bar']]);
+        $builder->getConnection()->shouldReceive('select')->once()->with('select * from "users" where "id" = ? fetch next 1 rows only', [1], true, [])->andReturn([['foo' => 'bar']]);
         $builder->getProcessor()->shouldReceive('processSelect')->once()->with($builder, [['foo' => 'bar']])->andReturnUsing(function ($query, $results) {
             return $results;
         });
@@ -2497,7 +2497,7 @@ class OracleDBQueryBuilderTest extends TestCase
     public function test_first_method_returns_first_result()
     {
         $builder = $this->getBuilder();
-        $builder->getConnection()->shouldReceive('select')->once()->with('select * from "users" where "id" = ? fetch next 1 rows only', [1], true)->andReturn([['foo' => 'bar']]);
+        $builder->getConnection()->shouldReceive('select')->once()->with('select * from "users" where "id" = ? fetch next 1 rows only', [1], true, [])->andReturn([['foo' => 'bar']]);
         $builder->getProcessor()->shouldReceive('processSelect')->once()->with($builder, [['foo' => 'bar']])->andReturnUsing(function ($query, $results) {
             return $results;
         });
@@ -2548,7 +2548,7 @@ class OracleDBQueryBuilderTest extends TestCase
     public function test_value_method_returns_single_column()
     {
         $builder = $this->getBuilder();
-        $builder->getConnection()->shouldReceive('select')->once()->with('select "foo" from "users" where "id" = ? fetch next 1 rows only', [1], true)->andReturn([['foo' => 'bar']]);
+        $builder->getConnection()->shouldReceive('select')->once()->with('select "foo" from "users" where "id" = ? fetch next 1 rows only', [1], true, [])->andReturn([['foo' => 'bar']]);
         $builder->getProcessor()->shouldReceive('processSelect')->once()->with($builder, [['foo' => 'bar']])->andReturn([['foo' => 'bar']]);
         $results = $builder->from('users')->where('id', '=', 1)->value('foo');
         $this->assertSame('bar', $results);
@@ -2557,7 +2557,7 @@ class OracleDBQueryBuilderTest extends TestCase
     public function test_aggregate_functions()
     {
         $builder = $this->getBuilder();
-        $builder->getConnection()->shouldReceive('select')->once()->with('select count(*) as aggregate from "users"', [], true)->andReturn([['aggregate' => 1]]);
+        $builder->getConnection()->shouldReceive('select')->once()->with('select count(*) as aggregate from "users"', [], true, [])->andReturn([['aggregate' => 1]]);
         $builder->getProcessor()->shouldReceive('processSelect')->once()->andReturnUsing(function ($builder, $results) {
             return $results;
         });
@@ -2575,7 +2575,7 @@ class OracleDBQueryBuilderTest extends TestCase
         $this->assertTrue($results);
 
         $builder = $this->getBuilder();
-        $builder->getConnection()->shouldReceive('select')->once()->with('select max("id") as aggregate from "users"', [], true)->andReturn([['aggregate' => 1]]);
+        $builder->getConnection()->shouldReceive('select')->once()->with('select max("id") as aggregate from "users"', [], true, [])->andReturn([['aggregate' => 1]]);
         $builder->getProcessor()->shouldReceive('processSelect')->once()->andReturnUsing(function ($builder, $results) {
             return $results;
         });
@@ -2583,7 +2583,7 @@ class OracleDBQueryBuilderTest extends TestCase
         $this->assertEquals(1, $results);
 
         $builder = $this->getBuilder();
-        $builder->getConnection()->shouldReceive('select')->once()->with('select min("id") as aggregate from "users"', [], true)->andReturn([['aggregate' => 1]]);
+        $builder->getConnection()->shouldReceive('select')->once()->with('select min("id") as aggregate from "users"', [], true, [])->andReturn([['aggregate' => 1]]);
         $builder->getProcessor()->shouldReceive('processSelect')->once()->andReturnUsing(function ($builder, $results) {
             return $results;
         });
@@ -2591,7 +2591,7 @@ class OracleDBQueryBuilderTest extends TestCase
         $this->assertEquals(1, $results);
 
         $builder = $this->getBuilder();
-        $builder->getConnection()->shouldReceive('select')->once()->with('select sum("id") as aggregate from "users"', [], true)->andReturn([['aggregate' => 1]]);
+        $builder->getConnection()->shouldReceive('select')->once()->with('select sum("id") as aggregate from "users"', [], true, [])->andReturn([['aggregate' => 1]]);
         $builder->getProcessor()->shouldReceive('processSelect')->once()->andReturnUsing(function ($builder, $results) {
             return $results;
         });
@@ -2599,7 +2599,7 @@ class OracleDBQueryBuilderTest extends TestCase
         $this->assertEquals(1, $results);
 
         $builder = $this->getBuilder();
-        $builder->getConnection()->shouldReceive('select')->once()->with('select avg("id") as aggregate from "users"', [], true)->andReturn([['aggregate' => 1]]);
+        $builder->getConnection()->shouldReceive('select')->once()->with('select avg("id") as aggregate from "users"', [], true, [])->andReturn([['aggregate' => 1]]);
         $builder->getProcessor()->shouldReceive('processSelect')->once()->andReturnUsing(function ($builder, $results) {
             return $results;
         });
@@ -2607,7 +2607,7 @@ class OracleDBQueryBuilderTest extends TestCase
         $this->assertEquals(1, $results);
 
         $builder = $this->getBuilder();
-        $builder->getConnection()->shouldReceive('select')->once()->with('select avg("id") as aggregate from "users"', [], true)->andReturn([['aggregate' => 1]]);
+        $builder->getConnection()->shouldReceive('select')->once()->with('select avg("id") as aggregate from "users"', [], true, [])->andReturn([['aggregate' => 1]]);
         $builder->getProcessor()->shouldReceive('processSelect')->once()->andReturnUsing(function ($builder, $results) {
             return $results;
         });
@@ -2650,9 +2650,9 @@ class OracleDBQueryBuilderTest extends TestCase
     public function test_aggregate_reset_followed_by_get()
     {
         $builder = $this->getBuilder();
-        $builder->getConnection()->shouldReceive('select')->once()->with('select count(*) as aggregate from "users"', [], true)->andReturn([['aggregate' => 1]]);
-        $builder->getConnection()->shouldReceive('select')->once()->with('select sum("id") as aggregate from "users"', [], true)->andReturn([['aggregate' => 2]]);
-        $builder->getConnection()->shouldReceive('select')->once()->with('select "column1", "column2" from "users"', [], true)->andReturn([['column1' => 'foo', 'column2' => 'bar']]);
+        $builder->getConnection()->shouldReceive('select')->once()->with('select count(*) as aggregate from "users"', [], true, [])->andReturn([['aggregate' => 1]]);
+        $builder->getConnection()->shouldReceive('select')->once()->with('select sum("id") as aggregate from "users"', [], true, [])->andReturn([['aggregate' => 2]]);
+        $builder->getConnection()->shouldReceive('select')->once()->with('select "column1", "column2" from "users"', [], true, [])->andReturn([['column1' => 'foo', 'column2' => 'bar']]);
         $builder->getProcessor()->shouldReceive('processSelect')->andReturnUsing(function ($builder, $results) {
             return $results;
         });
@@ -2668,8 +2668,8 @@ class OracleDBQueryBuilderTest extends TestCase
     public function test_aggregate_reset_followed_by_select_get()
     {
         $builder = $this->getBuilder();
-        $builder->getConnection()->shouldReceive('select')->once()->with('select count("column1") as aggregate from "users"', [], true)->andReturn([['aggregate' => 1]]);
-        $builder->getConnection()->shouldReceive('select')->once()->with('select "column2", "column3" from "users"', [], true)->andReturn([['column2' => 'foo', 'column3' => 'bar']]);
+        $builder->getConnection()->shouldReceive('select')->once()->with('select count("column1") as aggregate from "users"', [], true, [])->andReturn([['aggregate' => 1]]);
+        $builder->getConnection()->shouldReceive('select')->once()->with('select "column2", "column3" from "users"', [], true, [])->andReturn([['column2' => 'foo', 'column3' => 'bar']]);
         $builder->getProcessor()->shouldReceive('processSelect')->andReturnUsing(function ($builder, $results) {
             return $results;
         });
@@ -2683,8 +2683,8 @@ class OracleDBQueryBuilderTest extends TestCase
     public function test_aggregate_reset_followed_by_get_with_columns()
     {
         $builder = $this->getBuilder();
-        $builder->getConnection()->shouldReceive('select')->once()->with('select count("column1") as aggregate from "users"', [], true)->andReturn([['aggregate' => 1]]);
-        $builder->getConnection()->shouldReceive('select')->once()->with('select "column2", "column3" from "users"', [], true)->andReturn([['column2' => 'foo', 'column3' => 'bar']]);
+        $builder->getConnection()->shouldReceive('select')->once()->with('select count("column1") as aggregate from "users"', [], true, [])->andReturn([['aggregate' => 1]]);
+        $builder->getConnection()->shouldReceive('select')->once()->with('select "column2", "column3" from "users"', [], true, [])->andReturn([['column2' => 'foo', 'column3' => 'bar']]);
         $builder->getProcessor()->shouldReceive('processSelect')->andReturnUsing(function ($builder, $results) {
             return $results;
         });
@@ -2698,7 +2698,7 @@ class OracleDBQueryBuilderTest extends TestCase
     public function test_aggregate_with_sub_select()
     {
         $builder = $this->getBuilder();
-        $builder->getConnection()->shouldReceive('select')->once()->with('select count(*) as aggregate from "users"', [], true)->andReturn([['aggregate' => 1]]);
+        $builder->getConnection()->shouldReceive('select')->once()->with('select count(*) as aggregate from "users"', [], true, [])->andReturn([['aggregate' => 1]]);
         $builder->getProcessor()->shouldReceive('processSelect')->once()->andReturnUsing(function ($builder, $results) {
             return $results;
         });
@@ -3299,12 +3299,12 @@ class OracleDBQueryBuilderTest extends TestCase
     {
         $builder = $this->getOracleBuilderWithProcessor();
         $builder->getConnection()->shouldReceive('select')->once()
-            ->with(m::any(), m::any(), false);
+            ->with(m::any(), m::any(), false, []);
         $builder->select('*')->from('foo')->where('bar', '=', 'baz')->lock()->get();
 
         $builder = $this->getOracleBuilderWithProcessor();
         $builder->getConnection()->shouldReceive('select')->once()
-            ->with(m::any(), m::any(), false);
+            ->with(m::any(), m::any(), false, []);
         $builder->select('*')->from('foo')->where('bar', '=', 'baz')->lock(false)->get();
     }
 
