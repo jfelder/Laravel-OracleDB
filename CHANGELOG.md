@@ -1,5 +1,16 @@
 # Changelog
 
+## [13.0.0](https://github.com/jfelder/Laravel-OracleDB/compare/v12.1.1...v13.0.0) (2026-03-17)
+
+
+### ⚠ BREAKING CHANGES
+
+* master now targets Laravel 13 and PHP 8.3+, while Laravel 12 maintenance continues on the 12.x branch.
+
+### Features
+
+* laravel 13 upgrade ([5740a9c](https://github.com/jfelder/Laravel-OracleDB/commit/5740a9cd62f90337b5b5b798563f01714c4d13fa))
+
 ## [12.1.1](https://github.com/jfelder/Laravel-OracleDB/compare/v12.1.0...v12.1.1) (2026-03-12)
 
 
