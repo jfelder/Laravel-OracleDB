@@ -23,6 +23,7 @@ use Jfelder\OracleDB\Query\Grammars\OracleGrammar;
 use Jfelder\OracleDB\Query\OracleBuilder as OracleQueryBuilder;
 use Jfelder\OracleDB\Query\Processors\OracleProcessor;
 use Mockery as m;
+use Mockery\MockInterface;
 use PHPUnit\Framework\Attributes\DoesNotPerformAssertions;
 use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
@@ -2855,6 +2856,44 @@ class OracleDBQueryBuilderTest extends TestCase
         $this->assertEquals(1, $result);
     }
 
+    public function test_increment_each_method()
+    {
+        $builder = $this->getBuilder();
+        $builder->getConnection()->shouldReceive('raw')->twice()->andReturnUsing(
+            fn ($value) => new Raw($value)
+        );
+        $builder->getConnection()->shouldReceive('update')->once()->with(
+            'update "users" set "votes" = "votes" + 2, "score" = "score" + 3, "updated_at" = ? where "id" = ?',
+            ['now', 1]
+        )->andReturn(1);
+
+        $result = $builder->from('users')->where('id', '=', 1)->incrementEach(
+            ['votes' => 2, 'score' => 3],
+            ['updated_at' => 'now']
+        );
+
+        $this->assertEquals(1, $result);
+    }
+
+    public function test_decrement_each_method()
+    {
+        $builder = $this->getBuilder();
+        $builder->getConnection()->shouldReceive('raw')->twice()->andReturnUsing(
+            fn ($value) => new Raw($value)
+        );
+        $builder->getConnection()->shouldReceive('update')->once()->with(
+            'update "users" set "votes" = "votes" - 2, "score" = "score" - 3, "updated_at" = ? where "id" = ?',
+            ['now', 1]
+        )->andReturn(1);
+
+        $result = $builder->from('users')->where('id', '=', 1)->decrementEach(
+            ['votes' => 2, 'score' => 3],
+            ['updated_at' => 'now']
+        );
+
+        $this->assertEquals(1, $result);
+    }
+
     public function test_upsert_method()
     {
         $this->expectException(RuntimeException::class);
@@ -4274,7 +4313,7 @@ class OracleDBQueryBuilderTest extends TestCase
     }
 
     /**
-     * @return \Mockery\MockInterface|\Illuminate\Database\Query\Builder
+     * @return MockInterface|Builder
      */
     protected function getMockQueryBuilder()
     {
