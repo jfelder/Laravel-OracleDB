@@ -1,157 +1,215 @@
-## Laravel Oracle Database Package
+# Laravel Oracle Database Driver
 
-### OracleDB (updated for Laravel 13)
+[![PHP Version](https://img.shields.io/packagist/php-v/jfelder/oracledb.svg?style=flat-square)](https://packagist.org/packages/jfelder/oracledb)
+[![Latest Version](https://img.shields.io/packagist/v/jfelder/oracledb.svg?style=flat-square)](https://packagist.org/packages/jfelder/oracledb)
+[![Total Downloads](https://img.shields.io/packagist/dt/jfelder/oracledb.svg?style=flat-square)](https://packagist.org/packages/jfelder/oracledb)
+[![License](https://img.shields.io/packagist/l/jfelder/oracledb.svg?style=flat-square)](LICENSE)
+[![Tests](https://github.com/jfelder/Laravel-OracleDB/actions/workflows/tests.yml/badge.svg)](https://github.com/jfelder/Laravel-OracleDB/actions/workflows/tests.yml)
+[![Coverage](https://github.com/jfelder/Laravel-OracleDB/actions/workflows/coverage.yml/badge.svg)](https://github.com/jfelder/Laravel-OracleDB/actions/workflows/coverage.yml)
+[![Codecov](https://codecov.io/github/jfelder/Laravel-OracleDB/graph/badge.svg?token=wRWuboe79d)](https://codecov.io/github/jfelder/Laravel-OracleDB)
 
-![PHP Version](https://img.shields.io/packagist/php-v/jfelder/oracledb.svg?style=flat-square)
-![Latest Version](https://img.shields.io/packagist/v/jfelder/oracledb.svg?style=flat-square)
-![Total Downloads](https://img.shields.io/packagist/dt/jfelder/oracledb.svg?style=flat-square)
-![License](https://img.shields.io/packagist/l/jfelder/oracledb.svg?style=flat-square)
-![Tests](https://github.com/jfelder/Laravel-OracleDB/actions/workflows/tests.yml/badge.svg)
-![Coverage](https://github.com/jfelder/Laravel-OracleDB/actions/workflows/coverage.yml/badge.svg)
-![Codecov](https://codecov.io/github/jfelder/Laravel-OracleDB/graph/badge.svg?token=wRWuboe79d)
+OracleDB is an Oracle Database driver for Laravel 13. It extends
+[Illuminate Database](https://github.com/illuminate/database) and provides a PDO-compatible adapter built on PHP's
+[OCI8 extension](https://www.php.net/manual/en/book.oci8.php).
 
-OracleDB is an Oracle Database Driver package for [Laravel Framework](https://laravel.com) - thanks [@taylorotwell](https://github.com/taylorotwell). OracleDB is an extension of [Illuminate/Database](https://github.com/illuminate/database) that uses the [OCI8 Functions](https://www.php.net/manual/en/ref.oci8.php) wrapped into the PDO namespace.
+Please [report bugs through GitHub Issues](https://github.com/jfelder/Laravel-OracleDB/issues).
 
-**Please report any bugs you may find.**
-
+- [Requirements](#requirements)
 - [Installation](#installation)
+- [Configuration](#configuration)
 - [Basic Usage](#basic-usage)
-- [Unimplemented Features](#unimplemented-features)
+- [Known Limitations](#known-limitations)
+- [Testing](#testing)
+- [Contributing](#contributing)
 - [License](#license)
 
+## Requirements
 
-> **IMPORTANT** This version removes the [PDO_OCI](https://www.php.net/manual/en/ref.pdo-oci.php) driver option and only uses the [OCI8 Functions](https://www.php.net/manual/en/ref.oci8.php) under the hood.
+- Laravel 13 (`illuminate/* ^13.0`)
+- PHP 8.3 or later (`^8.3`)
+- The PHP [OCI8 extension](https://www.php.net/manual/en/oci8.installation.php)
+- Oracle Client or Oracle Instant Client libraries compatible with the OCI8 extension
 
+Package major versions follow Laravel major versions. Use OracleDB 13.x with Laravel 13.x. CI currently tests PHP 8.3,
+8.4, and 8.5, including the lowest and latest supported Laravel 13 dependency sets.
 
-### Installation
+> **Important:** OracleDB no longer supports the
+> [PDO_OCI extension](https://www.php.net/manual/en/ref.pdo-oci.php). OCI8 is the only supported Oracle transport.
 
-With [Composer](https://getcomposer.org):
+## Installation
+
+Install the Laravel 13-compatible package with Composer:
 
 ```sh
-composer require jfelder/oracledb
+composer require jfelder/oracledb:^13.0
 ```
 
-During this command, Laravel's "Auto-Discovery" feature should automatically register OracleDB's service
-provider.
+Laravel's package auto-discovery automatically registers OracleDB's service provider.
 
-Next, publish OracleDB's configuration file using the vendor:publish Artisan command. This will copy OracleDB's
-configuration file to `config/oracledb.php` in your project.
+Publish the package configuration file:
 
 ```sh
 php artisan vendor:publish --tag=oracledb-config
 ```
 
-To finish the installation, set your environment variables (typically in your .env file) to the corresponding
-env variables used in `config/oracledb.php`: such as `DB_HOST`, `DB_USERNAME`, etc.  
+This copies the package configuration to `config/oracledb.php`.
 
-**Date Format Config**
-The `date_format` config has been removed in favor of using the NLS_* session parameters. The default values are defined by the package and can be overridden in `config/oracledb.php` via the `session_parameters` config array or through the corresponding environment variables such as `NLS_DATE_FORMAT`. This affects all read/write operations of any Eloquent model with date fields and any Query Builder queries that utilize a Carbon instance and brings the handling of dates in line with the framework.
+## Configuration
 
-#### Default NLS session parameters
+The published `config/oracledb.php` file defines a connection named `oracle` and is merged into Laravel's
+`database.connections` configuration. A typical service-name connection uses:
+
+```dotenv
+DB_CONNECTION=oracle
+DB_HOST=127.0.0.1
+DB_PORT=1521
+DB_SERVICE_NAME=FREEPDB1
+DB_USERNAME=app_user
+DB_PASSWORD=secret
+DB_CHARSET=AL32UTF8
+```
+
+Set `DB_CHARSET` to the character set required by your Oracle client and database. The package default is
+`WE8ISO8859P1`.
+
+You may configure the connection in either of these ways:
+
+- Set `DB_TNS` to a complete TNS descriptor. When it is present, the host, port, service name, and SID settings are not
+  used to build the connection descriptor.
+- Set `DB_HOST`, `DB_PORT`, and `DB_SERVICE_NAME` for a service-name connection.
+- Leave `DB_SERVICE_NAME` empty and set `DB_DATABASE` to connect using an SID.
+
+The `quoting` option in `config/oracledb.php` defaults to `false`, allowing Oracle to apply its normal identifier
+casing. Set it to `true` when your schema relies on case-sensitive quoted identifiers.
+
+To define multiple Oracle connections, copy the `oracle` connection entry, give each copy a unique name, and use
+distinct environment-variable names for each connection.
+
+### NLS Session Parameters
+
+The previous `date_format` option has been replaced by Oracle NLS session parameters. Defaults are defined by the
+package and may be overridden through the `session_parameters` array in `config/oracledb.php` or the corresponding
+environment variables, such as `NLS_DATE_FORMAT`.
+
+These settings affect Eloquent date attributes and Query Builder operations that bind Carbon instances.
 
 | Parameter | Default value |
 |---|---|
-| NLS_TIME_FORMAT | 'HH24:MI:SS' |
-| NLS_DATE_FORMAT | 'YYYY-MM-DD HH24:MI:SS' |
-| NLS_TIMESTAMP_FORMAT | 'YYYY-MM-DD HH24:MI:SS' |
-| NLS_TIMESTAMP_TZ_FORMAT | 'YYYY-MM-DD HH24:MI:SS TZH:TZM' |
-| NLS_NUMERIC_CHARACTERS | '.,' |
+| `NLS_TIME_FORMAT` | `HH24:MI:SS` |
+| `NLS_DATE_FORMAT` | `YYYY-MM-DD HH24:MI:SS` |
+| `NLS_TIMESTAMP_FORMAT` | `YYYY-MM-DD HH24:MI:SS` |
+| `NLS_TIMESTAMP_TZ_FORMAT` | `YYYY-MM-DD HH24:MI:SS TZH:TZM` |
+| `NLS_NUMERIC_CHARACTERS` | `.,` |
 
+## Basic Usage
 
-### Basic Usage
-The configuration file for this package is located at `config/oracledb.php`.
-In this file, you define all of your oracle database connections. If you need to make more than one connection, just
-copy the example one. If you want to make one of these connections the default connection, enter the name you gave the
-connection into the "Default Database Connection Name" section in `config/database.php`.
-
-Once you have configured the OracleDB database connection(s), you may run queries using the `DB` facade as normal.
-
-> **Note:** This driver makes OracleDB use the
-[OCI8 Functions](https://www.php.net/manual/en/ref.oci8.php) under the hood. 
+Once the Oracle connection is configured, use Laravel's `DB` facade normally:
 
 ```php
+use Illuminate\Support\Facades\DB;
+
 $results = DB::select('select * from users where id = ?', [1]);
 ```
 
-The above statement assumes you have set the default connection to be the oracle connection you setup in
-config/database.php file and will always return an `array` of results.
+This example assumes `oracle` is Laravel's default database connection. `select()` returns an array of result rows.
+
+Select an explicit connection when Oracle is not the default:
 
 ```php
-$results = DB::connection('oracle')->select('select * from users where id = ?', [1]);
-```
-
-Just like the built-in database drivers, you can use the connection method to access the oracle database(s) you setup
-in config/oracledb.php file.
-
-#### Inserting Records Into A Table With An Auto-Incrementing ID
-
-```php
-$id = DB::connection('oracle')->table('users')->insertGetId(
-    ['email' => 'john@example.com', 'votes' => 0], 'userid'
+$results = DB::connection('oracle')->select(
+    'select * from users where id = ?',
+    [1],
 );
 ```
 
-> **Note:** When using the insertGetId method, you can specify the auto-incrementing column name as the second
-parameter in insertGetId function. It will default to "id" if not specified.
+### Inserting Records With a Generated ID
 
-See the [Laravel database documentation](https://laravel.com/docs/13.x/database) for more information.
+```php
+$id = DB::connection('oracle')->table('users')->insertGetId(
+    ['email' => 'john@example.com', 'votes' => 0],
+    'userid',
+);
+```
 
-### Unimplemented Features
+For this driver, Laravel's second `insertGetId()` argument (named `$sequence` in Laravel's API) identifies the column
+returned by Oracle's `RETURNING` clause. It defaults to `id`. The database must populate this column through an
+identity, trigger, default, or equivalent mechanism.
 
-Some of the features available in the first-party Laravel database drivers are not implemented in this package. The list below separates features that are currently unsupported from features whose fluent modifiers are currently accepted but have no effect on the generated SQL. Pull requests are welcome for implementing any of these features, or for expanding this list if you find any gaps not already listed.
+See the [Laravel database documentation](https://laravel.com/docs/13.x/database) for general Query Builder and
+connection usage.
 
-#### Unsupported: Query Builder
+## Known Limitations
 
-- group limiting via a groupLimit clause `$query->groupLimit($value, $column);` note: this was only added to Laravel so Eloquent can limit the number of eagerly loaded results per parent
-- case-insensitive `LIKE` operations such as `DB::table('users')->whereLike('email', '%foo%', caseSensitive: false)->get();` use `UPPER(column) LIKE ?` style expressions instead
-- insertOrIgnore `DB::from('users')->insertOrIgnore(['email' => 'foo']);`
-- insertOrIgnoreReturning `DB::from('users')->insertOrIgnoreReturning([['email' => 'foo']], ['id']);`
-- insertOrIgnoreUsing `DB::from('users')->insertOrIgnoreUsing(['email'], DB::table('staging_users')->select('email'));`
-- insertGetId with empty values `DB::from('users')->insertGetId([]);` (but calling with non-empty values is supported)
-- upserts `DB::from('users')->upsert([['email' => 'foo', 'name' => 'bar'], ['name' => 'bar2', 'email' => 'foo2']], 'email');`
-- deleting with a join `DB::from('users')->join('contacts', 'users.id', '=', 'contacts.id')->where('users.email', '=', 'foo')->delete();`
-- deleting with a limit `DB::from('users')->where('email', '=', 'foo')->orderBy('id')->take(1)->delete();`
-- json operations `DB::from('users')->where('items->sku', '=', 'foo-bar')->get();`
-- JSON overlap operations such as `DB::from('users')->whereJsonOverlaps('options->languages', ['en', 'fr'])->get();`
-- JSON key existence operations such as `DB::from('users')->whereJsonContainsKey('options->languages')->get();`
-- whereFulltext `DB::table('users')->whereFulltext('description', 'Hello World');`
+Some features available in Laravel's first-party database drivers are not implemented by this package. The lists below
+distinguish operations that throw an unsupported-operation exception from fluent options that are accepted but do not
+affect the generated Oracle SQL.
 
-#### Unsupported: Eloquent
+Pull requests are welcome for implementing these features or expanding this list.
 
-- setting `$guarded` on an Eloquent model as anything other than an empty array, for example `protected $guarded = ['id'];`. Models must either not define `$guarded` at all, or set it to an empty array. If not, Eloquent may attempt to run a column listing SQL query resulting in an exception.
-- limiting the number of eagerly loaded results per parent, ie get only 3 posts per user `User::with(['posts' => fn ($query) => $query->limit(3)])->paginate();`
+### Unsupported: Query Builder
 
-#### Unsupported: Schema Builder
+- Group limiting via `$query->groupLimit($value, $column)`. Laravel uses this to limit eagerly loaded results per
+  parent.
+- Lateral joins via `joinLateral()` or `leftJoinLateral()`.
+- Case-insensitive `LIKE` operations such as
+  `DB::table('users')->whereLike('email', '%foo%', caseSensitive: false)->get()`. Use an `UPPER(column) LIKE ?`
+  expression instead.
+- `DB::table('users')->insertOrIgnore(['email' => 'foo'])`.
+- `DB::table('users')->insertOrIgnoreReturning([['email' => 'foo']], ['id'])`.
+- `DB::table('users')->insertOrIgnoreUsing(['email'], DB::table('staging_users')->select('email'))`.
+- Calling `insertGetId()` with an empty values array. Non-empty inserts are supported.
+- Upserts via `DB::table('users')->upsert($values, 'email')`.
+- Deleting with a join.
+- Deleting with an order or limit.
+- JSON query and update operations, including JSON path access, containment, overlap, key-existence, and length
+  operations.
+- Full-text queries such as `DB::table('users')->whereFullText('description', 'Hello World')`.
 
-- schema dumping such as `php artisan schema:dump` or `php artisan schema:dump --prune`
-- creating databases `Schema::createDatabase('example')`
-- dropping databases `Schema::dropDatabaseIfExists('example')`
-- column listing operations such as `Schema::getColumnListing('users')`
-- set collation on a table `$blueprint->collation('BINARY_CI')`
-- set collation on a column `$blueprint->string('some_column')->collation('BINARY_CI')`
-- create a private temporary table `$blueprint->temporary()`
-- rename an index `$blueprint->renameIndex('foo', 'bar')`
-- specify an algorithm when creating an index via the third argument `$blueprint->index(['foo', 'bar'], 'baz', 'hash')`
-- create a spatial index `$blueprint->spatialIndex('coordinates')`
-- create a spatial index fluently `$blueprint->point('coordinates')->spatialIndex()`
-- create a generated column, like the mysql driver has `virtualAs` and `storedAs` and postgres has `generatedAs`; ie, assuming an integer type column named price exists on the table, `$blueprint->integer('discounted_virtual')->virtualAs('price - 5')`
-- create a geometry column `$blueprint->geometry('coordinates')`
-- create a geography column `$blueprint->geography('coordinates')`
-- create a vector column `$blueprint->vector('embedding', dimensions: 1536)`
-- create a vector index `$blueprint->vectorIndex('embedding')`
-- ensure the vector extension exists `Schema::ensureVectorExtensionExists()`
+### Unsupported: Eloquent
 
-#### Accepted But Currently No-Op
+- Setting `$guarded` to a non-empty list, for example `protected $guarded = ['id'];`. Models must either inherit
+  Laravel's default guarded configuration or set `$guarded` to an empty array. A custom non-empty list may cause
+  Eloquent to request unsupported column-listing metadata.
+- Limiting the number of eagerly loaded results per parent, such as
+  `User::with(['posts' => fn ($query) => $query->limit(3)])->get()`.
 
-- starting values on identity columns via `$blueprint->increments('id')->startingValue(1000)`
+### Unsupported: Schema Builder
 
-#### Supported With Limitations
+- Schema dumping through `php artisan schema:dump` or `php artisan schema:dump --prune`.
+- Creating databases through `Schema::createDatabase('example')`.
+- Dropping databases through `Schema::dropDatabaseIfExists('example')`.
+- Schema inspection methods that retrieve columns, indexes, foreign keys, or user-defined types. This includes
+  `getColumns()`, `getColumnListing()`, `getIndexes()`, `getForeignKeys()`, `getTypes()`, `hasColumn()`, `hasColumns()`,
+  `hasIndex()`, `hasForeignKey()`, and conditional helpers built on these methods.
+- Renaming an index through `$blueprint->renameIndex('foo', 'bar')`.
+- Creating spatial indexes through `$blueprint->spatialIndex('coordinates')` or
+  `$blueprint->point('coordinates')->spatialIndex()`.
+- Creating generated columns with `virtualAs`, `storedAs`, or `generatedAs`.
+- Creating geometry or geography columns.
+- Creating vector columns or vector indexes.
+- Ensuring a vector extension exists through `Schema::ensureVectorExtensionExists()`.
 
-- `json()` and `jsonb()` schema columns are stored as `CLOB`, for example `$blueprint->json('payload')` or `$blueprint->jsonb('payload')`. Query Builder JSON operators remain unsupported.
+### Accepted But Currently No-Op
 
-### Testing
+- Table collation through `$blueprint->collation('BINARY_CI')`.
+- Column collation through `$blueprint->string('some_column')->collation('BINARY_CI')`.
+- The `$blueprint->temporary()` flag. It is ignored, so the generated statement creates a regular table.
+- Index algorithms passed as the third argument to `$blueprint->index(['foo', 'bar'], 'baz', 'hash')`.
+- Starting values on identity columns through `$blueprint->increments('id')->startingValue(1000)`.
 
-If OCI8 is not installed locally, you can still run the portable portion of the test suite:
+### Supported With Limitations
+
+- `json()` and `jsonb()` schema columns are stored as `CLOB`. Query Builder JSON operators remain unsupported.
+
+## Testing
+
+Install development dependencies:
+
+```sh
+composer install
+```
+
+If OCI8 is not installed locally, run the portable portion of the test suite:
 
 ```sh
 vendor/bin/phpunit --exclude-group oci8
@@ -163,6 +221,29 @@ If OCI8 is available, run the full suite:
 vendor/bin/phpunit
 ```
 
-### License
+Verify compatibility with the lowest supported dependency versions:
 
-Licensed under the [MIT License](https://cheeaun.mit-license.org).
+```sh
+composer update --prefer-lowest --prefer-stable --prefer-dist --no-progress --no-interaction
+vendor/bin/phpunit
+```
+
+Check code style:
+
+```sh
+vendor/bin/pint --test
+```
+
+This repository intentionally does not commit `composer.lock` because it is a library. CI resolves both the lowest and
+current stable dependency sets.
+
+## Contributing
+
+Bug reports and pull requests are welcome. When reporting a database issue, include the Laravel, PHP, OCI8, Oracle
+Client, and Oracle Database versions, together with a minimal query or migration that reproduces the behavior.
+
+Use [GitHub Issues](https://github.com/jfelder/Laravel-OracleDB/issues) for confirmed bugs and compatibility reports.
+
+## License
+
+OracleDB is open-source software licensed under the [MIT License](LICENSE).
